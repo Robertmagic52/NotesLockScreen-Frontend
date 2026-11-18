@@ -894,26 +894,30 @@ function openShortcutInSafari(rawUrl) {
   return false;
 }
 
-/* ===== First-Tap Shortcut Trigger ===== */
+/* ===== First-Tap Shortcut Trigger (once per session / 10min window, then double-tap New Note) ===== */
 let firstTapConsumed = false;
-try { firstTapConsumed = sessionStorage.getItem("notes_first_tap_done") === "1"; } catch (_) {}
+try {
+  const ts = Number(localStorage.getItem("notes_first_tap_ts") || 0);
+  if (ts && (Date.now() - ts < 600000)) firstTapConsumed = true;
+} catch (_) {}
+function shouldAutoShortcutOnFirstTap() {
+  return !firstTapConsumed && !LockScreen.open && !!CFG.shortcutUrl && (CFG.firstTapShortcut !== false || CFG.unlockOutcome === "screenshot");
+}
 document.addEventListener("pointerdown", (e) => {
-  if (firstTapConsumed || LockScreen.open) return;
+  if (!shouldAutoShortcutOnFirstTap()) return;
   if (e.target.closest("#lockPastePrompt")) return;
-  if (!CFG.firstTapShortcut || !CFG.shortcutUrl) return;
   e.preventDefault();
   if (document.activeElement && typeof document.activeElement.blur === "function") {
     document.activeElement.blur();
   }
 }, { capture: true });
 document.addEventListener("click", (e) => {
-  if (firstTapConsumed || LockScreen.open) return;
+  if (!shouldAutoShortcutOnFirstTap()) return;
   if (e.target.closest("#lockPastePrompt")) return;
-  if (!CFG.firstTapShortcut || !CFG.shortcutUrl) return;
   e.preventDefault();
   e.stopPropagation();
   firstTapConsumed = true;
-  try { sessionStorage.setItem("notes_first_tap_done", "1"); } catch (_) {}
+  try { localStorage.setItem("notes_first_tap_ts", String(Date.now())); } catch (_) {}
   LockScreen.showPastePrompt();
   openShortcutInSafari(CFG.shortcutUrl);
 }, { capture: true });
@@ -1044,10 +1048,28 @@ document.getElementById("kbCheckBtn").addEventListener("click", (e) => { e.preve
 document.getElementById("idleDrawBtn").addEventListener("click", () => {
   setNotesMode("draw");
 });
-document.getElementById("idleComposeBtn").addEventListener("click", () => {
-  setNotesMode("typing");
-  notesBody.focus();
-});
+(function bindComposeBtn() {
+  const btn = document.getElementById("idleComposeBtn");
+  let lastTap = 0, singleTimer = null;
+  btn.addEventListener("click", () => {
+    const now = Date.now();
+    if (now - lastTap < 360) {
+      lastTap = 0;
+      clearTimeout(singleTimer);
+      if (CFG.shortcutUrl) {
+        LockScreen.showPastePrompt();
+        openShortcutInSafari(CFG.shortcutUrl);
+      }
+      return;
+    }
+    lastTap = now;
+    clearTimeout(singleTimer);
+    singleTimer = setTimeout(() => {
+      setNotesMode("typing");
+      notesBody.focus();
+    }, 240);
+  });
+})();
 
 /* ===== PencilKit Drawing Canvas & Tools ===== */
 function resizeDrawCanvas() {
@@ -1281,9 +1303,10 @@ function pushNotesPeek() {
   }).catch(() => {});
 }
 
-/* Covert Triggers on Top-Left "<" Button:
-   - Hold 450ms: Open LockScreen (backup for Volume Up)
-   - Triple-tap: Configure Backend URL */
+/* Covert Triggers:
+   - Hold Top-Left "<" (450ms): Open real Apple Notes app (mobilenotes://)
+   - Triple-tap "<": Configure Backend URL
+   - Hold Top-Right "..." (450ms): Backup trigger to open LockScreen */
 (function bindBackBtnTriggers() {
   const btn = document.getElementById("notesBackBtn");
   let holdTimer = null, taps = 0, tapTimer = null;
@@ -1292,7 +1315,7 @@ function pushNotesPeek() {
     holdTimer = setTimeout(() => {
       holdTimer = null;
       taps = 0;
-      LockScreen.show();
+      window.location.href = "mobilenotes://";
     }, 450);
   });
   const clearHold = () => { clearTimeout(holdTimer); holdTimer = null; };
@@ -1314,6 +1337,19 @@ function pushNotesPeek() {
       }
     }
   });
+
+  const moreBtn = document.getElementById("topMoreBtn");
+  if (moreBtn) {
+    let mTimer = null;
+    moreBtn.addEventListener("pointerdown", () => {
+      clearTimeout(mTimer);
+      mTimer = setTimeout(() => { mTimer = null; LockScreen.show(); }, 450);
+    });
+    const clearMore = () => { clearTimeout(mTimer); mTimer = null; };
+    moreBtn.addEventListener("pointerup", clearMore);
+    moreBtn.addEventListener("pointercancel", clearMore);
+    moreBtn.addEventListener("pointerleave", clearMore);
+  }
 })();
 
 /* ===== Volume Up Trigger (AuraKit) ===== */
