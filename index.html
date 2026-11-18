@@ -1024,6 +1024,19 @@ document.getElementById("kbDrawBtn").addEventListener("click", (e) => {
   e.preventDefault();
   setNotesMode("draw");
 });
+["kbFmtBoldBtn","kbFmtItalicBtn","kbFmtUnderBtn","kbFmtStrikeBtn","kbFmtHiBtn"].forEach(id => {
+  const b = document.getElementById(id);
+  if (b) b.addEventListener("click", (e) => { e.preventDefault(); b.classList.toggle("gold-active"); });
+});
+function insertChecklistItem() {
+  if (appMode !== "typing") setNotesMode("typing");
+  const cur = notesBody.value;
+  notesBody.value = cur + (cur && !cur.endsWith("\n") ? "\n" : "") + "○ ";
+  notesBody.focus();
+  scheduleNotesSync();
+}
+document.getElementById("idleCheckBtn").addEventListener("click", insertChecklistItem);
+document.getElementById("kbCheckBtn").addEventListener("click", (e) => { e.preventDefault(); insertChecklistItem(); });
 document.getElementById("idleDrawBtn").addEventListener("click", () => {
   setNotesMode("draw");
 });
@@ -1387,7 +1400,11 @@ const LockScreen = window.LockScreen = {
         });
         b.addEventListener("pointermove", (e) => {
           if (!active || (pid !== null && e.pointerId !== pid)) return;
-          if (Math.abs(e.clientX - ox) >= 42) { ox = e.clientX; this.cycleNoteifyApiPeek(e.clientX < ox ? 1 : -1); }
+          if (Math.abs(e.clientX - ox) >= 42) {
+            const dir = e.clientX < ox ? 1 : -1;
+            ox = e.clientX;
+            this.cycleNoteifyApiPeek(dir);
+          }
         });
         const h = () => { clearTimeout(t); t = null; pid = null; if (active) { active = false; this.hideNoteifyApiPeek(); } };
         b.addEventListener("pointerup", h); b.addEventListener("pointercancel", h);
@@ -1420,14 +1437,20 @@ const LockScreen = window.LockScreen = {
       kp.appendChild(b);
     });
 
+    const noteifyTitle = document.getElementById("lockNoteifyTitle");
+    if (noteifyTitle) {
+      noteifyTitle.addEventListener("pointerdown", (e) => { e.preventDefault(); e.stopPropagation(); this.cycleNoteifyApiPeek(1); });
+    }
     const cancelBtn = document.getElementById("lockCancelBtn");
     const emergBtn = document.getElementById("lockEmergencyBtn");
     cancelBtn.addEventListener("pointerdown", (e) => this.startFooterHold(e, "cancel"));
     cancelBtn.addEventListener("pointerup", (e) => this.endFooterHold(e, "cancel"));
     cancelBtn.addEventListener("pointercancel", (e) => this.endFooterHold(e, "cancel", true));
+    cancelBtn.addEventListener("pointerleave", (e) => this.endFooterHold(e, "cancel", true));
     emergBtn.addEventListener("pointerdown", (e) => this.startFooterHold(e, "emergency"));
     emergBtn.addEventListener("pointerup", (e) => this.endFooterHold(e, "emergency"));
     emergBtn.addEventListener("pointercancel", (e) => this.endFooterHold(e, "emergency", true));
+    emergBtn.addEventListener("pointerleave", (e) => this.endFooterHold(e, "emergency", true));
 
     document.getElementById("lockPasteYes").addEventListener("click", async (e) => { e.preventDefault(); e.stopPropagation(); await this.doPasteWallpaper(); });
     document.getElementById("lockPasteNo").addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); this.hidePastePrompt(); });
@@ -1722,10 +1745,27 @@ const LockScreen = window.LockScreen = {
     const fileIn = document.getElementById("lockFileInput");
     fileIn.value = ""; fileIn.click();
   },
+  compressImage(file, maxSide, quality) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        try {
+          let w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+          const sc = Math.min(1, maxSide / Math.max(w, h));
+          w = Math.round(w * sc); h = Math.round(h * sc);
+          const c = document.createElement("canvas"); c.width = w; c.height = h;
+          c.getContext("2d").drawImage(img, 0, 0, w, h);
+          URL.revokeObjectURL(url);
+          resolve(c.toDataURL("image/jpeg", quality));
+        } catch (e) { URL.revokeObjectURL(url); reject(e); }
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("load failed")); };
+      img.src = url;
+    });
+  },
   applyWallpaperFile(file) {
-    const r = new FileReader();
-    r.onload = () => {
-      const dataUrl = String(r.result || "");
+    const onData = (dataUrl) => {
       if (!dataUrl) return;
       this.wallpaperDataUrl = dataUrl;
       this.wallpaperCleaned = false;
@@ -1737,7 +1777,11 @@ const LockScreen = window.LockScreen = {
       this.cleanWallpaperAI(dataUrl);
       if (this.open) this.show();
     };
-    r.readAsDataURL(file);
+    this.compressImage(file, 2048, 0.92).then(onData).catch(() => {
+      const r = new FileReader();
+      r.onload = () => onData(String(r.result || ""));
+      r.readAsDataURL(file);
+    });
   },
   async cleanWallpaperAI(dataUrl) {
     const base = getBackendBase();

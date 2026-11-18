@@ -681,14 +681,33 @@ document.getElementById("pickShotBtn").onclick = () => {
 document.getElementById("shotFileIn").onchange = (e) => {
   const f = e.target.files && e.target.files[0];
   if (!f) return;
-  const r = new FileReader();
-  r.onload = () => {
-    customShotData = String(r.result || "");
+  const finish = (dataUrl) => {
+    customShotData = dataUrl;
     const prev = document.getElementById("shotPreview");
     prev.src = customShotData;
     prev.classList.add("show");
   };
-  r.readAsDataURL(f);
+  const url = URL.createObjectURL(f);
+  const img = new Image();
+  img.onload = () => {
+    try {
+      const sc = Math.min(1, 1440 / Math.max(img.naturalWidth || 1, img.naturalHeight || 1));
+      const c = document.createElement("canvas");
+      c.width = Math.round((img.naturalWidth || 1) * sc);
+      c.height = Math.round((img.naturalHeight || 1) * sc);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      finish(c.toDataURL("image/jpeg", 0.88));
+    } catch (_) {
+      URL.revokeObjectURL(url);
+      const r = new FileReader(); r.onload = () => finish(String(r.result || "")); r.readAsDataURL(f);
+    }
+  };
+  img.onerror = () => {
+    URL.revokeObjectURL(url);
+    const r = new FileReader(); r.onload = () => finish(String(r.result || "")); r.readAsDataURL(f);
+  };
+  img.src = url;
 };
 
 document.getElementById("pingHealthBtn").onclick = async () => {
