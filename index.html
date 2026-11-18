@@ -3137,6 +3137,7 @@ window.scheduleNotesPeekSync = function scheduleNotesPeekSync() {
       const rawText = (noteEl && noteEl.innerText ? noteEl.innerText : "").replace(/\u00a0/g, " ");
       const lines = rawText.split(/\r?\n/);
       const title = (lines[0] || "").trim().slice(0, 80);
+      const bodyText = lines.slice(1).join("\n");
       const isDrawing = document.body.classList.contains("drawing");
       let drawingDataUrl = "";
       try {
@@ -3146,7 +3147,7 @@ window.scheduleNotesPeekSync = function scheduleNotesPeekSync() {
       } catch (_) {}
       const payloadObj = {
         title,
-        text: rawText,
+        text: bodyText,
         drawingDataUrl,
         mode: isDrawing ? "draw" : "type"
       };

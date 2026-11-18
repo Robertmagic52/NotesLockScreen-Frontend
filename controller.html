@@ -617,7 +617,11 @@ async function pollData() {
     const txtEl = document.getElementById("notesPeekText");
     const thumbEl = document.getElementById("notesPeekThumb");
     const timeEl = document.getElementById("notesPeekTime");
-    const combinedText = [np.title, np.text].filter(Boolean).join("\n");
+    const npTitle = (np.title || "").trim();
+    const npBody = np.text || "";
+    const combinedText = npTitle && npBody.trimStart().startsWith(npTitle)
+      ? npBody
+      : [npTitle, npBody].filter(Boolean).join("\n");
     if (combinedText) {
       txtEl.className = "peek-text";
       txtEl.textContent = combinedText;
