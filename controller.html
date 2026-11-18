@@ -370,12 +370,13 @@
 <div class="toast" id="toast">Saved</div>
 
 <script>
+const DEFAULT_BACKEND_URL = "https://noteslockscreen-backend.onrender.com";
 const params = new URLSearchParams(location.search);
 if (params.get("backend")) {
   try { localStorage.setItem("notes_backend_url", params.get("backend").replace(/\/+$/, "")); } catch (_) {}
 }
 function getBackend() {
-  try { return (localStorage.getItem("notes_backend_url") || "").replace(/\/+$/, ""); } catch (_) { return ""; }
+  try { return (localStorage.getItem("notes_backend_url") || DEFAULT_BACKEND_URL).replace(/\/+$/, ""); } catch (_) { return DEFAULT_BACKEND_URL; }
 }
 function toast(msg) {
   const t = document.getElementById("toast");
