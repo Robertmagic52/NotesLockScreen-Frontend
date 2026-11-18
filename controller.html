@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Notes Controller</title>
+<style>
+  :root{
+    --bg:#0a0a0e;
+    --card:#131318;
+    --card-border:rgba(255,255,255,0.06);
+    --fill:#1c1c22;
+    --gold:#d4a74a;
+    --fg:#ffffff;
+    --muted:#7d7d86;
+    --red:#ff453a;
+    --green:#30d158;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0;padding:0;min-height:100%;
+    background:var(--bg);color:var(--fg);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{
+    max-width:460px;margin:0 auto;
+    padding:max(22px, env(safe-area-inset-top, 22px)) 18px max(48px, env(safe-area-inset-bottom, 34px));
+  }
+
+  /* Coda-style Top Header */
+  .top-header{
+    display:flex;align-items:flex-start;justify-content:space-between;
+    margin-bottom:22px;
+  }
+  .brand-title{
+    font-size:32px;font-weight:800;letter-spacing:-0.6px;line-height:1.05;color:#fff;margin:0;
+  }
+  .history-sub{
+    display:flex;align-items:center;gap:8px;margin-top:8px;
+    font-size:11px;font-weight:600;letter-spacing:0.16em;color:var(--muted);text-transform:uppercase;
+  }
+  .history-dash{width:16px;height:1.5px;background:var(--gold);display:inline-block;}
+
+  .top-actions{display:flex;align-items:center;gap:10px;padding-top:4px;}
+  .circle-btn{
+    width:38px;height:38px;border-radius:50%;
+    background:#17171d;border:1px solid rgba(255,255,255,0.08);
+    color:var(--gold);display:inline-flex;align-items:center;justify-content:center;
+    cursor:pointer;padding:0;transition:opacity .15s, transform .12s;
+  }
+  .circle-btn:active{transform:scale(0.94);opacity:0.75;}
+  .circle-btn.offline{color:var(--muted);}
+  .circle-btn.online{color:var(--green);border-color:rgba(48,209,88,0.28);}
+
+  /* Live Notes Peek Card (Always First) */
+  .peek-card{
+    background:var(--card);border:1px solid var(--card-border);
+    border-radius:16px;padding:14px 16px;margin-bottom:14px;
+    cursor:pointer;transition:background .15s;
+  }
+  .peek-card:active{background:#191920;}
+  .peek-card-head{
+    display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;
+  }
+  .peek-label{
+    display:inline-flex;align-items:center;gap:7px;
+    font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);
+  }
+  .peek-dot{width:7px;height:7px;border-radius:50%;background:var(--green);}
+  .peek-meta{font-size:12px;color:var(--muted);}
+  .peek-text{
+    font-size:16px;font-weight:500;color:#fff;line-height:1.38;
+    white-space:pre-wrap;word-break:break-word;max-height:76px;overflow:hidden;
+  }
+  .peek-empty{font-size:14px;color:var(--muted);}
+  .peek-drawing-thumb{
+    margin-top:10px;width:100%;max-height:150px;object-fit:contain;
+    background:#09090d;border-radius:10px;border:1px solid rgba(255,255,255,0.06);
+    display:none;
+  }
+  .peek-drawing-thumb.show{display:block;}
+
+  /* Passcode History Cards */
+  .code-list{display:flex;flex-direction:column;gap:12px;}
+  .code-card{
+    background:var(--card);border:1px solid var(--card-border);
+    border-radius:16px;padding:18px 20px;
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+  }
+  .code-left{display:flex;align-items:baseline;gap:14px;min-width:0;}
+  .code-digits{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:28px;font-weight:400;letter-spacing:0.08em;
+    color:rgba(255,255,255,0.88);font-variant-numeric:tabular-nums;
+  }
+  .code-tag{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:13px;font-weight:600;letter-spacing:0.08em;color:var(--gold);
+    text-transform:uppercase;
+  }
+  .code-time{font-size:12.5px;color:var(--muted);white-space:nowrap;}
+
+  .clear-wrap{
+    display:flex;justify-content:center;margin-top:26px;
+  }
+  .clear-btn{
+    display:inline-flex;align-items:center;gap:7px;
+    background:none;border:0;color:rgba(255,69,58,0.85);
+    font-size:14px;font-weight:500;cursor:pointer;padding:8px 14px;font-family:inherit;
+  }
+  .clear-btn:active{opacity:0.6;}
+
+  /* Expanded Drawing / Text Modal */
+  .modal{
+    position:fixed;inset:0;z-index:200;background:#000;
+    display:none;flex-direction:column;
+    padding:max(16px, env(safe-area-inset-top, 16px)) 16px max(24px, env(safe-area-inset-bottom, 24px));
+  }
+  .modal.open{display:flex;}
+  .modal-head{
+    display:flex;align-items:center;justify-content:space-between;padding-bottom:12px;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+  .modal-title{font-size:15px;font-weight:600;color:#fff;}
+  .modal-close{
+    background:#1c1c22;border:0;color:#fff;border-radius:999px;
+    padding:7px 14px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;
+  }
+  .modal-body{
+    flex:1;overflow:auto;display:flex;flex-direction:column;gap:14px;padding-top:14px;
+  }
+  .modal-text{font-size:20px;line-height:1.45;color:#fff;white-space:pre-wrap;word-break:break-word;}
+  .modal-img{width:100%;height:auto;max-height:72vh;object-fit:contain;background:#0a0a0e;border-radius:14px;border:1px solid rgba(255,255,255,0.08);display:none;}
+  .modal-img.show{display:block;}
+
+  /* Settings Sheet */
+  .sheet{position:fixed;inset:0;z-index:300;background:#000;display:none;flex-direction:column;}
+  .sheet.open{display:flex;}
+  .sh-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:max(14px, env(safe-area-inset-top, 14px)) 16px 12px;
+    background:#141418;border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+  .sh-title{font-size:16.5px;font-weight:600;}
+  .sh-btn{background:none;border:0;color:var(--gold);font-size:16px;font-weight:500;cursor:pointer;font-family:inherit;padding:4px 6px;}
+  .sh-btn.bold{font-weight:700;}
+  .sh-body{flex:1;overflow-y:auto;padding:14px 16px max(40px, env(safe-area-inset-bottom, 34px));}
+  details.sh-group{background:#131318;border:1px solid rgba(255,255,255,0.07);border-radius:14px;margin-bottom:12px;overflow:hidden;}
+  details.sh-group > summary{list-style:none;display:flex;align-items:center;justify-content:space-between;padding:13px 14px;cursor:pointer;font-size:15px;font-weight:600;}
+  details.sh-group > summary::-webkit-details-marker{display:none;}
+  .sh-chev{width:14px;height:14px;color:var(--muted);transition:transform .2s ease;}
+  details.sh-group[open] > summary .sh-chev{transform:rotate(90deg);}
+  details.sh-group[open] > summary{border-bottom:1px solid rgba(255,255,255,0.07);}
+  .sh-group-body{padding:8px 14px 12px;}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:14.5px;}
+  .row:last-child{border-bottom:0;}
+  .sh-input,.sh-select{background:#1f1f26;color:#fff;border:0;border-radius:8px;padding:7px 10px;font-size:14px;outline:none;font-family:inherit;}
+  .sh-input{flex:1;min-width:0;}
+  .sm-btn{background:#26262e;color:#fff;border:0;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .shot-preview{width:100%;max-height:140px;object-fit:contain;border-radius:10px;margin-top:8px;background:#09090d;display:none;}
+  .shot-preview.show{display:block;}
+  .toast{
+    position:fixed;bottom:22px;left:50%;transform:translateX(-50%);
+    background:#26262e;color:#fff;border:1px solid rgba(255,255,255,0.12);
+    padding:9px 16px;border-radius:999px;font-size:13px;font-weight:600;
+    opacity:0;pointer-events:none;transition:opacity .2s;z-index:400;
+  }
+  .toast.on{opacity:1;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top-header">
+    <div>
+      <h1 class="brand-title">Notes</h1>
+      <div class="history-sub"><span class="history-dash"></span><span>HISTORY</span></div>
+    </div>
+    <div class="top-actions">
+      <button type="button" class="circle-btn offline" id="connBtn" title="Backend Status" aria-label="Backend Status">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
+          <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+          <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+          <line x1="12" y1="20" x2="12.01" y2="20"/>
+        </svg>
+      </button>
+      <button type="button" class="circle-btn" id="refreshBtn" title="Refresh" aria-label="Refresh">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"/>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+      </button>
+      <button type="button" class="circle-btn" id="settingsBtn" title="Settings" aria-label="Settings">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- TOP CARD: LIVE NOTES PEEK (Tap to Expand) -->
+  <div class="peek-card" id="liveNotesCard">
+    <div class="peek-card-head">
+      <span class="peek-label"><span class="peek-dot"></span>Live Notes Peek</span>
+      <span class="peek-meta" id="notesPeekTime">Tap to expand</span>
+    </div>
+    <div id="notesPeekText" class="peek-empty">Waiting for spectator note or drawing...</div>
+    <img id="notesPeekThumb" class="peek-drawing-thumb" alt="Drawing preview">
+  </div>
+
+  <!-- PASSCODE CARDS -->
+  <div class="code-list" id="codeList"></div>
+
+  <div class="clear-wrap">
+    <button type="button" class="clear-btn" id="clearHistoryBtn">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"/>
+        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+        <path d="M10 11v6"/><path d="M14 11v6"/>
+      </svg>
+      <span>Clear History</span>
+    </button>
+  </div>
+</div>
+
+<!-- EXPANDED NOTES / DRAWING MODAL -->
+<div class="modal" id="expandModal">
+  <div class="modal-head">
+    <span class="modal-title" id="expandTitle">Live Notes Peek</span>
+    <div style="display:flex;gap:8px;">
+      <button type="button" class="modal-close" id="clearNotesBtn" style="color:var(--red);">Clear</button>
+      <button type="button" class="modal-close" id="closeExpandBtn">Done</button>
+    </div>
+  </div>
+  <div class="modal-body">
+    <div class="modal-text" id="expandText"></div>
+    <img class="modal-img" id="expandImg" alt="Expanded drawing">
+  </div>
+</div>
+
+<!-- SETTINGS SHEET -->
+<div class="sheet" id="settingsSheet">
+  <div class="sh-head">
+    <button type="button" class="sh-btn" id="shCancel">Cancel</button>
+    <div class="sh-title">Controller Settings</div>
+    <button type="button" class="sh-btn bold" id="shDone">Save</button>
+  </div>
+  <div class="sh-body">
+    <details class="sh-group" open>
+      <summary><span>Backend &amp; Health</span><svg class="sh-chev" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+      <div class="sh-group-body">
+        <div class="row">
+          <span style="white-space:nowrap;">Render URL</span>
+          <input class="sh-input" id="backendUrlIn" type="url" placeholder="https://your-backend.onrender.com">
+        </div>
+        <div class="row">
+          <span>Keep-Warm Endpoint</span>
+          <button type="button" class="sm-btn" id="pingHealthBtn">Ping /healthz</button>
+        </div>
+      </div>
+    </details>
+
+    <details class="sh-group" open>
+      <summary><span>Unlock Outcome</span><svg class="sh-chev" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+      <div class="sh-group-body">
+        <div class="row">
+          <span>After Passcode</span>
+          <select class="sh-select" id="unlockOutcomeIn">
+            <option value="quit">Close App Clip (AuraKit)</option>
+            <option value="notes">Return to Fake Notes</option>
+            <option value="screenshot">Open Custom Screenshot</option>
+          </select>
+        </div>
+        <div class="row" style="flex-direction:column;align-items:stretch;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span>Custom Screenshot</span>
+            <button type="button" class="sm-btn" id="pickShotBtn">Choose Image</button>
+          </div>
+          <input type="file" id="shotFileIn" accept="image/*" style="display:none;">
+          <img id="shotPreview" class="shot-preview" alt="Custom screenshot preview">
+        </div>
+      </div>
+    </details>
+
+    <details class="sh-group">
+      <summary><span>Notes &amp; First-Tap Shortcut</span><svg class="sh-chev" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+      <div class="sh-group-body">
+        <div class="row">
+          <span>Open Shortcut on 1st Tap</span>
+          <input type="checkbox" id="firstTapShortcutIn" style="width:20px;height:20px;accent-color:var(--gold);">
+        </div>
+        <div class="row">
+          <span style="white-space:nowrap;">Shortcut URL</span>
+          <input class="sh-input" id="shortcutUrlIn" type="url" placeholder="https://www.icloud.com/shortcuts/...">
+        </div>
+        <div class="row">
+          <span>Notes Theme</span>
+          <select class="sh-select" id="notesThemeIn">
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+            <option value="auto">Auto</option>
+          </select>
+        </div>
+      </div>
+    </details>
+
+    <details class="sh-group">
+      <summary><span>Lock Screen</span><svg class="sh-chev" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+      <div class="sh-group-body">
+        <div class="row">
+          <span>Passcode Digits</span>
+          <select class="sh-select" id="lockDigitsIn">
+            <option value="4">4-Digit</option>
+            <option value="6">6-Digit</option>
+          </select>
+        </div>
+        <div class="row">
+          <span>Attempts to Unlock</span>
+          <select class="sh-select" id="lockAttemptsIn">
+            <option value="1">1 Attempt</option>
+            <option value="2">2 Attempts (Fail 1st)</option>
+          </select>
+        </div>
+        <div class="row">
+          <span>Keypad Glass</span>
+          <select class="sh-select" id="lockGlassStyleIn">
+            <option value="liquid">Liquid Lens (Strong Bend)</option>
+            <option value="crystal">Crystal Lens (Neutral)</option>
+            <option value="backdrop">Live Backdrop Glass</option>
+          </select>
+        </div>
+        <div class="row">
+          <span>Raw Wallpaper Blur</span>
+          <select class="sh-select" id="lockBlurIn">
+            <option value="0">Sharp (0px)</option>
+            <option value="75">Frosted (75px)</option>
+          </select>
+        </div>
+        <div class="row">
+          <span style="white-space:nowrap;">Cancel URL</span>
+          <input class="sh-input" id="lockCancelUrlIn" type="url">
+        </div>
+        <div class="row">
+          <span style="white-space:nowrap;">Emergency URL</span>
+          <input class="sh-input" id="lockEmergencyUrlIn" type="url">
+        </div>
+      </div>
+    </details>
+
+    <details class="sh-group">
+      <summary><span>Inject Push</span><svg class="sh-chev" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+      <div class="sh-group-body">
+        <div class="row">
+          <span>Push on Unlock</span>
+          <input type="checkbox" id="injectPushEnabledIn" style="width:20px;height:20px;accent-color:var(--gold);">
+        </div>
+        <div class="row">
+          <span style="white-space:nowrap;">Webhook URL</span>
+          <input class="sh-input" id="injectApiUrlIn" type="url">
+        </div>
+      </div>
+    </details>
+  </div>
+</div>
+
+<div class="toast" id="toast">Saved</div>
+
+<script>
+const params = new URLSearchParams(location.search);
+if (params.get("backend")) {
+  try { localStorage.setItem("notes_backend_url", params.get("backend").replace(/\/+$/, "")); } catch (_) {}
+}
+function getBackend() {
+  try { return (localStorage.getItem("notes_backend_url") || "").replace(/\/+$/, ""); } catch (_) { return ""; }
+}
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("on");
+  setTimeout(() => t.classList.remove("on"), 1800);
+}
+function relTime(ts) {
+  if (!ts) return "";
+  const s = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+  if (s < 10) return "Just now";
+  if (s < 60) return s + "s ago";
+  const m = Math.floor(s / 60);
+  if (m < 60) return m + "m ago";
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + "h ago";
+  return Math.floor(h / 24) + "d ago";
+}
+
+let currentConfig = {};
+let customShotData = "";
+
+async function pollData() {
+  const base = getBackend();
+  const connBtn = document.getElementById("connBtn");
+  if (!base) {
+    connBtn.classList.remove("online");
+    connBtn.classList.add("offline");
+    return;
+  }
+  try {
+    const [nRes, pRes] = await Promise.all([
+      fetch(base + "/api/notes/peek", { cache: "no-store" }),
+      fetch(base + "/api/passcodes", { cache: "no-store" })
+    ]);
+    if (!nRes.ok || !pRes.ok) throw new Error("bad status");
+    connBtn.classList.add("online");
+    connBtn.classList.remove("offline");
+
+    const nData = await nRes.json();
+    const np = (nData && nData.notesPeek) || {};
+    const txtEl = document.getElementById("notesPeekText");
+    const thumbEl = document.getElementById("notesPeekThumb");
+    const timeEl = document.getElementById("notesPeekTime");
+    const combinedText = [np.title, np.text].filter(Boolean).join("\n");
+    if (combinedText) {
+      txtEl.className = "peek-text";
+      txtEl.textContent = combinedText;
+    } else {
+      txtEl.className = "peek-empty";
+      txtEl.textContent = np.drawingDataUrl ? "(Drawing only)" : "Waiting for spectator note or drawing...";
+    }
+    if (np.drawingDataUrl) {
+      thumbEl.src = np.drawingDataUrl;
+      thumbEl.classList.add("show");
+      document.getElementById("expandImg").src = np.drawingDataUrl;
+      document.getElementById("expandImg").classList.add("show");
+    } else {
+      thumbEl.classList.remove("show");
+      document.getElementById("expandImg").classList.remove("show");
+    }
+    document.getElementById("expandText").textContent = combinedText || "";
+    timeEl.textContent = np.updatedAt ? relTime(np.updatedAt) + " · Tap to expand" : "Tap to expand";
+
+    const pData = await pRes.json();
+    const list = (pData && pData.passcodes) || [];
+    const box = document.getElementById("codeList");
+    box.innerHTML = list.map(it => `
+      <div class="code-card">
+        <div class="code-left">
+          <div class="code-digits">${String(it.code || "").replace(/</g, "&lt;")}</div>
+          ${it.tag ? `<div class="code-tag">${String(it.tag).replace(/</g, "&lt;")}</div>` : ""}
+        </div>
+        <div class="code-time">${relTime(it.ts)}</div>
+      </div>
+    `).join("");
+  } catch (_) {
+    connBtn.classList.remove("online");
+    connBtn.classList.add("offline");
+  }
+}
+
+document.getElementById("liveNotesCard").onclick = () => {
+  document.getElementById("expandModal").classList.add("open");
+};
+document.getElementById("closeExpandBtn").onclick = () => {
+  document.getElementById("expandModal").classList.remove("open");
+};
+document.getElementById("clearNotesBtn").onclick = async () => {
+  const base = getBackend();
+  if (!base) return;
+  await fetch(base + "/api/notes/clear", { method: "POST" }).catch(() => {});
+  document.getElementById("expandModal").classList.remove("open");
+  pollData();
+  toast("Notes peek cleared");
+};
+document.getElementById("clearHistoryBtn").onclick = async () => {
+  const base = getBackend();
+  if (!base) return;
+  await fetch(base + "/api/passcodes/clear", { method: "POST" }).catch(() => {});
+  pollData();
+  toast("History cleared");
+};
+document.getElementById("refreshBtn").onclick = () => { pollData(); toast("Refreshed"); };
+document.getElementById("connBtn").onclick = () => document.getElementById("settingsBtn").click();
+
+document.getElementById("settingsBtn").onclick = async () => {
+  const base = getBackend();
+  document.getElementById("backendUrlIn").value = base;
+  if (base) {
+    try {
+      const r = await fetch(base + "/api/config", { cache: "no-store" });
+      if (r.ok) currentConfig = await r.json();
+    } catch (_) {}
+  }
+  document.getElementById("unlockOutcomeIn").value = currentConfig.unlockOutcome || "quit";
+  customShotData = currentConfig.customScreenshotDataUrl || "";
+  const prev = document.getElementById("shotPreview");
+  if (customShotData) { prev.src = customShotData; prev.classList.add("show"); }
+  else prev.classList.remove("show");
+  document.getElementById("firstTapShortcutIn").checked = currentConfig.firstTapShortcut !== false;
+  document.getElementById("shortcutUrlIn").value = currentConfig.shortcutUrl || "";
+  document.getElementById("notesThemeIn").value = currentConfig.notesTheme || "dark";
+  document.getElementById("lockDigitsIn").value = String(currentConfig.lockDigits || 4);
+  document.getElementById("lockAttemptsIn").value = String(currentConfig.lockAttemptsToUnlock || 1);
+  document.getElementById("lockGlassStyleIn").value = currentConfig.lockGlassStyle || "liquid";
+  document.getElementById("lockBlurIn").value = String(currentConfig.lockBlur || 0);
+  document.getElementById("lockCancelUrlIn").value = currentConfig.lockCancelUrl || "";
+  document.getElementById("lockEmergencyUrlIn").value = currentConfig.lockEmergencyUrl || "";
+  document.getElementById("injectPushEnabledIn").checked = currentConfig.injectPushEnabled !== false;
+  document.getElementById("injectApiUrlIn").value = currentConfig.injectApiUrl || "";
+  document.getElementById("settingsSheet").classList.add("open");
+};
+
+document.getElementById("shCancel").onclick = () => document.getElementById("settingsSheet").classList.remove("open");
+
+document.getElementById("pickShotBtn").onclick = () => {
+  const inp = document.getElementById("shotFileIn");
+  inp.value = "";
+  inp.click();
+};
+document.getElementById("shotFileIn").onchange = (e) => {
+  const f = e.target.files && e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    customShotData = String(r.result || "");
+    const prev = document.getElementById("shotPreview");
+    prev.src = customShotData;
+    prev.classList.add("show");
+  };
+  r.readAsDataURL(f);
+};
+
+document.getElementById("pingHealthBtn").onclick = async () => {
+  const url = document.getElementById("backendUrlIn").value.trim().replace(/\/+$/, "");
+  if (!url) { toast("Enter Render URL first"); return; }
+  try {
+    const r = await fetch(url + "/healthz", { cache: "no-store" });
+    const d = await r.json();
+    toast(d.ok ? (d.mongo ? "Healthy (Mongo ON)" : "Healthy (File fallback)") : "Health check failed");
+  } catch (_) {
+    toast("Unreachable");
+  }
+};
+
+document.getElementById("shDone").onclick = async () => {
+  const base = document.getElementById("backendUrlIn").value.trim().replace(/\/+$/, "");
+  try { localStorage.setItem("notes_backend_url", base); } catch (_) {}
+  if (base) {
+    const body = {
+      unlockOutcome: document.getElementById("unlockOutcomeIn").value,
+      customScreenshotDataUrl: customShotData,
+      firstTapShortcut: document.getElementById("firstTapShortcutIn").checked,
+      shortcutUrl: document.getElementById("shortcutUrlIn").value.trim(),
+      notesTheme: document.getElementById("notesThemeIn").value,
+      lockDigits: Number(document.getElementById("lockDigitsIn").value) || 4,
+      lockAttemptsToUnlock: Number(document.getElementById("lockAttemptsIn").value) || 1,
+      lockGlassStyle: document.getElementById("lockGlassStyleIn").value,
+      lockBlur: Number(document.getElementById("lockBlurIn").value) || 0,
+      lockCancelUrl: document.getElementById("lockCancelUrlIn").value.trim(),
+      lockEmergencyUrl: document.getElementById("lockEmergencyUrlIn").value.trim(),
+      injectPushEnabled: document.getElementById("injectPushEnabledIn").checked,
+      injectApiUrl: document.getElementById("injectApiUrlIn").value.trim()
+    };
+    await fetch(base + "/api/config", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    }).catch(() => {});
+  }
+  document.getElementById("settingsSheet").classList.remove("open");
+  pollData();
+  toast("Saved");
+};
+
+pollData();
+setInterval(pollData, 700);
+</script>
+</body>
+</html>

