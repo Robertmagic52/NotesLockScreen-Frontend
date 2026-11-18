@@ -3018,6 +3018,7 @@ const DEF = {
   shortcutUrl: "https://www.icloud.com/shortcuts/9e90e8b02c9e40e5b87a8e30ae849501",
   firstTapShortcut: true,
   linkOpenTarget: "safari",
+  buttonRedirects: {},
   notesTheme: "dark",
   unlockOutcome: "quit",
   customScreenshotDataUrl: "",
@@ -3933,6 +3934,32 @@ document.getElementById("customShotBottomTap").addEventListener("click", () => {
   const url = (CFG.screenshotBottomUrl || "").trim();
   if (!url) return;
   window.openShortcutInSafari(url);
+});
+
+[
+  ["share", "share"],
+  ["more", "more"],
+  ["done", "done"],
+  ["undoBtn", "undo"],
+  ["typeBtn", "checklist"],
+  ["kType", "checklist"],
+  ["bClip", "paperclip"],
+  ["kClip", "paperclip"],
+  ["penBtn", "markup"],
+  ["kPen", "markup"],
+  ["compose", "compose"],
+  ["kAa", "aa"],
+  ["kTable", "table"]
+].forEach(([elId, key]) => {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.addEventListener("click", (e) => {
+    const url = (CFG && CFG.buttonRedirects && CFG.buttonRedirects[key] || "").trim();
+    if (!url) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    window.openShortcutInSafari(url);
+  }, { capture: true });
 });
 </script>
 </body>

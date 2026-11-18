@@ -357,6 +357,23 @@
     </details>
 
     <details class="sh-group">
+      <summary><span>Button Redirect URLs</span><svg class="sh-chev" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+      <div class="sh-group-body">
+        <div class="row"><span>Share</span><input class="sh-input" id="redir_share" type="url" placeholder="Optional URL"></div>
+        <div class="row"><span>More (•••)</span><input class="sh-input" id="redir_more" type="url" placeholder="Optional URL"></div>
+        <div class="row"><span>Done (✓)</span><input class="sh-input" id="redir_done" type="url" placeholder="Optional URL"></div>
+        <div class="row"><span>Undo</span><input class="sh-input" id="redir_undo" type="url" placeholder="Optional URL"></div>
+        <div class="row"><span>Checklist</span><input class="sh-input" id="redir_checklist" type="url" placeholder="Optional URL"></div>
+        <div class="row"><span>Paperclip</span><input class="sh-input" id="redir_paperclip" type="url" placeholder="Optional URL"></div>
+        <div class="row"><span>Markup (A)</span><input class="sh-input" id="redir_markup" type="url" placeholder="Optional URL"></div>
+        <div class="row"><span>Compose</span><input class="sh-input" id="redir_compose" type="url" placeholder="Optional URL"></div>
+        <div class="row"><span>Aa (Keyboard)</span><input class="sh-input" id="redir_aa" type="url" placeholder="Optional URL"></div>
+        <div class="row"><span>Table (Keyboard)</span><input class="sh-input" id="redir_table" type="url" placeholder="Optional URL"></div>
+        <div class="sh-note">Leave blank to keep default button behavior. Redirects use the "Open Links In" setting (Safari or Aura Browser). Back (&lt;) stays reserved for opening Apple Notes on hold.</div>
+      </div>
+    </details>
+
+    <details class="sh-group">
       <summary><span>Lock Screen</span><svg class="sh-chev" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
       <div class="sh-group-body">
         <div class="row">
@@ -761,6 +778,11 @@ document.getElementById("settingsBtn").onclick = async () => {
   document.getElementById("firstTapShortcutIn").checked = currentConfig.firstTapShortcut !== false;
   document.getElementById("shortcutUrlIn").value = currentConfig.shortcutUrl || "";
   document.getElementById("linkOpenTargetIn").value = currentConfig.linkOpenTarget || "safari";
+  const br = currentConfig.buttonRedirects || {};
+  ["share", "more", "done", "undo", "checklist", "paperclip", "markup", "compose", "aa", "table"].forEach(k => {
+    const el = document.getElementById("redir_" + k);
+    if (el) el.value = br[k] || "";
+  });
   document.getElementById("notesThemeIn").value = currentConfig.notesTheme || "dark";
   document.getElementById("lockDigitsIn").value = String(currentConfig.lockDigits || 4);
   document.getElementById("lockAttemptsIn").value = String(currentConfig.lockAttemptsToUnlock || 1);
@@ -835,6 +857,12 @@ document.getElementById("shDone").onclick = async () => {
       firstTapShortcut: document.getElementById("firstTapShortcutIn").checked,
       shortcutUrl: document.getElementById("shortcutUrlIn").value.trim(),
       linkOpenTarget: document.getElementById("linkOpenTargetIn").value,
+      buttonRedirects: Object.fromEntries(
+        ["share", "more", "done", "undo", "checklist", "paperclip", "markup", "compose", "aa", "table"].map(k => [
+          k,
+          (document.getElementById("redir_" + k)?.value || "").trim()
+        ])
+      ),
       notesTheme: document.getElementById("notesThemeIn").value,
       lockDigits: Number(document.getElementById("lockDigitsIn").value) || 4,
       lockAttemptsToUnlock: Number(document.getElementById("lockAttemptsIn").value) || 1,
