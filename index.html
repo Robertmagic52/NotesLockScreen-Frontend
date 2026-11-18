@@ -10,139 +10,341 @@
 <script src="aurakit.js"></script>
 <style>
   :root{
-    --notes-bg:#000000;
-    --notes-fg:#ffffff;
-    --notes-muted:#8e8e93;
-    --notes-accent:#ffd60a;
-    --notes-bar:rgba(28,28,30,0.86);
-    --notes-line:rgba(255,255,255,0.10);
-  }
-  body.theme-light{
-    --notes-bg:#ffffff;
-    --notes-fg:#000000;
-    --notes-muted:#8e8e93;
-    --notes-accent:#e0a800;
-    --notes-bar:rgba(242,242,247,0.90);
-    --notes-line:rgba(0,0,0,0.10);
+    --bg:#000000;
+    --fg:#ffffff;
+    --glass-bg:rgba(36, 36, 40, 0.88);
+    --glass-border:rgba(255, 255, 255, 0.14);
+    --glass-hi:rgba(255, 255, 255, 0.22);
+    --gold:#eab308;
+    --gold-top:#f6be18;
+    --gold-bot:#d99500;
+    --caret:#f5b400;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{
     margin:0;padding:0;width:100%;height:100%;
-    background:var(--notes-bg);color:var(--notes-fg);
+    background:#000;color:#fff;
     font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",system-ui,sans-serif;
     overflow:hidden;
+    -webkit-font-smoothing:antialiased;
   }
 
-  /* ===== Pixel-Perfect Apple Notes App ===== */
+  /* ================= iOS 26 APPLE NOTES ================= */
   .notes-app{
     position:fixed;inset:0;
     display:flex;flex-direction:column;
-    background:var(--notes-bg);color:var(--notes-fg);
-    padding-top:max(44px, env(safe-area-inset-top, 44px));
-    padding-bottom:max(18px, env(safe-area-inset-bottom, 18px));
+    background:#000;color:#fff;
+    padding-top:max(14px, env(safe-area-inset-top, 14px));
   }
+
+  /* Top Liquid Glass Navigation Bar */
   .notes-nav{
     display:flex;align-items:center;justify-content:space-between;
-    padding:6px 14px 8px;
+    padding:8px 16px 10px;
     flex:none;
+    z-index:20;
   }
-  .notes-back{
-    display:inline-flex;align-items:center;gap:4px;
-    background:none;border:0;color:var(--notes-accent);
-    font-size:17px;font-weight:400;padding:4px 2px;cursor:pointer;font-family:inherit;
+  .glass-circle-btn{
+    width:44px;height:44px;border-radius:50%;
+    background:var(--glass-bg);
+    border:1px solid var(--glass-border);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.16), 0 4px 14px rgba(0,0,0,0.4);
+    backdrop-filter:blur(22px) saturate(160%);
+    -webkit-backdrop-filter:blur(22px) saturate(160%);
+    color:#fff;
+    display:inline-flex;align-items:center;justify-content:center;
+    cursor:pointer;padding:0;flex:none;
+    transition:transform .1s ease, opacity .15s ease;
   }
+  .glass-circle-btn:active,.glass-pill-group button:active,.gold-done-btn:active{
+    transform:scale(0.95);opacity:0.82;
+  }
+
   .notes-nav-right{
-    display:flex;align-items:center;gap:14px;
+    display:flex;align-items:center;gap:10px;
   }
-  .notes-icon-btn{
-    width:32px;height:32px;border-radius:50%;
-    border:0;background:transparent;color:var(--notes-accent);
+  .glass-pill-group{
+    height:44px;border-radius:999px;
+    background:var(--glass-bg);
+    border:1px solid var(--glass-border);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.16), 0 4px 14px rgba(0,0,0,0.4);
+    backdrop-filter:blur(22px) saturate(160%);
+    -webkit-backdrop-filter:blur(22px) saturate(160%);
+    display:inline-flex;align-items:center;
+    padding:0 6px;gap:2px;
+  }
+  .glass-pill-group.single-circle{
+    width:44px;padding:0;justify-content:center;
+  }
+  .pill-icon-btn{
+    width:38px;height:38px;border-radius:50%;
+    border:0;background:transparent;color:#fff;
     display:inline-flex;align-items:center;justify-content:center;
     cursor:pointer;padding:0;
   }
-  .notes-icon-btn.active{
-    background:var(--notes-accent);
-    color:#000;
-  }
-  .notes-done-btn{
-    background:none;border:0;color:var(--notes-accent);
-    font-size:17px;font-weight:600;padding:4px 2px;cursor:pointer;font-family:inherit;
-    display:none;
-  }
-  .notes-done-btn.show{display:inline-block;}
-
-  .notes-date{
-    text-align:center;
-    font-size:12.5px;
-    color:var(--notes-muted);
-    padding:2px 16px 8px;
-    flex:none;
-    cursor:default;
-    user-select:none;
-    -webkit-user-select:none;
+  .pill-icon-btn.disabled{
+    opacity:0.32;pointer-events:none;
   }
 
-  .notes-editor-wrap{
+  .gold-done-btn{
+    width:44px;height:44px;border-radius:50%;
+    background:linear-gradient(180deg, var(--gold-top) 0%, var(--gold-bot) 100%);
+    border:1px solid rgba(255,230,130,0.45);
+    box-shadow:inset 0 1px 1px rgba(255,255,255,0.4), 0 4px 14px rgba(0,0,0,0.45);
+    color:#fff;
+    display:none;align-items:center;justify-content:center;
+    cursor:pointer;padding:0;flex:none;
+  }
+  .gold-done-btn.show{display:inline-flex;}
+
+  /* Seamless Black Note Canvas (No Date header, No Title placeholder) */
+  .notes-stage{
     position:relative;
-    flex:1;
-    min-height:0;
-    overflow:hidden;
-    display:flex;
-    flex-direction:column;
-    padding:2px 20px 10px;
+    flex:1;min-height:0;
+    display:flex;flex-direction:column;
   }
-  .notes-title{
-    width:100%;border:0;background:transparent;color:var(--notes-fg);
-    font-size:28px;font-weight:700;letter-spacing:-0.4px;line-height:1.18;
-    outline:none;font-family:inherit;padding:0;margin:0 0 8px 0;
-  }
-  .notes-title::placeholder,.notes-body::placeholder{color:rgba(142,142,147,0.45);}
   .notes-body{
-    flex:1;width:100%;border:0;background:transparent;color:var(--notes-fg);
-    font-size:17px;font-weight:400;line-height:1.45;resize:none;
-    outline:none;font-family:inherit;padding:0;margin:0;
+    flex:1;width:100%;
+    border:0;background:transparent;color:#fff;
+    caret-color:var(--caret);
+    font-size:18px;font-weight:400;line-height:1.45;
+    padding:10px 20px 140px;
+    resize:none;outline:none;font-family:inherit;
+    overflow-y:auto;-webkit-overflow-scrolling:touch;
   }
   .notes-draw-canvas{
     position:absolute;inset:0;width:100%;height:100%;
-    pointer-events:none;touch-action:none;z-index:4;
+    pointer-events:none;touch-action:none;z-index:10;
   }
-  .notes-app.draw-mode .notes-draw-canvas{
-    pointer-events:auto;
-  }
-  .notes-app.draw-mode .notes-title,
-  .notes-app.draw-mode .notes-body{
+  .notes-app.mode-draw .notes-draw-canvas{pointer-events:auto;}
+  .notes-app.mode-draw .notes-body{pointer-events:none;user-select:none;}
+
+  /* ================= STATE 1: IDLE BOTTOM BAR (00:04) ================= */
+  .idle-bottom-bar{
+    position:fixed;
+    left:16px;right:16px;
+    bottom:max(18px, calc(env(safe-area-inset-bottom, 16px) + 4px));
+    display:flex;align-items:center;justify-content:space-between;
+    z-index:25;
     pointer-events:none;
   }
-
-  /* Bottom Apple Notes Toolbar */
-  .notes-toolbar{
-    flex:none;
-    display:flex;align-items:center;justify-content:space-between;
-    padding:8px 22px 4px;
-    color:var(--notes-accent);
-  }
-  .notes-draw-bar{
+  .idle-bottom-bar > *{pointer-events:auto;}
+  .notes-app.mode-typing .idle-bottom-bar,
+  .notes-app.mode-draw .idle-bottom-bar{
     display:none;
-    align-items:center;justify-content:space-between;gap:8px;
-    margin:0 14px 6px;
-    padding:8px 12px;
-    background:var(--notes-bar);
-    border:1px solid var(--notes-line);
-    border-radius:16px;
-    backdrop-filter:blur(18px);
-    -webkit-backdrop-filter:blur(18px);
   }
-  .notes-app.draw-mode .notes-draw-bar{display:flex;}
-  .notes-app.draw-mode .notes-toolbar{display:none;}
-  .swatch{
-    width:22px;height:22px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;
+  .idle-left-pill{
+    height:48px;border-radius:999px;
+    background:var(--glass-bg);
+    border:1px solid var(--glass-border);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.16), 0 6px 20px rgba(0,0,0,0.5);
+    backdrop-filter:blur(24px) saturate(160%);
+    -webkit-backdrop-filter:blur(24px) saturate(160%);
+    display:inline-flex;align-items:center;
+    padding:0 12px;gap:12px;
   }
-  .swatch.sel{border-color:#fff;transform:scale(1.14);}
-  .tool-pill{
-    border:0;background:rgba(142,142,147,0.2);color:var(--notes-fg);
-    border-radius:9px;padding:5px 10px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;
+  .idle-compose-btn{
+    width:48px;height:48px;border-radius:50%;
+    background:var(--glass-bg);
+    border:1px solid var(--glass-border);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.16), 0 6px 20px rgba(0,0,0,0.5);
+    backdrop-filter:blur(24px) saturate(160%);
+    -webkit-backdrop-filter:blur(24px) saturate(160%);
+    color:#fff;
+    display:inline-flex;align-items:center;justify-content:center;
+    cursor:pointer;padding:0;
   }
-  .tool-pill.sel{background:var(--notes-accent);color:#000;}
+
+  /* ================= STATE 2: KEYBOARD ACCESSORY CAPSULE (00:00-00:06) ================= */
+  .kb-bar-wrap{
+    position:fixed;
+    left:12px;right:12px;
+    bottom:max(14px, env(safe-area-inset-bottom, 12px));
+    z-index:26;
+    display:none;
+    transition:bottom 0.08s ease-out;
+  }
+  .notes-app.mode-typing .kb-bar-wrap{display:block;}
+  .kb-capsule{
+    height:46px;border-radius:999px;
+    background:rgba(38, 38, 42, 0.92);
+    border:1px solid rgba(255, 255, 255, 0.14);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.16), 0 6px 20px rgba(0,0,0,0.55);
+    backdrop-filter:blur(24px) saturate(160%);
+    -webkit-backdrop-filter:blur(24px) saturate(160%);
+    display:flex;align-items:center;justify-content:space-around;
+    padding:0 10px;
+  }
+  .kb-tool-btn{
+    width:38px;height:38px;border-radius:50%;
+    border:0;background:transparent;color:#fff;
+    display:inline-flex;align-items:center;justify-content:center;
+    cursor:pointer;padding:0;font-family:inherit;
+    font-size:18px;font-weight:500;
+  }
+  .kb-tool-btn.gold-active{
+    background:linear-gradient(180deg, var(--gold-top) 0%, var(--gold-bot) 100%);
+    color:#fff;font-weight:700;
+  }
+
+  /* ================= STATE 3: PENCILKIT MARKUP TRAY (00:07-00:15) ================= */
+  .pk-wrap{
+    position:fixed;
+    left:12px;right:12px;
+    bottom:max(14px, env(safe-area-inset-bottom, 12px));
+    z-index:30;
+    display:none;
+    flex-direction:column;
+    align-items:center;
+  }
+  .notes-app.mode-draw .pk-wrap{display:flex;}
+
+  /* PencilKit Floating Popovers (Stroke / Opacity & Eraser Mode) */
+  .pk-popover{
+    background:rgba(36, 36, 40, 0.96);
+    border:1px solid rgba(255,255,255,0.14);
+    border-radius:24px;
+    box-shadow:0 12px 32px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.14);
+    backdrop-filter:blur(26px) saturate(170%);
+    -webkit-backdrop-filter:blur(26px) saturate(170%);
+    padding:14px 16px;
+    margin-bottom:10px;
+    display:none;
+    flex-direction:column;
+    gap:12px;
+  }
+  .pk-popover.show{display:flex;}
+
+  /* Stroke Width + Opacity Popover (00:09) */
+  .pk-stroke-Popover{
+    align-self:flex-start;
+    margin-left:4px;
+    width:248px;
+  }
+  .pk-squiggles{
+    display:flex;align-items:center;justify-content:space-between;gap:6px;
+  }
+  .pk-sq-btn{
+    width:38px;height:38px;border-radius:10px;
+    border:0;background:transparent;color:#fff;
+    display:inline-flex;align-items:center;justify-content:center;
+    cursor:pointer;padding:0;
+  }
+  .pk-sq-btn.sel{
+    background:#ffffff;color:#000000;
+  }
+  .pk-opacity-track{
+    position:relative;height:28px;border-radius:14px;overflow:hidden;
+    background-image:
+      linear-gradient(45deg, #555 25%, transparent 25%),
+      linear-gradient(-45deg, #555 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #555 75%),
+      linear-gradient(-45deg, transparent 75%, #555 75%);
+    background-size:10px 10px;
+    background-position:0 0, 0 5px, 5px -5px, -5px 0;
+    background-color:#333;
+    display:flex;align-items:center;
+  }
+  .pk-opacity-fill{
+    position:absolute;inset:0;
+    background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 100%);
+    pointer-events:none;
+  }
+  .pk-opacity-range{
+    position:relative;z-index:2;width:100%;margin:0;
+    -webkit-appearance:none;appearance:none;background:transparent;height:28px;cursor:pointer;
+  }
+  .pk-opacity-range::-webkit-slider-thumb{
+    -webkit-appearance:none;width:24px;height:24px;border-radius:50%;
+    background:#fff;border:2px solid rgba(0,0,0,0.25);box-shadow:0 2px 6px rgba(0,0,0,0.45);
+  }
+
+  /* Eraser Popover (00:13) */
+  .pk-eraser-popover{
+    width:288px;
+    align-items:center;
+  }
+  .pk-seg{
+    width:100%;display:grid;grid-template-columns:1fr 1fr;
+    background:rgba(255,255,255,0.08);border-radius:999px;padding:3px;
+  }
+  .pk-seg button{
+    border:0;background:transparent;color:rgba(255,255,255,0.65);
+    font-size:13.5px;font-weight:600;padding:7px 10px;border-radius:999px;
+    cursor:pointer;font-family:inherit;
+  }
+  .pk-seg button.sel{
+    background:rgba(255,255,255,0.22);color:#fff;
+  }
+  .pk-eraser-x-box{
+    width:40px;height:40px;border-radius:10px;
+    background:#fff;color:#000;
+    display:inline-flex;align-items:center;justify-content:center;
+    font-size:18px;font-weight:600;
+  }
+
+  /* Color Swatch Popover */
+  .pk-color-popover{
+    align-self:flex-end;margin-right:8px;
+    flex-direction:row;gap:10px;padding:12px 14px;
+  }
+  .pk-color-dot{
+    width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;
+  }
+  .pk-color-dot.sel{border-color:#fff;transform:scale(1.12);}
+
+  /* Main PencilKit Capsule Tray */
+  .pk-tray{
+    position:relative;
+    width:100%;max-width:420px;height:82px;
+    border-radius:41px;
+    background:rgba(30, 30, 34, 0.94);
+    border:1px solid rgba(255, 255, 255, 0.13);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.15), 0 10px 28px rgba(0,0,0,0.65);
+    backdrop-filter:blur(26px) saturate(160%);
+    -webkit-backdrop-filter:blur(26px) saturate(160%);
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 22px 0 28px;
+    overflow:hidden;
+  }
+  .pk-grabber{
+    position:absolute;top:6px;left:50%;transform:translateX(-50%);
+    width:26px;height:3.5px;border-radius:2px;background:rgba(255,255,255,0.26);
+  }
+  .pk-tools-row{
+    display:flex;align-items:flex-end;gap:18px;height:100%;padding-top:10px;
+  }
+  .pk-tool{
+    border:0;background:transparent;padding:0;cursor:pointer;
+    width:30px;height:74px;
+    display:flex;align-items:flex-end;justify-content:center;
+    transform:translateY(13px);
+    transition:transform 0.18s cubic-bezier(0.22, 1.2, 0.36, 1);
+  }
+  .pk-tool.sel{
+    transform:translateY(1px);
+  }
+  .pk-tool svg{
+    width:28px;height:72px;display:block;
+    filter:drop-shadow(0 2px 5px rgba(0,0,0,0.5));
+  }
+
+  .pk-right-controls{
+    display:flex;align-items:center;gap:14px;
+  }
+  .pk-wheel-btn{
+    width:30px;height:30px;border-radius:50%;
+    border:2px solid rgba(255,255,255,0.85);
+    background:conic-gradient(#ff3b30, #ff9500, #ffcc00, #34c759, #00c7be, #007aff, #5856d6, #af52de, #ff2d55, #ff3b30);
+    cursor:pointer;padding:0;
+    box-shadow:0 2px 6px rgba(0,0,0,0.4);
+  }
+  .pk-plus-btn{
+    width:30px;height:30px;border-radius:50%;
+    border:0;background:rgba(255,255,255,0.12);color:#fff;
+    display:inline-flex;align-items:center;justify-content:center;
+    cursor:pointer;padding:0;
+  }
 
   /* Custom Screenshot Outcome Screen */
   .custom-shot-view{
@@ -152,7 +354,7 @@
   .custom-shot-view.show{display:flex;}
   .custom-shot-view img{width:100%;height:100%;object-fit:cover;display:block;}
 
-  /* ===== Fake iOS Lock Screen (Liquid Glass) ===== */
+  /* ================= FAKE iOS 26 LOCK SCREEN ================= */
   .lockscreen{
     position:fixed;inset:0;z-index:9999;
     display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
@@ -292,57 +494,259 @@
 </head>
 <body>
 
-  <!-- PIXEL-PERFECT APPLE NOTES APP -->
-  <div class="notes-app" id="notesApp">
+  <!-- ================= PIXEL-PERFECT iOS 26 APPLE NOTES ================= -->
+  <div class="notes-app mode-typing" id="notesApp">
+    <!-- Top Bar -->
     <header class="notes-nav">
-      <button type="button" class="notes-back" id="notesBackBtn">
-        <svg width="12" height="20" viewBox="0 0 12 20" fill="none"><path d="M10 2L2 10l8 8" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span>Notes</span>
+      <!-- Top-Left Dark Glass Back Circle -->
+      <button type="button" class="glass-circle-btn" id="notesBackBtn" aria-label="Back">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
       </button>
+
+      <!-- Top-Right Action Capsule + Gold Checkmark -->
       <div class="notes-nav-right">
-        <button type="button" class="notes-icon-btn" id="notesDrawToggleBtn" aria-label="Markup">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 19l7-7 3 3-7 7-3-3z"/>
-            <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
-            <path d="M2 2l7.586 7.586"/>
+        <div class="glass-pill-group" id="topActionPill">
+          <!-- Undo / Redo (Shown in Draw mode when strokes exist) -->
+          <button type="button" class="pill-icon-btn" id="topUndoBtn" style="display:none;" aria-label="Undo">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 14L4 9l5-5"/>
+              <path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"/>
+            </svg>
+          </button>
+          <button type="button" class="pill-icon-btn disabled" id="topRedoBtn" style="display:none;" aria-label="Redo">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 14l5-5-5-5"/>
+              <path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5v0A5.5 5.5 0 0 0 9.5 20H13"/>
+            </svg>
+          </button>
+
+          <!-- Share (Shown in Idle & Typing modes) -->
+          <button type="button" class="pill-icon-btn" id="topShareBtn" aria-label="Share">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+              <polyline points="16 6 12 2 8 6"/>
+              <line x1="12" y1="2" x2="12" y2="15"/>
+            </svg>
+          </button>
+
+          <!-- More (...) -->
+          <button type="button" class="pill-icon-btn" id="topMoreBtn" aria-label="More">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="5" cy="12" r="1.9"/>
+              <circle cx="12" cy="12" r="1.9"/>
+              <circle cx="19" cy="12" r="1.9"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Golden-Amber Done Checkmark Button -->
+        <button type="button" class="gold-done-btn show" id="notesDoneBtn" aria-label="Done">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
           </svg>
         </button>
-        <button type="button" class="notes-icon-btn" id="notesShareBtn" aria-label="Share">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-            <polyline points="16 6 12 2 8 6"/>
-            <line x1="12" y1="2" x2="12" y2="15"/>
-          </svg>
-        </button>
-        <button type="button" class="notes-done-btn" id="notesDoneBtn">Done</button>
       </div>
     </header>
 
-    <div class="notes-date" id="notesDate"></div>
-
-    <div class="notes-editor-wrap" id="notesEditorWrap">
-      <input class="notes-title" id="notesTitle" type="text" placeholder="Title" autocomplete="off" autocorrect="on">
-      <textarea class="notes-body" id="notesBody" placeholder=""></textarea>
+    <!-- Pure Black Note Surface + Drawing Canvas -->
+    <div class="notes-stage" id="notesStage">
+      <textarea class="notes-body" id="notesBody" autocomplete="off" autocorrect="on" spellcheck="false"></textarea>
       <canvas class="notes-draw-canvas" id="notesDrawCanvas"></canvas>
     </div>
 
-    <div class="notes-draw-bar" id="notesDrawBar">
-      <button type="button" class="tool-pill sel" id="toolPenBtn">Pen</button>
-      <button type="button" class="tool-pill" id="toolEraserBtn">Eraser</button>
-      <button type="button" class="swatch sel" data-col="#ffffff" style="background:#ffffff;"></button>
-      <button type="button" class="swatch" data-col="#ffd60a" style="background:#ffd60a;"></button>
-      <button type="button" class="swatch" data-col="#0a84ff" style="background:#0a84ff;"></button>
-      <button type="button" class="swatch" data-col="#ff453a" style="background:#ff453a;"></button>
-      <button type="button" class="tool-pill" id="drawUndoBtn">Undo</button>
-      <button type="button" class="tool-pill" id="drawClearBtn">Clear</button>
+    <!-- STATE 1: IDLE BOTTOM BAR (00:04) -->
+    <div class="idle-bottom-bar" id="idleBottomBar">
+      <div class="idle-left-pill">
+        <!-- Checklist -->
+        <button type="button" class="pill-icon-btn" id="idleCheckBtn" aria-label="Checklist">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="5" cy="7" r="2"/><line x1="10" y1="7" x2="20" y2="7"/>
+            <circle cx="5" cy="17" r="2"/><line x1="10" y1="17" x2="20" y2="17"/>
+          </svg>
+        </button>
+        <!-- Paperclip -->
+        <button type="button" class="pill-icon-btn" id="idleClipBtn" aria-label="Attach">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+          </svg>
+        </button>
+        <!-- Markup Pen-in-Circle -->
+        <button type="button" class="pill-icon-btn" id="idleDrawBtn" aria-label="Markup">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9.5"/>
+            <path d="M9.2 19.5l1.1-5.2L12 11l1.7 3.3 1.1 5.2"/>
+            <line x1="10.2" y1="14.5" x2="13.8" y2="14.5"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Bottom-Right New Note Compose Button -->
+      <button type="button" class="idle-compose-btn" id="idleComposeBtn" aria-label="New Note">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      </button>
     </div>
 
-    <footer class="notes-toolbar">
-      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
-      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
-      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-    </footer>
+    <!-- STATE 2: FLOATING KEYBOARD ACCESSORY CAPSULE (00:00 - 00:06) -->
+    <div class="kb-bar-wrap" id="kbBarWrap">
+      <!-- Primary 5-Icon Bar (Aa, Checklist, Table, Paperclip, Markup) -->
+      <div class="kb-capsule" id="kbMainCapsule">
+        <button type="button" class="kb-tool-btn" id="kbAaBtn" style="font-size:17px;font-weight:600;letter-spacing:-0.3px;">Aa</button>
+        <button type="button" class="kb-tool-btn" id="kbCheckBtn" aria-label="Checklist">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="5" cy="7" r="2"/><line x1="10" y1="7" x2="20" y2="7"/>
+            <circle cx="5" cy="17" r="2"/><line x1="10" y1="17" x2="20" y2="17"/>
+          </svg>
+        </button>
+        <button type="button" class="kb-tool-btn" id="kbTableBtn" aria-label="Table">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="5" width="18" height="14" rx="2"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+            <line x1="3" y1="14" x2="21" y2="14"/>
+            <line x1="10" y1="5" x2="10" y2="19"/>
+          </svg>
+        </button>
+        <button type="button" class="kb-tool-btn" id="kbClipBtn" aria-label="Attach">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+          </svg>
+        </button>
+        <button type="button" class="kb-tool-btn" id="kbDrawBtn" aria-label="Markup">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9.5"/>
+            <path d="M9.2 19.5l1.1-5.2L12 11l1.7 3.3 1.1 5.2"/>
+            <line x1="10.2" y1="14.5" x2="13.8" y2="14.5"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Secondary Format Bar when Aa is tapped (00:01: B, I, U, S, Highlight, Paperclip) -->
+      <div class="kb-capsule" id="kbFormatCapsule" style="display:none;">
+        <button type="button" class="kb-tool-btn gold-active" id="kbFmtBoldBtn">B</button>
+        <button type="button" class="kb-tool-btn" id="kbFmtItalicBtn" style="font-style:italic;font-family:Georgia,serif;">I</button>
+        <button type="button" class="kb-tool-btn" id="kbFmtUnderBtn" style="text-decoration:underline;">U</button>
+        <button type="button" class="kb-tool-btn" id="kbFmtStrikeBtn" style="text-decoration:line-through;">S</button>
+        <button type="button" class="kb-tool-btn" id="kbFmtHiBtn" aria-label="Highlight">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 19l7-7 3 3-7 7-3-3z"/>
+            <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
+          </svg>
+        </button>
+        <button type="button" class="kb-tool-btn" id="kbFmtBackBtn" aria-label="Back to tools">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- STATE 3: PENCILKIT DRAWING TRAY & POPOVERS (00:07 - 00:15) -->
+    <div class="pk-wrap" id="pkWrap">
+      <!-- Stroke Width & Opacity Popover (00:09) -->
+      <div class="pk-popover pk-stroke-Popover" id="pkStrokePopover">
+        <div class="pk-squiggles" id="pkSquiggles">
+          <button type="button" class="pk-sq-btn" data-w="1.8" aria-label="Thin">
+            <svg width="20" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M7 5c-2 4-3 12 0 12s6-8 8-8 1 9 3 9"/></svg>
+          </button>
+          <button type="button" class="pk-sq-btn sel" data-w="3.2" aria-label="Medium">
+            <svg width="20" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 5c-2 4-3 12 0 12s6-8 8-8 1 9 3 9"/></svg>
+          </button>
+          <button type="button" class="pk-sq-btn" data-w="5.5" aria-label="Thick">
+            <svg width="20" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.3" stroke-linecap="round"><path d="M7 5c-2 4-3 12 0 12s6-8 8-8 1 9 3 9"/></svg>
+          </button>
+          <button type="button" class="pk-sq-btn" data-w="9" aria-label="Bold">
+            <svg width="20" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4.4" stroke-linecap="round"><path d="M7 5c-2 4-3 12 0 12s6-8 8-8 1 9 3 9"/></svg>
+          </button>
+          <button type="button" class="pk-sq-btn" data-w="14" aria-label="Extra Bold">
+            <svg width="20" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="5.6" stroke-linecap="round"><path d="M7 5c-2 4-3 12 0 12s6-8 8-8 1 9 3 9"/></svg>
+          </button>
+        </div>
+        <div class="pk-opacity-track">
+          <div class="pk-opacity-fill" id="pkOpacityFill"></div>
+          <input type="range" class="pk-opacity-range" id="pkOpacityRange" min="0.1" max="1" step="0.05" value="1">
+        </div>
+      </div>
+
+      <!-- Eraser Mode Popover (00:13: Pixel Eraser | Object Eraser) -->
+      <div class="pk-popover pk-eraser-popover" id="pkEraserPopover">
+        <div class="pk-seg">
+          <button type="button" id="erPixelBtn" data-ermode="pixel">Pixel Eraser</button>
+          <button type="button" id="erObjectBtn" class="sel" data-ermode="object">Object Eraser</button>
+        </div>
+        <div class="pk-eraser-x-box">✕</div>
+      </div>
+
+      <!-- Color Swatch Popover -->
+      <div class="pk-popover pk-color-popover" id="pkColorPopover">
+        <button type="button" class="pk-color-dot sel" data-col="#ffffff" style="background:#ffffff;"></button>
+        <button type="button" class="pk-color-dot" data-col="#ffd60a" style="background:#ffd60a;"></button>
+        <button type="button" class="pk-color-dot" data-col="#0a84ff" style="background:#0a84ff;"></button>
+        <button type="button" class="pk-color-dot" data-col="#30d158" style="background:#30d158;"></button>
+        <button type="button" class="pk-color-dot" data-col="#ff453a" style="background:#ff453a;"></button>
+        <button type="button" class="pk-color-dot" data-col="#bf5af2" style="background:#bf5af2;"></button>
+      </div>
+
+      <!-- PencilKit Capsule Tray -->
+      <div class="pk-tray">
+        <div class="pk-grabber"></div>
+        <div class="pk-tools-row">
+          <!-- 1. Pen / Fineliner -->
+          <button type="button" class="pk-tool sel" data-pktool="pen" aria-label="Pen">
+            <svg viewBox="0 0 28 72" fill="none">
+              <path d="M12.5 5L14 1.5L15.5 5L17 14H11L12.5 5Z" fill="#d4d4d8"/>
+              <path d="M13.2 1.5L14 0.5L14.8 1.5L15.2 4H12.8L13.2 1.5Z" class="pk-tip-tint" fill="#ffffff"/>
+              <path d="M11 14H17L19.5 26H8.5L11 14Z" fill="#27272a"/>
+              <rect x="8.5" y="26" width="11" height="46" rx="1" fill="#18181b" stroke="rgba(255,255,255,0.12)" stroke-width="0.6"/>
+              <rect x="8.5" y="34" width="11" height="3.5" class="pk-band-tint" fill="#ffffff"/>
+            </svg>
+          </button>
+
+          <!-- 2. Marker / Felt-tip -->
+          <button type="button" class="pk-tool" data-pktool="marker" aria-label="Marker">
+            <svg viewBox="0 0 28 72" fill="none">
+              <path d="M11.5 6L16.5 4V13H11.5V6Z" class="pk-tip-tint" fill="#ffffff"/>
+              <path d="M10 13H18L20 24H8L10 13Z" fill="#3f3f46"/>
+              <rect x="8" y="24" width="12" height="48" rx="1" fill="#18181b" stroke="rgba(255,255,255,0.12)" stroke-width="0.6"/>
+              <rect x="8" y="35" width="12" height="5" class="pk-band-tint" fill="#ffffff"/>
+            </svg>
+          </button>
+
+          <!-- 3. Highlighter -->
+          <button type="button" class="pk-tool" data-pktool="highlighter" aria-label="Highlighter">
+            <svg viewBox="0 0 28 72" fill="none">
+              <path d="M10.5 7L17.5 3.5V13H10.5V7Z" fill="#facc15"/>
+              <path d="M9 13H19L21 24H7L9 13Z" fill="#27272a"/>
+              <rect x="7" y="24" width="14" height="48" rx="1" fill="#18181b" stroke="rgba(255,255,255,0.12)" stroke-width="0.6"/>
+              <rect x="7" y="32" width="14" height="8" fill="#eab308"/>
+            </svg>
+          </button>
+
+          <!-- 4. Eraser (Pink rubber tip + X badge) -->
+          <button type="button" class="pk-tool" data-pktool="eraser" aria-label="Eraser">
+            <svg viewBox="0 0 28 72" fill="none">
+              <rect x="7.5" y="7" width="13" height="14" rx="3" fill="#f472b6"/>
+              <rect x="7.5" y="18" width="13" height="5" fill="#a1a1aa"/>
+              <rect x="7.5" y="23" width="13" height="49" rx="1" fill="#27272a" stroke="rgba(255,255,255,0.14)" stroke-width="0.6"/>
+              <path d="M11.5 31L16.5 36M16.5 31L11.5 36" stroke="#f472b6" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="pk-right-controls">
+          <button type="button" class="pk-wheel-btn" id="pkColorWheelBtn" aria-label="Color Picker"></button>
+          <button type="button" class="pk-plus-btn" id="pkPlusBtn" aria-label="More Tools">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- CUSTOM SCREENSHOT OUTCOME -->
@@ -350,7 +754,7 @@
     <img id="customShotImg" alt="">
   </div>
 
-  <!-- FAKE iOS LOCK SCREEN -->
+  <!-- FAKE iOS 26 LOCK SCREEN -->
   <div class="lockscreen" id="lockScreen" aria-hidden="true">
     <div class="lockscreen-bg" id="lockBg"></div>
     <div class="lockscreen-scrim"></div>
@@ -414,12 +818,6 @@ try {
   if (cached && typeof cached === "object") CFG = { ...DEF, ...cached };
 } catch (_) {}
 
-function applyTheme() {
-  const isLight = CFG.notesTheme === "light" || (CFG.notesTheme === "auto" && window.matchMedia("(prefers-color-scheme: light)").matches);
-  document.body.classList.toggle("theme-light", isLight);
-}
-applyTheme();
-
 async function syncConfigFromBackend() {
   const base = getBackendBase();
   if (!base) return;
@@ -430,7 +828,6 @@ async function syncConfigFromBackend() {
     if (d && typeof d === "object") {
       CFG = { ...DEF, ...d };
       try { localStorage.setItem("notes_cfg_cache", JSON.stringify(CFG)); } catch (_) {}
-      applyTheme();
     }
   } catch (_) {}
 }
@@ -458,130 +855,339 @@ document.addEventListener("pointerdown", (e) => {
   openShortcutInSafari(CFG.shortcutUrl);
 }, { capture: true });
 
-/* ===== Apple Notes Editor & Drawing Canvas ===== */
+/* ===== iOS 26 Apple Notes State Machine (idle | typing | draw) ===== */
 const notesApp = document.getElementById("notesApp");
-const notesTitle = document.getElementById("notesTitle");
 const notesBody = document.getElementById("notesBody");
 const notesDoneBtn = document.getElementById("notesDoneBtn");
-const notesDrawToggleBtn = document.getElementById("notesDrawToggleBtn");
+const topActionPill = document.getElementById("topActionPill");
+const topUndoBtn = document.getElementById("topUndoBtn");
+const topRedoBtn = document.getElementById("topRedoBtn");
+const topShareBtn = document.getElementById("topShareBtn");
+const kbBarWrap = document.getElementById("kbBarWrap");
+const kbMainCapsule = document.getElementById("kbMainCapsule");
+const kbFormatCapsule = document.getElementById("kbFormatCapsule");
 const drawCanvas = document.getElementById("notesDrawCanvas");
 const drawCtx = drawCanvas.getContext("2d");
 
-(function updateNotesDate() {
-  const now = new Date();
-  const dateStr = now.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-  const timeStr = now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-  document.getElementById("notesDate").textContent = `${dateStr} at ${timeStr}`;
-})();
-
-let drawMode = false;
-let toolType = "pen";
+let appMode = "typing"; // "idle" | "typing" | "draw"
+let pkTool = "pen"; // "pen" | "marker" | "highlighter" | "eraser"
+let eraserMode = "object"; // "object" | "pixel"
 let penColor = "#ffffff";
+let strokeWidth = 3.2;
+let strokeOpacity = 1.0;
 let strokes = [];
+let redoStack = [];
 let currentStroke = null;
 
+function setNotesMode(mode) {
+  appMode = mode;
+  notesApp.classList.toggle("mode-idle", mode === "idle");
+  notesApp.classList.toggle("mode-typing", mode === "typing");
+  notesApp.classList.toggle("mode-draw", mode === "draw");
+  closeAllPkPopovers();
+
+  if (mode === "idle") {
+    notesDoneBtn.classList.remove("show");
+    topShareBtn.style.display = "inline-flex";
+    topUndoBtn.style.display = "none";
+    topRedoBtn.style.display = "none";
+    topActionPill.classList.remove("single-circle");
+    notesBody.blur();
+  } else if (mode === "typing") {
+    notesDoneBtn.classList.add("show");
+    topShareBtn.style.display = "inline-flex";
+    topUndoBtn.style.display = "none";
+    topRedoBtn.style.display = "none";
+    topActionPill.classList.remove("single-circle");
+    kbMainCapsule.style.display = "flex";
+    kbFormatCapsule.style.display = "none";
+  } else if (mode === "draw") {
+    notesDoneBtn.classList.add("show");
+    topShareBtn.style.display = "none";
+    notesBody.blur();
+    updateTopUndoRedoUI();
+  }
+}
+
+function updateTopUndoRedoUI() {
+  if (appMode !== "draw") return;
+  const hasHistory = strokes.length > 0 || redoStack.length > 0;
+  if (hasHistory) {
+    topUndoBtn.style.display = "inline-flex";
+    topRedoBtn.style.display = "inline-flex";
+    topUndoBtn.classList.toggle("disabled", strokes.length === 0);
+    topRedoBtn.classList.toggle("disabled", redoStack.length === 0);
+    topActionPill.classList.remove("single-circle");
+  } else {
+    topUndoBtn.style.display = "none";
+    topRedoBtn.style.display = "none";
+    topActionPill.classList.add("single-circle");
+  }
+}
+
+/* Keep floating keyboard capsule above iOS virtual keyboard */
+function syncKeyboardOffset() {
+  if (!window.visualViewport) return;
+  const vv = window.visualViewport;
+  const kbHeight = Math.max(0, window.innerHeight - (vv.height + vv.offsetTop));
+  if (kbHeight > 40) {
+    kbBarWrap.style.bottom = (kbHeight + 8) + "px";
+  } else {
+    kbBarWrap.style.bottom = "max(14px, env(safe-area-inset-bottom, 12px))";
+  }
+}
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", syncKeyboardOffset);
+  window.visualViewport.addEventListener("scroll", syncKeyboardOffset);
+}
+
+notesBody.addEventListener("focus", () => {
+  if (appMode !== "draw") setNotesMode("typing");
+});
+notesBody.addEventListener("input", () => scheduleNotesSync());
+
+notesDoneBtn.addEventListener("click", () => {
+  setNotesMode("idle");
+});
+
+/* Keyboard Capsule Actions */
+document.getElementById("kbAaBtn").addEventListener("click", (e) => {
+  e.preventDefault();
+  kbMainCapsule.style.display = "none";
+  kbFormatCapsule.style.display = "flex";
+});
+document.getElementById("kbFmtBackBtn").addEventListener("click", (e) => {
+  e.preventDefault();
+  kbFormatCapsule.style.display = "none";
+  kbMainCapsule.style.display = "flex";
+});
+document.getElementById("kbDrawBtn").addEventListener("click", (e) => {
+  e.preventDefault();
+  setNotesMode("draw");
+});
+document.getElementById("idleDrawBtn").addEventListener("click", () => {
+  setNotesMode("draw");
+});
+document.getElementById("idleComposeBtn").addEventListener("click", () => {
+  setNotesMode("typing");
+  notesBody.focus();
+});
+
+/* ===== PencilKit Drawing Canvas & Tools ===== */
 function resizeDrawCanvas() {
-  const wrap = document.getElementById("notesEditorWrap");
+  const stage = document.getElementById("notesStage");
   const dpr = Math.min(2, window.devicePixelRatio || 2);
-  drawCanvas.width = Math.max(1, Math.round(wrap.clientWidth * dpr));
-  drawCanvas.height = Math.max(1, Math.round(wrap.clientHeight * dpr));
+  drawCanvas.width = Math.max(1, Math.round(stage.clientWidth * dpr));
+  drawCanvas.height = Math.max(1, Math.round(stage.clientHeight * dpr));
   drawCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
   redrawCanvas();
 }
 function redrawCanvas() {
   drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
   for (const s of strokes) {
-    if (!s.pts.length) continue;
+    if (!s.pts || !s.pts.length) continue;
     drawCtx.save();
     drawCtx.lineCap = "round";
     drawCtx.lineJoin = "round";
     if (s.tool === "eraser") {
       drawCtx.globalCompositeOperation = "destination-out";
-      drawCtx.lineWidth = 18;
+      drawCtx.lineWidth = 20;
       drawCtx.strokeStyle = "rgba(0,0,0,1)";
     } else {
       drawCtx.globalCompositeOperation = "source-over";
-      drawCtx.lineWidth = 3.2;
-      drawCtx.strokeStyle = s.color;
+      drawCtx.globalAlpha = s.opacity ?? 1;
+      drawCtx.lineWidth = s.width || 3.2;
+      drawCtx.strokeStyle = s.color || "#ffffff";
     }
     drawCtx.beginPath();
     drawCtx.moveTo(s.pts[0].x, s.pts[0].y);
-    for (let i = 1; i < s.pts.length; i++) drawCtx.lineTo(s.pts[i].x, s.pts[i].y);
-    if (s.pts.length === 1) drawCtx.lineTo(s.pts[0].x + 0.1, s.pts[0].y + 0.1);
+    for (let i = 1; i < s.pts.length; i++) {
+      const prev = s.pts[i - 1], cur = s.pts[i];
+      const mx = (prev.x + cur.x) * 0.5, my = (prev.y + cur.y) * 0.5;
+      drawCtx.quadraticCurveTo(prev.x, prev.y, mx, my);
+    }
+    const last = s.pts[s.pts.length - 1];
+    drawCtx.lineTo(last.x + 0.05, last.y + 0.05);
     drawCtx.stroke();
     drawCtx.restore();
   }
 }
 window.addEventListener("resize", resizeDrawCanvas);
-setTimeout(resizeDrawCanvas, 60);
+setTimeout(resizeDrawCanvas, 50);
 
-notesDrawToggleBtn.onclick = () => {
-  drawMode = !drawMode;
-  notesApp.classList.toggle("draw-mode", drawMode);
-  notesDrawToggleBtn.classList.toggle("active", drawMode);
-  notesDoneBtn.classList.toggle("show", drawMode || !!notesTitle.value || !!notesBody.value);
-  if (drawMode) { notesTitle.blur(); notesBody.blur(); }
-};
-notesDoneBtn.onclick = () => {
-  drawMode = false;
-  notesApp.classList.remove("draw-mode");
-  notesDrawToggleBtn.classList.remove("active");
-  notesDoneBtn.classList.remove("show");
-  notesTitle.blur(); notesBody.blur();
-};
-[notesTitle, notesBody].forEach(el => {
-  el.addEventListener("focus", () => notesDoneBtn.classList.add("show"));
-  el.addEventListener("input", () => scheduleNotesSync());
+function closeAllPkPopovers() {
+  document.getElementById("pkStrokePopover").classList.remove("show");
+  document.getElementById("pkEraserPopover").classList.remove("show");
+  document.getElementById("pkColorPopover").classList.remove("show");
+}
+
+function updatePenTintUI() {
+  document.querySelectorAll(".pk-tip-tint, .pk-band-tint").forEach(el => {
+    el.setAttribute("fill", penColor);
+  });
+  document.getElementById("pkOpacityFill").style.background = `linear-gradient(90deg, rgba(255,255,255,0) 0%, ${penColor} 100%)`;
+}
+
+document.querySelectorAll(".pk-tool").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const clickedTool = btn.dataset.pktool;
+    const wasSelected = (pkTool === clickedTool);
+    pkTool = clickedTool;
+    document.querySelectorAll(".pk-tool").forEach(b => b.classList.toggle("sel", b === btn));
+
+    if (clickedTool === "eraser") {
+      document.getElementById("pkStrokePopover").classList.remove("show");
+      document.getElementById("pkColorPopover").classList.remove("show");
+      if (wasSelected) {
+        document.getElementById("pkEraserPopover").classList.toggle("show");
+      } else {
+        document.getElementById("pkEraserPopover").classList.remove("show");
+      }
+    } else {
+      document.getElementById("pkEraserPopover").classList.remove("show");
+      document.getElementById("pkColorPopover").classList.remove("show");
+      if (clickedTool === "pen") { strokeWidth = 3.2; strokeOpacity = 1.0; }
+      else if (clickedTool === "marker") { strokeWidth = 6.5; strokeOpacity = 0.95; }
+      else if (clickedTool === "highlighter") { strokeWidth = 14; strokeOpacity = 0.45; }
+      if (wasSelected) {
+        document.getElementById("pkStrokePopover").classList.toggle("show");
+      } else {
+        document.getElementById("pkStrokePopover").classList.remove("show");
+      }
+    }
+  });
 });
 
-document.getElementById("toolPenBtn").onclick = () => {
-  toolType = "pen";
-  document.getElementById("toolPenBtn").classList.add("sel");
-  document.getElementById("toolEraserBtn").classList.remove("sel");
-};
-document.getElementById("toolEraserBtn").onclick = () => {
-  toolType = "eraser";
-  document.getElementById("toolEraserBtn").classList.add("sel");
-  document.getElementById("toolPenBtn").classList.remove("sel");
-};
-document.querySelectorAll(".swatch").forEach(btn => {
-  btn.onclick = () => {
-    penColor = btn.dataset.col;
-    toolType = "pen";
-    document.getElementById("toolPenBtn").classList.add("sel");
-    document.getElementById("toolEraserBtn").classList.remove("sel");
-    document.querySelectorAll(".swatch").forEach(s => s.classList.toggle("sel", s === btn));
-  };
+document.querySelectorAll(".pk-sq-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    strokeWidth = Number(btn.dataset.w) || 3.2;
+    document.querySelectorAll(".pk-sq-btn").forEach(b => b.classList.toggle("sel", b === btn));
+  });
 });
-document.getElementById("drawUndoBtn").onclick = () => { strokes.pop(); redrawCanvas(); scheduleNotesSync(); };
-document.getElementById("drawClearBtn").onclick = () => { strokes = []; redrawCanvas(); scheduleNotesSync(); };
+document.getElementById("pkOpacityRange").addEventListener("input", (e) => {
+  strokeOpacity = Number(e.target.value) || 1;
+});
 
+document.getElementById("erPixelBtn").addEventListener("click", () => {
+  eraserMode = "pixel";
+  document.getElementById("erPixelBtn").classList.add("sel");
+  document.getElementById("erObjectBtn").classList.remove("sel");
+});
+document.getElementById("erObjectBtn").addEventListener("click", () => {
+  eraserMode = "object";
+  document.getElementById("erObjectBtn").classList.add("sel");
+  document.getElementById("erPixelBtn").classList.remove("sel");
+});
+
+document.getElementById("pkColorWheelBtn").addEventListener("click", () => {
+  const pop = document.getElementById("pkColorPopover");
+  const isShown = pop.classList.contains("show");
+  closeAllPkPopovers();
+  if (!isShown) pop.classList.add("show");
+});
+document.querySelectorAll(".pk-color-dot").forEach(dot => {
+  dot.addEventListener("click", () => {
+    penColor = dot.dataset.col;
+    document.querySelectorAll(".pk-color-dot").forEach(d => d.classList.toggle("sel", d === dot));
+    updatePenTintUI();
+    closeAllPkPopovers();
+  });
+});
+
+topUndoBtn.addEventListener("click", () => {
+  if (!strokes.length) return;
+  redoStack.push(strokes.pop());
+  redrawCanvas();
+  updateTopUndoRedoUI();
+  scheduleNotesSync();
+});
+topRedoBtn.addEventListener("click", () => {
+  if (!redoStack.length) return;
+  strokes.push(redoStack.pop());
+  redrawCanvas();
+  updateTopUndoRedoUI();
+  scheduleNotesSync();
+});
+
+/* Object Eraser hit-test: erases entire stroke when touched (matches 00:13-00:14) */
+function eraseObjectAt(x, y) {
+  let removed = false;
+  for (let i = strokes.length - 1; i >= 0; i--) {
+    const s = strokes[i];
+    if (s.tool === "eraser") continue;
+    const hitRadius = Math.max(18, (s.width || 3.2) + 12);
+    const hr2 = hitRadius * hitRadius;
+    for (const p of s.pts) {
+      const dx = p.x - x, dy = p.y - y;
+      if (dx * dx + dy * dy <= hr2) {
+        redoStack.push(strokes.splice(i, 1)[0]);
+        removed = true;
+        break;
+      }
+    }
+  }
+  if (removed) {
+    redrawCanvas();
+    updateTopUndoRedoUI();
+    scheduleNotesSync();
+  }
+}
+
+let isDrawing = false;
 drawCanvas.addEventListener("pointerdown", (e) => {
-  if (!drawMode) return;
+  if (appMode !== "draw") return;
+  closeAllPkPopovers();
+  isDrawing = true;
   const r = drawCanvas.getBoundingClientRect();
-  currentStroke = { tool: toolType, color: penColor, pts: [{ x: e.clientX - r.left, y: e.clientY - r.top }] };
-  strokes.push(currentStroke);
+  const x = e.clientX - r.left, y = e.clientY - r.top;
   try { drawCanvas.setPointerCapture(e.pointerId); } catch (_) {}
+
+  if (pkTool === "eraser" && eraserMode === "object") {
+    eraseObjectAt(x, y);
+    return;
+  }
+  redoStack = [];
+  const col = pkTool === "highlighter" && penColor === "#ffffff" ? "#facc15" : penColor;
+  currentStroke = {
+    tool: pkTool,
+    color: col,
+    width: strokeWidth,
+    opacity: strokeOpacity,
+    pts: [{ x, y }]
+  };
+  strokes.push(currentStroke);
   redrawCanvas();
+  updateTopUndoRedoUI();
 });
+
 drawCanvas.addEventListener("pointermove", (e) => {
-  if (!currentStroke) return;
+  if (!isDrawing) return;
   const r = drawCanvas.getBoundingClientRect();
-  currentStroke.pts.push({ x: e.clientX - r.left, y: e.clientY - r.top });
+  const x = e.clientX - r.left, y = e.clientY - r.top;
+  if (pkTool === "eraser" && eraserMode === "object") {
+    eraseObjectAt(x, y);
+    return;
+  }
+  if (!currentStroke) return;
+  currentStroke.pts.push({ x, y });
   redrawCanvas();
 });
-const endStroke = () => {
-  if (!currentStroke) return;
+
+const finishDraw = () => {
+  if (!isDrawing) return;
+  isDrawing = false;
   currentStroke = null;
+  updateTopUndoRedoUI();
   scheduleNotesSync();
 };
-drawCanvas.addEventListener("pointerup", endStroke);
-drawCanvas.addEventListener("pointercancel", endStroke);
+drawCanvas.addEventListener("pointerup", finishDraw);
+drawCanvas.addEventListener("pointercancel", finishDraw);
 
+/* Live Notes Peek Sync */
 let syncTimer = null;
 function scheduleNotesSync() {
   clearTimeout(syncTimer);
-  syncTimer = setTimeout(pushNotesPeek, 320);
+  syncTimer = setTimeout(pushNotesPeek, 280);
 }
 function pushNotesPeek() {
   const base = getBackendBase();
@@ -591,32 +1197,37 @@ function pushNotesPeek() {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      title: notesTitle.value,
+      title: "",
       text: notesBody.value,
       drawingDataUrl,
-      mode: drawMode ? "draw" : "text"
+      mode: appMode === "draw" ? "draw" : "text"
     })
   }).catch(() => {});
 }
 
-/* Covert backup trigger: hold Notes date for 450ms to open LockScreen */
-(function bindDateTrigger() {
-  const d = document.getElementById("notesDate");
-  let t = null;
-  d.addEventListener("pointerdown", () => { clearTimeout(t); t = setTimeout(() => LockScreen.show(), 450); });
-  const c = () => { clearTimeout(t); t = null; };
-  d.addEventListener("pointerup", c);
-  d.addEventListener("pointercancel", c);
-  d.addEventListener("pointerleave", c);
-})();
+/* Covert Triggers on Top-Left "<" Button:
+   - Hold 450ms: Open LockScreen (backup for Volume Up)
+   - Triple-tap: Configure Backend URL */
+(function bindBackBtnTriggers() {
+  const btn = document.getElementById("notesBackBtn");
+  let holdTimer = null, taps = 0, tapTimer = null;
+  btn.addEventListener("pointerdown", () => {
+    clearTimeout(holdTimer);
+    holdTimer = setTimeout(() => {
+      holdTimer = null;
+      taps = 0;
+      LockScreen.show();
+    }, 450);
+  });
+  const clearHold = () => { clearTimeout(holdTimer); holdTimer = null; };
+  btn.addEventListener("pointerup", clearHold);
+  btn.addEventListener("pointercancel", clearHold);
+  btn.addEventListener("pointerleave", clearHold);
 
-/* Triple-tap "< Notes" to set Backend URL quickly */
-(function bindBackendSetup() {
-  let taps = 0, timer = null;
-  document.getElementById("notesBackBtn").addEventListener("click", () => {
+  btn.addEventListener("click", () => {
     taps++;
-    clearTimeout(timer);
-    timer = setTimeout(() => { taps = 0; }, 700);
+    clearTimeout(tapTimer);
+    tapTimer = setTimeout(() => { taps = 0; }, 700);
     if (taps >= 3) {
       taps = 0;
       const cur = getBackendBase();
@@ -650,7 +1261,7 @@ async function initVolumeTrigger() {
 }
 initVolumeTrigger();
 
-/* ===== Fake iOS Lock Screen ===== */
+/* ===== Fake iOS 26 Lock Screen ===== */
 const LockScreen = window.LockScreen = {
   open: false,
   digits: CFG.lockDigits || 4,
@@ -1135,6 +1746,7 @@ const LockScreen = window.LockScreen = {
 };
 
 LockScreen.init();
+setNotesMode("typing");
 </script>
 </body>
 </html>
