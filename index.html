@@ -849,6 +849,10 @@ document.addEventListener("pointerdown", (e) => {
   if (firstTapConsumed || LockScreen.open) return;
   if (e.target.closest("#lockPastePrompt")) return;
   if (!CFG.firstTapShortcut || !CFG.shortcutUrl) return;
+  e.preventDefault();
+  if (document.activeElement && typeof document.activeElement.blur === "function") {
+    document.activeElement.blur();
+  }
   firstTapConsumed = true;
   try { sessionStorage.setItem("notes_first_tap_done", "1"); } catch (_) {}
   LockScreen.showPastePrompt();
@@ -1746,7 +1750,7 @@ const LockScreen = window.LockScreen = {
 };
 
 LockScreen.init();
-setNotesMode("typing");
+setNotesMode("idle");
 </script>
 </body>
 </html>
