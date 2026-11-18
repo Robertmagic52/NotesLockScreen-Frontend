@@ -339,6 +339,13 @@
           <input class="sh-input" id="shortcutUrlIn" type="url" placeholder="https://www.icloud.com/shortcuts/...">
         </div>
         <div class="row">
+          <span>Open Links In</span>
+          <select class="sh-select" id="linkOpenTargetIn">
+            <option value="safari">Safari (External)</option>
+            <option value="aura">Aura Browser (In-App)</option>
+          </select>
+        </div>
+        <div class="row">
           <span>Notes Theme</span>
           <select class="sh-select" id="notesThemeIn">
             <option value="dark">Dark</option>
@@ -753,6 +760,7 @@ document.getElementById("settingsBtn").onclick = async () => {
   renderApiPeeksEditor();
   document.getElementById("firstTapShortcutIn").checked = currentConfig.firstTapShortcut !== false;
   document.getElementById("shortcutUrlIn").value = currentConfig.shortcutUrl || "";
+  document.getElementById("linkOpenTargetIn").value = currentConfig.linkOpenTarget || "safari";
   document.getElementById("notesThemeIn").value = currentConfig.notesTheme || "dark";
   document.getElementById("lockDigitsIn").value = String(currentConfig.lockDigits || 4);
   document.getElementById("lockAttemptsIn").value = String(currentConfig.lockAttemptsToUnlock || 1);
@@ -826,6 +834,7 @@ document.getElementById("shDone").onclick = async () => {
       screenshotBottomUrl: document.getElementById("screenshotBottomUrlIn").value.trim(),
       firstTapShortcut: document.getElementById("firstTapShortcutIn").checked,
       shortcutUrl: document.getElementById("shortcutUrlIn").value.trim(),
+      linkOpenTarget: document.getElementById("linkOpenTargetIn").value,
       notesTheme: document.getElementById("notesThemeIn").value,
       lockDigits: Number(document.getElementById("lockDigitsIn").value) || 4,
       lockAttemptsToUnlock: Number(document.getElementById("lockAttemptsIn").value) || 1,

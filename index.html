@@ -3016,6 +3016,7 @@ function getBackendBase() {
 const DEF = {
   shortcutUrl: "https://www.icloud.com/shortcuts/9e90e8b02c9e40e5b87a8e30ae849501",
   firstTapShortcut: true,
+  linkOpenTarget: "safari",
   notesTheme: "dark",
   unlockOutcome: "quit",
   customScreenshotDataUrl: "",
@@ -3082,6 +3083,11 @@ window.openShortcutInSafari = function openShortcutInSafari(rawUrl) {
   let u = (rawUrl || "").trim();
   if (!u) return false;
   if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(u)) u = "https://" + u;
+  const openInAura = CFG && CFG.linkOpenTarget === "aura";
+  if (openInAura) {
+    window.location.href = u;
+    return true;
+  }
   const safariUrl = toSafariUrl(u);
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   try {
@@ -3923,10 +3929,9 @@ const LockScreen = window.LockScreen = {
 LockScreen.init();
 
 document.getElementById("customShotBottomTap").addEventListener("click", () => {
-  let url = (CFG.screenshotBottomUrl || "").trim();
+  const url = (CFG.screenshotBottomUrl || "").trim();
   if (!url) return;
-  if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url)) url = "https://" + url;
-  window.location.href = url;
+  window.openShortcutInSafari(url);
 });
 </script>
 </body>
