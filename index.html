@@ -886,16 +886,7 @@ function openShortcutInSafari(rawUrl) {
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   try {
     if (isIOS) {
-      try { window.location.href = safariUrl; } catch (_) {}
-      try {
-        const a = document.createElement("a");
-        a.href = u;
-        a.target = "_blank";
-        a.rel = "noreferrer noopener";
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => { try { document.body.removeChild(a); } catch (_) {} }, 150);
-      } catch (_) {}
+      window.location.href = safariUrl;
       return true;
     }
     window.open(u, "_blank");
