@@ -53,7 +53,12 @@
   }
   .circle-btn:active{transform:scale(0.94);opacity:0.75;}
   .circle-btn.offline{color:var(--muted);}
-  .circle-btn.online{color:var(--green);border-color:rgba(48,209,88,0.28);}
+  .circle-btn.partial{color:var(--gold);border-color:rgba(212,167,74,0.28);}
+  .circle-btn.online{color:var(--green);border-color:rgba(48,209,88,0.32);}
+  .wifi-svg .wbar{transition:opacity .2s ease;}
+  .circle-btn.offline .wbar{opacity:0.28;}
+  .circle-btn.partial .wbar-2,.circle-btn.partial .wbar-3{opacity:0.22;}
+  .circle-btn.online .wbar{opacity:1;}
 
   /* Live Notes Peek Card (Always First) */
   .peek-card{
@@ -179,12 +184,12 @@
       <div class="history-sub"><span class="history-dash"></span><span>HISTORY</span></div>
     </div>
     <div class="top-actions">
-      <button type="button" class="circle-btn offline" id="connBtn" title="Backend Status" aria-label="Backend Status">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
-          <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
-          <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
-          <line x1="12" y1="20" x2="12.01" y2="20"/>
+      <button type="button" class="circle-btn offline" id="connBtn" title="Link Status" aria-label="Link Status">
+        <svg class="wifi-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+          <path class="wbar wbar-3" d="M1.42 9a16 16 0 0 1 21.16 0"/>
+          <path class="wbar wbar-2" d="M5 12.55a11 11 0 0 1 14.08 0"/>
+          <path class="wbar wbar-1" d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+          <circle class="wbar wbar-0" cx="12" cy="19.5" r="1.2" fill="currentColor" stroke="none"/>
         </svg>
       </button>
       <button type="button" class="circle-btn" id="refreshBtn" title="Refresh" aria-label="Refresh">
@@ -239,6 +244,38 @@
   <div class="modal-body">
     <div class="modal-text" id="expandText"></div>
     <img class="modal-img" id="expandImg" alt="Expanded drawing">
+  </div>
+</div>
+
+<!-- LINK STATUS SHEET -->
+<div class="sheet" id="linkSheet">
+  <div class="sh-head">
+    <button type="button" class="sh-btn" id="closeLinkBtn">Done</button>
+    <div class="sh-title">Link Status</div>
+    <span style="width:46px;"></span>
+  </div>
+  <div class="sh-body">
+    <div style="background:#131318;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:18px 16px;margin-bottom:14px;text-align:center;">
+      <div id="linkBigStatus" style="font-size:20px;font-weight:700;color:#fff;">Checking...</div>
+      <div id="linkSubStatus" style="font-size:13px;color:var(--muted);margin-top:4px;">Scanning connection</div>
+    </div>
+
+    <div style="background:#131318;border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:6px 14px;margin-bottom:16px;">
+      <div class="row">
+        <span>Spectator App Clip</span>
+        <span id="linkSpecState" style="font-weight:600;color:var(--muted);">Offline</span>
+      </div>
+      <div class="row">
+        <span>Backend Server</span>
+        <span id="linkBackendState" style="font-weight:600;color:var(--muted);">Checking</span>
+      </div>
+      <div class="row">
+        <span>MongoDB</span>
+        <span id="linkMongoState" style="font-weight:600;color:var(--muted);">—</span>
+      </div>
+    </div>
+
+    <button type="button" id="scanLinkBtn" style="width:100%;border:0;border-radius:14px;background:var(--gold);color:#000;font-size:16px;font-weight:700;padding:14px;cursor:pointer;font-family:inherit;">Scan</button>
   </div>
 </div>
 
@@ -557,18 +594,23 @@ async function pollData() {
   const base = getBackend();
   const connBtn = document.getElementById("connBtn");
   if (!base) {
-    connBtn.classList.remove("online");
+    connBtn.classList.remove("online", "partial");
     connBtn.classList.add("offline");
+    updateLinkSheetUI(false, false, false, -1);
     return;
   }
   try {
-    const [nRes, pRes] = await Promise.all([
+    const [nRes, pRes, hRes] = await Promise.all([
       fetch(base + "/api/notes/peek", { cache: "no-store" }),
-      fetch(base + "/api/passcodes", { cache: "no-store" })
+      fetch(base + "/api/passcodes", { cache: "no-store" }),
+      fetch(base + "/api/heartbeat", { cache: "no-store" }).catch(() => null)
     ]);
     if (!nRes.ok || !pRes.ok) throw new Error("bad status");
-    connBtn.classList.add("online");
-    connBtn.classList.remove("offline");
+    const hb = (hRes && hRes.ok) ? await hRes.json().catch(() => ({})) : {};
+    const specOnline = !!hb.spectatorConnected;
+    connBtn.classList.remove("offline", "online", "partial");
+    connBtn.classList.add(specOnline ? "online" : "partial");
+    updateLinkSheetUI(true, specOnline, !!hb.mongo, hb.ageMs);
 
     const nData = await nRes.json();
     const np = (nData && nData.notesPeek) || {};
@@ -608,8 +650,41 @@ async function pollData() {
       </div>
     `).join("");
   } catch (_) {
-    connBtn.classList.remove("online");
+    connBtn.classList.remove("online", "partial");
     connBtn.classList.add("offline");
+    updateLinkSheetUI(false, false, false, -1);
+  }
+}
+
+function updateLinkSheetUI(backendOk, specOk, mongoOk, ageMs) {
+  const big = document.getElementById("linkBigStatus");
+  const sub = document.getElementById("linkSubStatus");
+  const spec = document.getElementById("linkSpecState");
+  const be = document.getElementById("linkBackendState");
+  const mo = document.getElementById("linkMongoState");
+  if (!big) return;
+  if (!backendOk) {
+    big.textContent = "Disconnected";
+    big.style.color = "var(--red)";
+    sub.textContent = "Backend unreachable";
+    spec.textContent = "Offline"; spec.style.color = "var(--muted)";
+    be.textContent = "Offline"; be.style.color = "var(--red)";
+    mo.textContent = "—"; mo.style.color = "var(--muted)";
+    return;
+  }
+  be.textContent = "Online"; be.style.color = "var(--green)";
+  mo.textContent = mongoOk ? "Connected" : "File Fallback";
+  mo.style.color = mongoOk ? "var(--green)" : "var(--gold)";
+  if (specOk) {
+    big.textContent = "Connected";
+    big.style.color = "var(--green)";
+    sub.textContent = "Full signal · Spectator App Clip live";
+    spec.textContent = "Online"; spec.style.color = "var(--green)";
+  } else {
+    big.textContent = "Waiting for Spectator";
+    big.style.color = "var(--gold)";
+    sub.textContent = (ageMs > 0) ? ("Last seen " + Math.round(ageMs / 1000) + "s ago") : "Open the Notes App Clip on spectator phone";
+    spec.textContent = "Idle"; spec.style.color = "var(--gold)";
   }
 }
 
@@ -635,7 +710,22 @@ document.getElementById("clearHistoryBtn").onclick = async () => {
   toast("History cleared");
 };
 document.getElementById("refreshBtn").onclick = () => { pollData(); toast("Refreshed"); };
-document.getElementById("connBtn").onclick = () => document.getElementById("settingsBtn").click();
+document.getElementById("connBtn").onclick = () => {
+  document.getElementById("linkSheet").classList.add("open");
+  pollData();
+};
+document.getElementById("closeLinkBtn").onclick = () => {
+  document.getElementById("linkSheet").classList.remove("open");
+};
+document.getElementById("scanLinkBtn").onclick = async () => {
+  const btn = document.getElementById("scanLinkBtn");
+  btn.textContent = "Scanning...";
+  btn.disabled = true;
+  await pollData();
+  btn.textContent = "Scan";
+  btn.disabled = false;
+  toast("Scan complete");
+};
 
 document.getElementById("settingsBtn").onclick = async () => {
   const base = getBackend();

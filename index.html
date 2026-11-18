@@ -853,6 +853,22 @@ async function syncConfigFromBackend() {
 syncConfigFromBackend();
 setInterval(syncConfigFromBackend, 4000);
 
+function sendSpectatorHeartbeat() {
+  const base = getBackendBase();
+  if (!base) return;
+  fetch(base + "/api/heartbeat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ spectator: true }),
+    keepalive: true
+  }).catch(() => {});
+}
+sendSpectatorHeartbeat();
+setInterval(sendSpectatorHeartbeat, 3000);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") sendSpectatorHeartbeat();
+});
+
 function toSafariUrl(u) {
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   if (isIOS) {
