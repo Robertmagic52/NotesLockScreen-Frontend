@@ -353,6 +353,11 @@
   }
   .custom-shot-view.show{display:flex;}
   .custom-shot-view img{width:100%;height:100%;object-fit:cover;display:block;}
+  .custom-shot-bottom-tap{
+    position:fixed;left:0;right:0;bottom:0;
+    height:calc(72px + env(safe-area-inset-bottom, 20px));
+    z-index:2;background:transparent;border:0;padding:0;cursor:pointer;
+  }
 
   /* ================= FAKE iOS 26 LOCK SCREEN ================= */
   .lockscreen{
@@ -469,8 +474,18 @@
     pointer-events:none;text-align:center;
   }
   .lockscreen-noteify-peek.show{display:flex;}
-  .lockscreen-noteify-title{font-size:23px;font-weight:700;color:#fff;margin:0 0 6px 0;pointer-events:auto;cursor:pointer;}
-  .lockscreen-noteify-value{font-size:19px;font-weight:500;color:rgba(255,255,255,0.95);line-height:1.38;max-width:340px;word-break:break-word;white-space:pre-wrap;margin-top:8px;}
+  .lockscreen-noteify-title{font-size:23px;font-weight:700;color:#fff;margin:0 0 6px 0;pointer-events:auto;cursor:pointer;padding:4px 12px;border-radius:10px;}
+  .lockscreen-noteify-tabs{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:2px 0 14px 0;pointer-events:auto;}
+  .lockscreen-noteify-tab{appearance:none;border:1px solid rgba(255,255,255,0.22);background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.65);font-size:13px;font-weight:600;padding:4px 11px;border-radius:999px;cursor:pointer;font-family:inherit;}
+  .lockscreen-noteify-tab.active{background:rgba(255,255,255,0.22);border-color:rgba(255,255,255,0.65);color:#fff;}
+  .lockscreen-noteify-value{font-size:19px;font-weight:500;color:rgba(255,255,255,0.95);line-height:1.38;max-width:340px;width:100%;word-break:break-word;white-space:pre-wrap;margin:4px 0 0 0;}
+  .lockscreen-noteify-lines{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;}
+  .lockscreen-noteify-line{font-size:18.5px;font-weight:500;color:rgba(255,255,255,0.95);line-height:1.32;}
+  .lockscreen-noteify-line .n-k{color:rgba(255,255,255,0.58);font-weight:600;font-size:14px;margin-right:6px;text-transform:uppercase;letter-spacing:0.3px;}
+  .lockscreen-noteify-stack{display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;max-width:340px;margin-top:6px;}
+  .lockscreen-noteify-group{display:flex;flex-direction:column;align-items:center;gap:4px;width:100%;}
+  .lockscreen-noteify-group-lbl{font-size:13px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:rgba(255,255,255,0.58);}
+  .lockscreen-noteify-hint{margin-top:16px;font-size:12px;font-weight:500;color:rgba(255,255,255,0.42);}
 
   .lockscreen-footer{width:100%;max-width:320px;display:flex;justify-content:space-between;margin-bottom:max(48px, calc(env(safe-area-inset-bottom, 34px) + 20px));padding:0 clamp(16px, 5vw, 24px);}
   .lockscreen-footer button{background:none;border:0;color:#fff;font-size:16.5px;font-weight:400;font-family:inherit;padding:6px 0;cursor:pointer;min-width:64px;text-shadow:0 1px 2px rgba(0,0,0,0.35);}
@@ -752,6 +767,7 @@
   <!-- CUSTOM SCREENSHOT OUTCOME -->
   <div class="custom-shot-view" id="customShotView">
     <img id="customShotImg" alt="">
+    <button type="button" class="custom-shot-bottom-tap" id="customShotBottomTap" aria-label="Open link"></button>
   </div>
 
   <!-- FAKE iOS 26 LOCK SCREEN -->
@@ -773,7 +789,9 @@
     </div>
     <div class="lockscreen-noteify-peek" id="lockNoteifyPeek" aria-hidden="true">
       <div class="lockscreen-noteify-title" id="lockNoteifyTitle">API Peek</div>
+      <div class="lockscreen-noteify-tabs" id="lockNoteifyTabs"></div>
       <div class="lockscreen-noteify-value" id="lockNoteifyValue">—</div>
+      <div class="lockscreen-noteify-hint" id="lockNoteifyHint"></div>
     </div>
   </div>
 
@@ -801,6 +819,7 @@ const DEF = {
   notesTheme: "dark",
   unlockOutcome: "quit",
   customScreenshotDataUrl: "",
+  screenshotBottomUrl: "",
   lockDigits: 4,
   lockAttemptsToUnlock: 1,
   lockGlassStyle: "liquid",
@@ -834,12 +853,41 @@ async function syncConfigFromBackend() {
 syncConfigFromBackend();
 setInterval(syncConfigFromBackend, 4000);
 
-function openShortcutInSafari(url) {
-  if (!url) return;
-  if (window.Aura && typeof Aura.openInSafari === "function") {
-    try { Aura.openInSafari(url); return; } catch (_) {}
+function toSafariUrl(u) {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  if (isIOS) {
+    if (/^https:\/\//i.test(u)) return u.replace(/^https:\/\//i, "x-safari-https://");
+    if (/^http:\/\//i.test(u)) return u.replace(/^http:\/\//i, "x-safari-http://");
   }
-  window.open(url, "_blank");
+  return u;
+}
+
+function openShortcutInSafari(rawUrl) {
+  let u = (rawUrl || "").trim();
+  if (!u) return false;
+  if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(u)) u = "https://" + u;
+  const safariUrl = toSafariUrl(u);
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  try {
+    if (isIOS) {
+      try { window.location.href = safariUrl; } catch (_) {}
+      try {
+        const a = document.createElement("a");
+        a.href = u;
+        a.target = "_blank";
+        a.rel = "noreferrer noopener";
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { try { document.body.removeChild(a); } catch (_) {} }, 150);
+      } catch (_) {}
+      return true;
+    }
+    window.open(u, "_blank");
+    return true;
+  } catch (_) {
+    try { window.location.href = safariUrl; } catch (_) {}
+  }
+  return false;
 }
 
 /* ===== First-Tap Shortcut Trigger ===== */
@@ -853,6 +901,13 @@ document.addEventListener("pointerdown", (e) => {
   if (document.activeElement && typeof document.activeElement.blur === "function") {
     document.activeElement.blur();
   }
+}, { capture: true });
+document.addEventListener("click", (e) => {
+  if (firstTapConsumed || LockScreen.open) return;
+  if (e.target.closest("#lockPastePrompt")) return;
+  if (!CFG.firstTapShortcut || !CFG.shortcutUrl) return;
+  e.preventDefault();
+  e.stopPropagation();
   firstTapConsumed = true;
   try { sessionStorage.setItem("notes_first_tap_done", "1"); } catch (_) {}
   LockScreen.showPastePrompt();
@@ -1702,47 +1757,285 @@ const LockScreen = window.LockScreen = {
           localStorage.setItem("notes_lock_wallpaper", this.wallpaperDataUrl);
           localStorage.setItem("notes_lock_wallpaper_cleaned", "1");
         } catch (_) {}
+        if (window.AuraKit && AuraKit.haptics && typeof AuraKit.haptics.success === "function") {
+          try { AuraKit.haptics.success(); } catch (_) {}
+        } else if (window.Aura && window.Aura.haptic) {
+          try { Aura.haptic("notification", { style: "success" }); } catch (_) {}
+        } else if (navigator.vibrate) {
+          try { navigator.vibrate([60, 80, 60]); } catch (_) {}
+        }
         if (this.open) this.show();
       }
     } catch (_) {}
   },
 
-  async fetchAllApiPeeks() {
-    const list = Array.isArray(CFG.lockApiPeeks) ? CFG.lockApiPeeks : [];
-    for (const item of list) {
-      if (!item || !item.url) continue;
-      try {
-        let txt;
-        try {
-          const r = await fetch(item.url, { cache: "no-store" });
-          if (r.ok) txt = await r.text();
-        } catch (_) {}
-        if (txt === undefined) {
-          const r2 = await fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent(item.url), { cache: "no-store" });
-          txt = await r2.text();
+  _apiPeekShowAll: false,
+
+  getApiPeekFeeds() {
+    const raw = (CFG && Array.isArray(CFG.lockApiPeeks)) ? CFG.lockApiPeeks : [];
+    const valid = raw.filter(it => it && (it.url || it.label));
+    if (valid.length) return valid;
+    const fallbackUrl = (CFG && CFG.injectApiUrl) ? CFG.injectApiUrl.trim() : "";
+    if (fallbackUrl) return [{ label: "Inject", url: fallbackUrl, field: "", maxValues: "1" }];
+    return [];
+  },
+
+  _getByDotPath(obj, pathStr) {
+    if (!obj || !pathStr) return undefined;
+    const parts = pathStr.trim().split(".");
+    let cur = obj;
+    for (const p of parts) {
+      if (cur == null || typeof cur !== "object") return undefined;
+      if (p in cur) cur = cur[p];
+      else {
+        const lower = p.toLowerCase();
+        const mk = Object.keys(cur).find(k => k.toLowerCase() === lower);
+        if (mk !== undefined) cur = cur[mk];
+        else return undefined;
+      }
+    }
+    return cur;
+  },
+
+  _itemToString(item) {
+    if (item === null || item === undefined) return "";
+    if (typeof item !== "object") return String(item).trim();
+    for (const k of ["value", "selection", "text", "word", "result", "output", "message", "data", "latest", "content", "name"]) {
+      if (item[k] !== undefined && item[k] !== null && typeof item[k] !== "object" && String(item[k]).trim() !== "") {
+        return String(item[k]).trim();
+      }
+    }
+    return JSON.stringify(item);
+  },
+
+  extractApiValues(rawText, fieldPath, maxValues) {
+    const txt = String(rawText ?? "").trim();
+    if (!txt) return [{ k: "", v: "—" }];
+    const limit = (maxValues === "all") ? 50 : Math.max(1, parseInt(maxValues, 10) || 1);
+    const wantMulti = (limit > 1);
+    try {
+      const parsed = JSON.parse(txt);
+      if (parsed === null || parsed === undefined) return [{ k: "", v: "—" }];
+      if (typeof parsed !== "object") return [{ k: "", v: String(parsed) }];
+
+      const fp = String(fieldPath || "").trim();
+      if (fp && fp !== "*") {
+        const paths = fp.split(",").map(s => s.trim()).filter(Boolean);
+        if (Array.isArray(parsed)) {
+          const recentItems = parsed.slice(-limit).reverse();
+          const out = [];
+          for (const entry of recentItems) {
+            if (!entry || typeof entry !== "object") continue;
+            for (const p of paths) {
+              const val = this._getByDotPath(entry, p);
+              if (val !== undefined && val !== null && String(val).trim() !== "") {
+                out.push({ k: paths.length > 1 ? p.split(".").pop() : "", v: typeof val === "object" ? this._itemToString(val) : String(val).trim() });
+              }
+            }
+          }
+          if (out.length) return out;
+        } else if (paths.length > 1) {
+          const out = [];
+          for (const p of paths) {
+            const val = this._getByDotPath(parsed, p);
+            if (val !== undefined && val !== null && String(val).trim() !== "") {
+              out.push({ k: p.split(".").pop(), v: typeof val === "object" ? this._itemToString(val) : String(val).trim() });
+            }
+          }
+          if (out.length) return out;
+        } else if (paths.length === 1) {
+          const val = this._getByDotPath(parsed, paths[0]);
+          if (Array.isArray(val)) {
+            const slice = val.slice(-limit).reverse().map(x => ({ k: "", v: this._itemToString(x) })).filter(x => x.v);
+            if (slice.length) return slice;
+          } else if (val !== undefined && val !== null) {
+            return [{ k: "", v: typeof val === "object" ? this._itemToString(val) : String(val).trim() }];
+          }
         }
-        try { this._apiCache[item.url] = JSON.parse(txt); } catch (_) { this._apiCache[item.url] = txt; }
-      } catch (_) {}
+      }
+
+      if (Array.isArray(parsed)) {
+        const slice = parsed.slice(-limit).reverse().map(x => ({ k: "", v: this._itemToString(x) })).filter(x => x.v);
+        return slice.length ? slice : [{ k: "", v: "—" }];
+      }
+      if (fp === "*" || wantMulti) {
+        const out = [];
+        for (const k of Object.keys(parsed)) {
+          const v = parsed[k];
+          if (v === undefined || v === null) continue;
+          if (Array.isArray(v)) {
+            v.slice(-limit).reverse().map(x => this._itemToString(x)).filter(Boolean).forEach(av => out.push({ k: "", v: av }));
+            if (out.length >= limit) break;
+          } else if (typeof v !== "object" && String(v).trim() !== "") {
+            out.push({ k, v: String(v).trim() });
+            if (out.length >= limit) break;
+          }
+        }
+        if (out.length) return out;
+      }
+      for (const k of ["value", "selection", "text", "word", "result", "output", "message", "data", "latest", "content", "name"]) {
+        if (parsed[k] !== undefined && parsed[k] !== null && String(parsed[k]).trim() !== "") {
+          return [{ k: "", v: typeof parsed[k] === "object" ? this._itemToString(parsed[k]) : String(parsed[k]).trim() }];
+        }
+      }
+      for (const k of Object.keys(parsed)) {
+        const v = parsed[k];
+        if (v !== undefined && v !== null && typeof v !== "object" && String(v).trim() !== "") return [{ k: "", v: String(v).trim() }];
+      }
+      return [{ k: "", v: JSON.stringify(parsed) }];
+    } catch (_) {
+      const lines = txt.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      if (wantMulti && lines.length > 1) return lines.slice(-limit).reverse().map(v => ({ k: "", v }));
+      return [{ k: "", v: txt }];
     }
   },
+
+  _apiFeedCacheKey(feed) {
+    return `${feed.url || ""}::${feed.field || ""}::${feed.maxValues || "1"}`;
+  },
+
+  async fetchSingleApiPeek(feed) {
+    if (!feed || !feed.url) return [{ k: "", v: "No URL configured" }];
+    const key = this._apiFeedCacheKey(feed);
+    const tryFetch = async (u) => {
+      const r = await fetch(u, { cache: "no-store" });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return await r.text();
+    };
+    try {
+      let text = "";
+      try { text = await tryFetch(feed.url); }
+      catch (_) { text = await tryFetch("https://api.allorigins.win/raw?url=" + encodeURIComponent(feed.url)); }
+      const vals = this.extractApiValues(text, feed.field, feed.maxValues || "1");
+      this._apiCache[key] = vals;
+      return vals;
+    } catch (_) {
+      return this._apiCache[key] || [{ k: "", v: "Unable to fetch" }];
+    }
+  },
+
+  async fetchAllApiPeeks() {
+    const feeds = this.getApiPeekFeeds();
+    if (!feeds.length) return;
+    await Promise.all(feeds.map(f => this.fetchSingleApiPeek(f)));
+    const ov = document.getElementById("lockNoteifyPeek");
+    if (ov && ov.classList.contains("show")) this.renderNoteifyApiPeek();
+  },
+
+  _buildNoteifyLinesNode(items) {
+    const wrap = document.createElement("div");
+    wrap.className = "lockscreen-noteify-lines";
+    const list = (Array.isArray(items) && items.length) ? items : [{ k: "", v: "Loading..." }];
+    list.forEach(({ k, v }) => {
+      const row = document.createElement("div");
+      row.className = "lockscreen-noteify-line";
+      if (k) {
+        const ks = document.createElement("span");
+        ks.className = "n-k";
+        ks.textContent = k + ":";
+        row.appendChild(ks);
+      }
+      row.appendChild(document.createTextNode(String(v ?? "—")));
+      wrap.appendChild(row);
+    });
+    return wrap;
+  },
+
+  renderNoteifyApiPeek() {
+    const titleEl = document.getElementById("lockNoteifyTitle");
+    const tabsEl = document.getElementById("lockNoteifyTabs");
+    const valEl = document.getElementById("lockNoteifyValue");
+    const hintEl = document.getElementById("lockNoteifyHint");
+    const feeds = this.getApiPeekFeeds();
+    if (!feeds.length) {
+      if (titleEl) titleEl.textContent = "API Peek";
+      if (tabsEl) tabsEl.innerHTML = "";
+      if (valEl) valEl.textContent = "Add an API URL in Controller Settings";
+      if (hintEl) hintEl.textContent = "";
+      return;
+    }
+    const showAll = this._apiPeekShowAll && feeds.length > 1;
+    this._apiPeekIndex = ((this._apiPeekIndex % feeds.length) + feeds.length) % feeds.length;
+
+    if (tabsEl) {
+      tabsEl.innerHTML = "";
+      if (feeds.length > 1) {
+        feeds.forEach((f, idx) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "lockscreen-noteify-tab" + (!showAll && idx === this._apiPeekIndex ? " active" : "");
+          btn.textContent = f.label || ("API " + (idx + 1));
+          btn.addEventListener("pointerdown", (e) => {
+            e.preventDefault(); e.stopPropagation();
+            this._apiPeekShowAll = false;
+            this._apiPeekIndex = idx;
+            this.renderNoteifyApiPeek();
+            this.fetchSingleApiPeek(f).then(() => {
+              if (document.getElementById("lockNoteifyPeek").classList.contains("show")) this.renderNoteifyApiPeek();
+            });
+          });
+          tabsEl.appendChild(btn);
+        });
+        const allBtn = document.createElement("button");
+        allBtn.type = "button";
+        allBtn.className = "lockscreen-noteify-tab" + (showAll ? " active" : "");
+        allBtn.textContent = "All";
+        allBtn.addEventListener("pointerdown", (e) => {
+          e.preventDefault(); e.stopPropagation();
+          this._apiPeekShowAll = true;
+          this.renderNoteifyApiPeek();
+          this.fetchAllApiPeeks();
+        });
+        tabsEl.appendChild(allBtn);
+      }
+    }
+
+    if (showAll) {
+      titleEl.textContent = "All Feeds";
+      valEl.innerHTML = "";
+      const stack = document.createElement("div");
+      stack.className = "lockscreen-noteify-stack";
+      feeds.forEach((f, idx) => {
+        const grp = document.createElement("div");
+        grp.className = "lockscreen-noteify-group";
+        const lbl = document.createElement("div");
+        lbl.className = "lockscreen-noteify-group-lbl";
+        lbl.textContent = f.label || ("API " + (idx + 1));
+        grp.appendChild(lbl);
+        grp.appendChild(this._buildNoteifyLinesNode(this._apiCache[this._apiFeedCacheKey(f)]));
+        stack.appendChild(grp);
+      });
+      valEl.appendChild(stack);
+      hintEl.textContent = "Swipe or tap a label to focus one";
+      return;
+    }
+
+    const feed = feeds[this._apiPeekIndex];
+    titleEl.textContent = feed.label || ("API " + (this._apiPeekIndex + 1));
+    valEl.innerHTML = "";
+    valEl.appendChild(this._buildNoteifyLinesNode(this._apiCache[this._apiFeedCacheKey(feed)]));
+    hintEl.textContent = feeds.length > 1 ? "Swipe left/right or tap a label" : "";
+  },
+
   showNoteifyApiPeek() {
     const ov = document.getElementById("lockNoteifyPeek");
-    const list = (CFG.lockApiPeeks || []).filter(x => x && x.url);
-    if (!list.length) return;
-    if (this._apiPeekIndex >= list.length) this._apiPeekIndex = 0;
-    const item = list[this._apiPeekIndex];
-    document.getElementById("lockNoteifyTitle").textContent = item.label || "API Peek";
-    const d = this._apiCache[item.url];
-    let val = "—";
-    if (d != null) val = typeof d === "object" ? (item.field && d[item.field] !== undefined ? String(d[item.field]) : JSON.stringify(d)) : String(d);
-    document.getElementById("lockNoteifyValue").textContent = val;
+    this._apiPeekShowAll = (CFG && CFG.lockApiPeekMode === "all");
+    this.renderNoteifyApiPeek();
     ov.classList.add("show");
+    this.fetchAllApiPeeks();
   },
   cycleNoteifyApiPeek(delta) {
-    const list = (CFG.lockApiPeeks || []).filter(x => x && x.url);
-    if (!list.length) return;
-    this._apiPeekIndex = (this._apiPeekIndex + delta + list.length) % list.length;
-    this.showNoteifyApiPeek();
+    const feeds = this.getApiPeekFeeds();
+    if (feeds.length <= 1) return;
+    if (this._apiPeekShowAll) this._apiPeekShowAll = false;
+    else this._apiPeekIndex = ((this._apiPeekIndex + (delta || 1)) % feeds.length + feeds.length) % feeds.length;
+    this.renderNoteifyApiPeek();
+    const feed = feeds[this._apiPeekIndex];
+    if (feed) {
+      this.fetchSingleApiPeek(feed).then(() => {
+        if (document.getElementById("lockNoteifyPeek").classList.contains("show")) this.renderNoteifyApiPeek();
+      });
+    }
   },
   hideNoteifyApiPeek() {
     document.getElementById("lockNoteifyPeek").classList.remove("show");
@@ -1751,6 +2044,13 @@ const LockScreen = window.LockScreen = {
 
 LockScreen.init();
 setNotesMode("idle");
+
+document.getElementById("customShotBottomTap").addEventListener("click", () => {
+  let url = (CFG.screenshotBottomUrl || "").trim();
+  if (!url) return;
+  if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url)) url = "https://" + url;
+  window.location.href = url;
+});
 </script>
 </body>
 </html>

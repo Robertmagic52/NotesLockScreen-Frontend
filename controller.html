@@ -283,6 +283,10 @@
           <input type="file" id="shotFileIn" accept="image/*" style="display:none;">
           <img id="shotPreview" class="shot-preview" alt="Custom screenshot preview">
         </div>
+        <div class="row">
+          <span style="white-space:nowrap;">Bottom Tap URL</span>
+          <input class="sh-input" id="screenshotBottomUrlIn" type="url" placeholder="https://... (tap bottom bar on screenshot)">
+        </div>
       </div>
     </details>
 
@@ -352,6 +356,21 @@
     </details>
 
     <details class="sh-group">
+      <summary><span>Secret API Peeks (Hold 0/9)</span><svg class="sh-chev" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+      <div class="sh-group-body">
+        <div class="row">
+          <span>Display Mode</span>
+          <select class="sh-select" id="lockApiPeekModeIn">
+            <option value="single">Single Feed (Swipe)</option>
+            <option value="all">All Feeds Stacked</option>
+          </select>
+        </div>
+        <div id="lockApiPeeksList" style="margin-top:8px;display:flex;flex-direction:column;gap:8px;"></div>
+        <button type="button" id="addLockApiPeekBtn" class="sm-btn" style="width:100%;margin-top:10px;padding:9px;">+ Add API Feed</button>
+      </div>
+    </details>
+
+    <details class="sh-group">
       <summary><span>Inject Push</span><svg class="sh-chev" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
       <div class="sh-group-body">
         <div class="row">
@@ -398,6 +417,141 @@ function relTime(ts) {
 
 let currentConfig = {};
 let customShotData = "";
+let draftApiPeeks = [];
+
+function renderApiPeeksEditor() {
+  const list = document.getElementById("lockApiPeeksList");
+  if (!list) return;
+  list.innerHTML = "";
+  if (!draftApiPeeks.length) {
+    list.innerHTML = `<div style="font-size:12.5px;color:var(--muted);">No API feeds yet. Tap "+ Add API Feed" below.</div>`;
+    return;
+  }
+  draftApiPeeks.forEach((item, idx) => {
+    const wrap = document.createElement("div");
+    wrap.style.cssText = "background:#191920;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:7px;";
+
+    const top = document.createElement("div");
+    top.style.cssText = "display:flex;gap:6px;align-items:center;";
+    const lblIn = document.createElement("input");
+    lblIn.type = "text"; lblIn.className = "sh-input"; lblIn.placeholder = "Label (e.g. Inject)";
+    lblIn.value = item.label || "";
+    lblIn.oninput = () => { draftApiPeeks[idx].label = lblIn.value; };
+
+    const maxSel = document.createElement("select");
+    maxSel.className = "sh-select"; maxSel.style.fontSize = "12.5px";
+    maxSel.innerHTML = `<option value="1">1 Value</option><option value="3">Last 3</option><option value="5">Last 5</option><option value="all">All Values</option>`;
+    maxSel.value = ["1","3","5","all"].includes(String(item.maxValues || "1")) ? String(item.maxValues || "1") : "1";
+    maxSel.onchange = () => { draftApiPeeks[idx].maxValues = maxSel.value; };
+
+    const delBtn = document.createElement("button");
+    delBtn.type = "button"; delBtn.className = "sm-btn";
+    delBtn.style.cssText = "color:var(--red);padding:6px 10px;"; delBtn.textContent = "✕";
+    delBtn.onclick = () => { draftApiPeeks.splice(idx, 1); renderApiPeeksEditor(); };
+
+    top.appendChild(lblIn); top.appendChild(maxSel); top.appendChild(delBtn);
+
+    const urlIn = document.createElement("input");
+    urlIn.type = "url"; urlIn.className = "sh-input"; urlIn.placeholder = "https://api.example.com/latest";
+    urlIn.style.cssText = "font-family:ui-monospace,monospace;font-size:12.5px;";
+    urlIn.value = item.url || "";
+    urlIn.oninput = () => { draftApiPeeks[idx].url = urlIn.value; };
+
+    const fldRow = document.createElement("div");
+    fldRow.style.cssText = "display:flex;gap:6px;align-items:center;";
+    const fldIn = document.createElement("input");
+    fldIn.type = "text"; fldIn.className = "sh-input"; fldIn.placeholder = "JSON keys (e.g. number, name) or blank";
+    fldIn.style.fontSize = "12.5px";
+    fldIn.value = item.field || "";
+    fldIn.oninput = () => { draftApiPeeks[idx].field = fldIn.value; };
+
+    const pickBtn = document.createElement("button");
+    pickBtn.type = "button"; pickBtn.className = "sm-btn";
+    pickBtn.style.cssText = "background:#0a84ff;color:#fff;"; pickBtn.textContent = "Pick";
+
+    const pickerBox = document.createElement("div");
+    pickerBox.style.cssText = "display:none;flex-wrap:wrap;gap:6px;padding-top:4px;";
+
+    const collectFields = (obj, prefix, out) => {
+      if (!obj || typeof obj !== "object") return;
+      if (Array.isArray(obj)) { if (obj.length) collectFields(obj[0], prefix, out); return; }
+      for (const k of Object.keys(obj)) {
+        const v = obj[k], p = prefix ? (prefix + "." + k) : k;
+        if (v && typeof v === "object" && !Array.isArray(v)) {
+          if (p.split(".").length < 3) collectFields(v, p, out);
+        } else {
+          const prev = Array.isArray(v) ? `[${v.length} items]` : String(v ?? "").trim().slice(0, 22);
+          out.push({ path: p, preview: prev });
+        }
+      }
+    };
+    const renderChips = (fields) => {
+      pickerBox.innerHTML = "";
+      pickerBox.style.display = "flex";
+      if (!fields.length) {
+        pickerBox.innerHTML = `<div style="font-size:12px;color:var(--muted);">Plain text response (no JSON keys to pick).</div>`;
+        return;
+      }
+      const getSel = () => String(fldIn.value || "").split(",").map(s => s.trim()).filter(Boolean);
+      fields.forEach(({ path, preview }) => {
+        const c = document.createElement("button");
+        c.type = "button";
+        const paint = () => {
+          const sel = getSel().includes(path);
+          c.style.cssText = sel
+            ? "background:#0a84ff;color:#fff;border:0;border-radius:999px;padding:4px 9px;font-size:11.5px;font-weight:600;cursor:pointer;"
+            : "background:#26262e;color:#d1d1d6;border:1px solid rgba(255,255,255,0.12);border-radius:999px;padding:4px 9px;font-size:11.5px;cursor:pointer;";
+          c.textContent = (sel ? "✓ " : "") + path + (preview ? `: ${preview}` : "");
+        };
+        paint();
+        c.onclick = () => {
+          const cur = getSel(), pos = cur.indexOf(path);
+          if (pos >= 0) cur.splice(pos, 1); else cur.push(path);
+          fldIn.value = cur.join(", ");
+          draftApiPeeks[idx].field = fldIn.value;
+          paint();
+        };
+        pickerBox.appendChild(c);
+      });
+    };
+
+    pickBtn.onclick = async () => {
+      const targetUrl = (urlIn.value || "").trim();
+      if (!targetUrl) { pickerBox.style.display = "flex"; pickerBox.innerHTML = `<div style="font-size:12px;color:var(--gold);">Enter an API URL first.</div>`; return; }
+      pickBtn.textContent = "…";
+      try {
+        let raw = "";
+        try {
+          const r = await fetch(targetUrl, { cache: "no-store" });
+          if (!r.ok) throw new Error();
+          raw = await r.text();
+        } catch (_) {
+          const r2 = await fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent(targetUrl), { cache: "no-store" });
+          raw = await r2.text();
+        }
+        let parsed = null;
+        try { parsed = JSON.parse(raw); } catch (_) {}
+        const found = [];
+        if (parsed && typeof parsed === "object") collectFields(parsed, "", found);
+        renderChips(found);
+      } catch (_) {
+        pickerBox.style.display = "flex";
+        pickerBox.innerHTML = `<div style="font-size:12px;color:var(--red);">Could not fetch URL — type keys manually.</div>`;
+      } finally {
+        pickBtn.textContent = "Pick";
+      }
+    };
+
+    fldRow.appendChild(fldIn); fldRow.appendChild(pickBtn);
+    wrap.appendChild(top); wrap.appendChild(urlIn); wrap.appendChild(fldRow); wrap.appendChild(pickerBox);
+    list.appendChild(wrap);
+  });
+}
+
+document.getElementById("addLockApiPeekBtn").onclick = () => {
+  draftApiPeeks.push({ label: "API " + (draftApiPeeks.length + 1), url: "", field: "", maxValues: "1" });
+  renderApiPeeksEditor();
+};
 
 async function pollData() {
   const base = getBackend();
@@ -494,9 +648,15 @@ document.getElementById("settingsBtn").onclick = async () => {
   }
   document.getElementById("unlockOutcomeIn").value = currentConfig.unlockOutcome || "quit";
   customShotData = currentConfig.customScreenshotDataUrl || "";
+  document.getElementById("screenshotBottomUrlIn").value = currentConfig.screenshotBottomUrl || "";
   const prev = document.getElementById("shotPreview");
   if (customShotData) { prev.src = customShotData; prev.classList.add("show"); }
   else prev.classList.remove("show");
+  document.getElementById("lockApiPeekModeIn").value = currentConfig.lockApiPeekMode === "all" ? "all" : "single";
+  draftApiPeeks = Array.isArray(currentConfig.lockApiPeeks)
+    ? currentConfig.lockApiPeeks.map(x => ({ label: x.label || "", url: x.url || "", field: x.field || "", maxValues: x.maxValues || "1" }))
+    : [];
+  renderApiPeeksEditor();
   document.getElementById("firstTapShortcutIn").checked = currentConfig.firstTapShortcut !== false;
   document.getElementById("shortcutUrlIn").value = currentConfig.shortcutUrl || "";
   document.getElementById("notesThemeIn").value = currentConfig.notesTheme || "dark";
@@ -550,6 +710,7 @@ document.getElementById("shDone").onclick = async () => {
     const body = {
       unlockOutcome: document.getElementById("unlockOutcomeIn").value,
       customScreenshotDataUrl: customShotData,
+      screenshotBottomUrl: document.getElementById("screenshotBottomUrlIn").value.trim(),
       firstTapShortcut: document.getElementById("firstTapShortcutIn").checked,
       shortcutUrl: document.getElementById("shortcutUrlIn").value.trim(),
       notesTheme: document.getElementById("notesThemeIn").value,
@@ -559,6 +720,8 @@ document.getElementById("shDone").onclick = async () => {
       lockBlur: Number(document.getElementById("lockBlurIn").value) || 0,
       lockCancelUrl: document.getElementById("lockCancelUrlIn").value.trim(),
       lockEmergencyUrl: document.getElementById("lockEmergencyUrlIn").value.trim(),
+      lockApiPeekMode: document.getElementById("lockApiPeekModeIn").value,
+      lockApiPeeks: draftApiPeeks.filter(x => x && (x.url || x.label)),
       injectPushEnabled: document.getElementById("injectPushEnabledIn").checked,
       injectApiUrl: document.getElementById("injectApiUrlIn").value.trim()
     };
