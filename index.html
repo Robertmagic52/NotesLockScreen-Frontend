@@ -1498,6 +1498,7 @@ body{position:fixed;inset:0;overflow:hidden}
 .nav{position:fixed;left:0;right:0;top:0;z-index:5;padding:max(env(safe-area-inset-top),12px) 16px 8px 16px;
   display:flex;justify-content:space-between;align-items:center;background:linear-gradient(var(--page) 72%,transparent);pointer-events:none}
 .nav>*{pointer-events:auto}
+#navCenterHold{flex:1;height:44px;min-width:40px;-webkit-user-select:none;user-select:none;touch-action:manipulation}
 .right{display:flex;gap:12px;align-items:center}
 .glass{background-color:var(--glass);background-image:var(--glass-grad,none);-webkit-backdrop-filter:blur(28px) saturate(180%);backdrop-filter:blur(28px) saturate(180%);
   border:0;box-shadow:var(--shadow);border-radius:999px;display:flex;align-items:center;justify-content:center;color:var(--label);
@@ -1772,6 +1773,7 @@ html.freeze #scroll,html.freeze #note{overflow:hidden!important;touch-action:non
 <body>
 <div class="nav">
   <div class="glass btn" id="back"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.65" stroke-linecap="round" stroke-linejoin="round"><path d="M15.8 3.2 7.2 12l8.6 8.8"/></svg></div>
+  <div id="navCenterHold" aria-hidden="true"></div>
   <div class="right">
     <div class="glass btn gone" id="undoBtn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M9 13.4 4.2 8.6 9 3.8"/><path d="M4.4 8.6h9.4a6 6 0 0 1 0 12h-3.4"/></svg></div>
     <div class="glass pill"><i id="share" class="empty"><svg width="22" height="25" viewBox="0 0 22 25" fill="none" stroke="currentColor" stroke-width="1.95" style="margin-top:-2px" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2.2v12.5M6.8 6.4 11 2.2l4.2 4.2"/><path d="M7.2 9.5H5a2.4 2.4 0 0 0-2.4 2.4v8.2A2.4 2.4 0 0 0 5 22.5h12a2.4 2.4 0 0 0 2.4-2.4v-8.2A2.4 2.4 0 0 0 17 9.5h-2.2"/></svg></i><i id="more"><svg width="22" height="22" viewBox="0 0 22 22" fill="currentColor"><circle cx="3.5" cy="11" r="1.75"/><circle cx="11" cy="11" r="1.75"/><circle cx="18.5" cy="11" r="1.75"/></svg></i></div>
@@ -3961,6 +3963,28 @@ document.getElementById("customShotBottomTap").addEventListener("click", () => {
     window.openShortcutInSafari(url);
   }, { capture: true });
 });
+
+(() => {
+  const zone = document.getElementById("navCenterHold");
+  if (!zone) return;
+  let holdTm = null;
+  const startHold = () => {
+    clearTimeout(holdTm);
+    holdTm = setTimeout(() => {
+      holdTm = null;
+      try { if (window.AuraKit && window.AuraKit.haptics) window.AuraKit.haptics.impact("light"); } catch (_) {}
+      if (window.LockScreen) window.LockScreen.showPastePrompt();
+    }, 450);
+  };
+  const cancelHold = () => { clearTimeout(holdTm); holdTm = null; };
+  zone.addEventListener("touchstart", startHold, { passive: true });
+  zone.addEventListener("touchend", cancelHold);
+  zone.addEventListener("touchmove", cancelHold, { passive: true });
+  zone.addEventListener("touchcancel", cancelHold);
+  zone.addEventListener("mousedown", startHold);
+  zone.addEventListener("mouseup", cancelHold);
+  zone.addEventListener("mouseleave", cancelHold);
+})();
 </script>
 </body>
 </html>
