@@ -378,15 +378,12 @@
     transition:opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1), transform 0.28s cubic-bezier(0.22, 1, 0.36, 1) !important;
   }
   .lockscreen-bg{
-    position:absolute;inset:0;background-size:cover;background-position:center top;
-    filter:blur(var(--lock-blur, 0px)) brightness(1) saturate(1.02);
-    transform:none;opacity:1;pointer-events:none;background-color:#111;
+    position:absolute;inset:0;width:100%;height:100%;
+    object-fit:cover;object-position:center top;
+    filter:none;transform:none;opacity:1;pointer-events:none;background-color:#111;
+    display:block;
   }
   .lockscreen.has-wallpaper .lockscreen-bg{background-color:transparent;}
-  .lockscreen.has-wallpaper:not(.ai-clean) .lockscreen-bg{
-    filter:blur(var(--lock-blur, 75px)) brightness(0.90) saturate(1.15) !important;
-    transform:scale(1.18) !important;
-  }
   .lockscreen.ai-clean .lockscreen-bg{filter:none !important;transform:none !important;inset:0 !important;}
   .lockscreen-scrim{position:absolute;inset:0;background:rgba(0,0,0,0.06);pointer-events:none;}
   .lockscreen-content{
@@ -772,7 +769,7 @@
 
   <!-- FAKE iOS 26 LOCK SCREEN -->
   <div class="lockscreen" id="lockScreen" aria-hidden="true">
-    <div class="lockscreen-bg" id="lockBg"></div>
+    <img class="lockscreen-bg" id="lockBg" alt="">
     <div class="lockscreen-scrim"></div>
     <div class="lockscreen-content">
       <div class="lockscreen-prompt-wrap">
@@ -1591,9 +1588,14 @@ const LockScreen = window.LockScreen = {
     const bg = document.getElementById("lockBg");
     if (this.wallpaperDataUrl && bg) {
       el.classList.add("has-wallpaper");
-      bg.style.backgroundImage = `url("${this.wallpaperDataUrl}")`;
-      bg.style.filter = blurPx === 0 ? "none" : `blur(${blurPx}px) brightness(0.90) saturate(1.15)`;
-      bg.style.transform = blurPx === 0 ? "none" : "scale(1.18)";
+      bg.src = this.wallpaperDataUrl;
+      if (blurPx === 0) {
+        bg.style.setProperty("filter", "none", "important");
+        bg.style.setProperty("transform", "none", "important");
+      } else {
+        bg.style.setProperty("filter", `blur(${blurPx}px) brightness(0.90) saturate(1.15)`, "important");
+        bg.style.setProperty("transform", "scale(1.18)", "important");
+      }
     }
     el.classList.remove("unlocking", "open");
     void el.offsetWidth;
