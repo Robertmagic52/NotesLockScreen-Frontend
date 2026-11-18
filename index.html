@@ -1481,66 +1481,66 @@
 <title>Notes</title>
 <style>
 :root{
-  --datec:#8A8A8E;
-  --page:#FFFFFF;--label:#000;--sec:rgba(60,60,67,.6);--tint:#E3A900;--title:#000;--dimicon:#A6A6A6;
-  --glass:#F8F8F8;--glassb:rgba(0,0,0,.07);--shadow:0 6px 18px rgba(0,0,0,.055),inset 0 .5px 0 #fff;
+  --datec:rgba(60,60,67,.6);
+  --page:#FFFFFF;--label:#000000;--sec:rgba(60,60,67,.6);--tint:#E3A900;--title:#000000;--dimicon:rgba(60,60,67,.28);
+  --glass:rgba(245,245,247,.82);--glassb:rgba(0,0,0,.07);--shadow:0 4px 16px rgba(0,0,0,.06),inset 0 .5px 0 rgba(255,255,255,.9);
   color-scheme:light dark;
 }
 @media (prefers-color-scheme:dark){:root{
-  --datec:#97969B;
-  --page:#000;--label:#FFF;--sec:rgba(235,235,245,.6);--tint:#DBB03D;--title:#DCDCDC;--dimicon:#5A5A5A;
-  --glass:#1F1F1F;--glassb:rgba(255,255,255,.1);--shadow:inset 0 .5px 0 rgba(255,255,255,.1);
+  --datec:rgba(235,235,245,.55);
+  --page:#000000;--label:#FFFFFF;--sec:rgba(235,235,245,.6);--tint:#E0AC1E;--title:#FFFFFF;--dimicon:rgba(255,255,255,.28);
+  --glass:rgba(36,36,38,.78);--glassb:rgba(255,255,255,.12);--shadow:inset 0 .5px 0 rgba(255,255,255,.14),0 4px 16px rgba(0,0,0,.38);
 }}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;background:var(--page);color:var(--label);overscroll-behavior:none;
   font-family:-apple-system,system-ui,"SF Pro Text","Helvetica Neue",sans-serif;-webkit-text-size-adjust:100%}
 body{position:fixed;inset:0;overflow:hidden}
-.nav{position:fixed;left:0;right:0;top:0;z-index:5;padding:max(env(safe-area-inset-top),12px) 16px 10px 16px;
-  display:flex;justify-content:space-between;align-items:center;background:linear-gradient(var(--page) 70%,transparent);pointer-events:none}
+.nav{position:fixed;left:0;right:0;top:0;z-index:5;padding:max(env(safe-area-inset-top),12px) 16px 8px 16px;
+  display:flex;justify-content:space-between;align-items:center;background:linear-gradient(var(--page) 72%,transparent);pointer-events:none}
 .nav>*{pointer-events:auto}
 .right{display:flex;gap:12px;align-items:center}
-.glass{background:var(--glass);-webkit-backdrop-filter:blur(22px) saturate(190%);backdrop-filter:blur(22px) saturate(190%);
+.glass{background:var(--glass);-webkit-backdrop-filter:blur(28px) saturate(180%);backdrop-filter:blur(28px) saturate(180%);
   border:.5px solid var(--glassb);box-shadow:var(--shadow);border-radius:999px;display:flex;align-items:center;justify-content:center;color:var(--label);
   transition:transform .15s,opacity .2s}
 .glass:active{transform:scale(.94)}
 .btn{width:44px;height:44px}
-.pill{height:44px;padding:0 4px}
-.pill i{width:42px;height:44px;display:flex;align-items:center;justify-content:center}
-.nav .pill{width:110px;padding:0;position:relative}
-.nav .pill i{position:absolute;top:0;width:31px}
-.nav .pill #share{left:10px}.nav .pill #more{left:69px}
+.pill{height:44px;padding:0 6px}
+.pill i{width:42px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.nav .pill{width:104px;padding:0 4px;display:flex;align-items:center;justify-content:space-evenly}
+.nav .pill i{position:static;width:44px;height:44px}
 #share.empty{color:var(--dimicon)}
 #undoBtn.gone{display:none}
-.done{background:var(--tint);border-color:rgba(255,236,170,.3);color:#fff;box-shadow:none}
-@supports (color:color(display-p3 1 1 1)){@media (prefers-color-scheme:dark){:root{--tint:color(display-p3 .859 .690 .239)}}}
-.hidden{opacity:0;pointer-events:none;transform:scale(.8)}
+.done{background:var(--tint);border-color:rgba(255,236,170,.28);color:#fff;box-shadow:0 2px 10px rgba(224,172,30,.25)}
+@supports (color:color(display-p3 1 1 1)){@media (prefers-color-scheme:dark){:root{--tint:color(display-p3 .878 .675 .118)}}}
+.hidden{opacity:0;pointer-events:none;transform:scale(.82)}
 svg{display:block}
 #scroll{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
-  padding:calc(max(env(safe-area-inset-top),12px) + 53px) 20px calc(env(safe-area-inset-bottom) + 120px) 26px}
-#date{text-align:center;font-size:16.5px;line-height:22px;font-weight:500;color:var(--datec,#97969B);padding:0 0 12px;margin-left:-6px;-webkit-user-select:none;user-select:none;letter-spacing:-.1px}
+  padding:calc(max(env(safe-area-inset-top),12px) + 52px) 20px calc(env(safe-area-inset-bottom) + 110px) 20px}
+#date{text-align:center;font-size:13px;line-height:18px;font-weight:400;color:var(--datec);padding:2px 0 14px;margin-left:0;-webkit-user-select:none;user-select:none;letter-spacing:-.08px}
 #note{min-height:60vh;outline:none;font-size:17px;line-height:23px;white-space:pre-wrap;word-wrap:break-word;caret-color:var(--tint);
   -webkit-user-select:text;user-select:text}
-#note::first-line{font-size:30px;line-height:40px;font-weight:800;letter-spacing:.2px;color:var(--title)}
+#note::first-line{font-size:28px;line-height:34px;font-weight:700;letter-spacing:.2px;color:var(--title)}
 #note.plain::first-line{font-size:17px;line-height:23px;font-weight:400;letter-spacing:0;color:inherit}   /* Acrostic: no title line */
 #note:empty{min-height:max(60vh,40px)}
 #note:empty::before{content:'';display:inline-block;height:40px}
-.bar{position:fixed;left:0;right:0;bottom:0;z-index:5;padding:14px 28px max(calc(env(safe-area-inset-bottom) - 7px),12px) 27px;
-  display:flex;justify-content:space-between;align-items:center;background:linear-gradient(transparent,var(--page) 45%);pointer-events:none}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:5;padding:12px 20px max(env(safe-area-inset-bottom),16px) 20px;
+  display:flex;justify-content:space-between;align-items:center;background:linear-gradient(transparent,var(--page) 48%);pointer-events:none}
 .bar>*{pointer-events:auto}
-.bar .pill{width:180px;height:49px;padding:0 6px;justify-content:space-around}
-.bar .pill i{width:54px;height:49px}
-.bar #compose{width:49px;height:49px}
+.bar .pill{width:170px;height:48px;padding:0 6px;justify-content:space-evenly}
+.bar .pill i{width:48px;height:48px}
+.bar #compose{width:48px;height:48px}
 #compose.empty{color:var(--dimicon)}
 .tint{color:var(--tint)}
-/* keyboard toolbar (shows above the keyboard while typing, like iOS 27 Notes) */
-#kbar{position:fixed;left:8px;right:9px;height:48px;bottom:8px;z-index:6;border-radius:24px;background:var(--glass);
-  border:.5px solid var(--glassb);box-shadow:var(--shadow);display:none;align-items:center;justify-content:flex-start;padding:0 0 0 2px;color:var(--label)}
-@media (prefers-color-scheme:dark){#kbar{border-color:rgba(255,255,255,.09)}}
+/* keyboard toolbar (shows above the keyboard while typing, like iOS 26 Notes) */
+#kbar{position:fixed;left:10px;right:10px;height:44px;bottom:8px;z-index:6;border-radius:22px;background:var(--glass);
+  -webkit-backdrop-filter:blur(28px) saturate(180%);backdrop-filter:blur(28px) saturate(180%);
+  border:.5px solid var(--glassb);box-shadow:var(--shadow);display:none;align-items:center;justify-content:space-around;padding:0 6px;color:var(--label)}
+@media (prefers-color-scheme:dark){#kbar{border-color:rgba(255,255,255,.12)}}
 .editing #kbar{display:flex}
 .editing .bar{display:none}
-#kbar i{width:73px;height:48px;display:flex;align-items:center;justify-content:center}
-#kbar svg *{stroke-width:2.4}
-#kbar i:first-child{margin-left:-8px}
+#kbar i{flex:1;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+#kbar svg *{stroke-width:1.85}
+#kbar i:first-child{margin-left:0}
 /* markup / drawing mode */
 #draw{position:fixed;inset:0;z-index:3;pointer-events:none;touch-action:none}
 .drawing #draw{pointer-events:auto}
@@ -1767,11 +1767,11 @@ html.freeze #scroll,html.freeze #note{overflow:hidden!important;touch-action:non
 </head>
 <body>
 <div class="nav">
-  <div class="glass btn" id="back"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4.5 7.5 12l7.5 7.5"/></svg></div>
+  <div class="glass btn" id="back"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 5 8.5 12l7 7"/></svg></div>
   <div class="right">
-    <div class="glass btn gone" id="undoBtn"><svg width="31" height="31" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 13.4 4.2 8.6 9 3.8"/><path d="M4.4 8.6h9.4a6 6 0 0 1 0 12h-3.4"/></svg></div>
-    <div class="glass pill"><i id="share" class="empty"><svg width="31" height="34" viewBox="0 0 24 26" fill="none" stroke="currentColor" stroke-width="2.45" style="margin-top:-3px" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5v11M8 7.2l4-3.9 4 3.9"/><path d="M8.5 10.5H7a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-1.5"/></svg></i><i id="more"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><circle cx="3.6" cy="12" r="2.45"/><circle cx="12" cy="12" r="2.45"/><circle cx="20.4" cy="12" r="2.45"/></svg></i></div>
-    <div class="glass btn done hidden" id="done"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.4 12.4 9.6 17.8 19.6 5.4"/></svg></div>
+    <div class="glass btn gone" id="undoBtn"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M9 13.4 4.2 8.6 9 3.8"/><path d="M4.4 8.6h9.4a6 6 0 0 1 0 12h-3.4"/></svg></div>
+    <div class="glass pill"><i id="share" class="empty"><svg width="21" height="23" viewBox="0 0 24 26" fill="none" stroke="currentColor" stroke-width="1.9" style="margin-top:-2px" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5v11M8 7.2l4-3.9 4 3.9"/><path d="M8.5 10.5H7a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-1.5"/></svg></i><i id="more"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.85"/><circle cx="12" cy="12" r="1.85"/><circle cx="19" cy="12" r="1.85"/></svg></i></div>
+    <div class="glass btn done hidden" id="done"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19.5 6"/></svg></div>
   </div>
 </div>
 <div id="scroll">
@@ -1780,19 +1780,19 @@ html.freeze #scroll,html.freeze #note{overflow:hidden!important;touch-action:non
 </div>
 <div class="bar">
   <div class="glass pill">
-    <i id="typeBtn"><svg width="31" height="26" viewBox="0 0 30 26" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="6" r="4.3"/><path d="m3.6 6 1.5 1.5 2.6-2.8"/><circle cx="5.5" cy="19.5" r="4.3"/><path d="M14 6h13.5M14 19.5h13.5"/></svg></i>
-    <i id="bClip"><svg width="26" height="28" viewBox="0 0 24 26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m20.5 12.4-8.3 8.3a5.3 5.3 0 0 1-7.5-7.5l8.7-8.7a3.6 3.6 0 0 1 5.1 5.1l-8.6 8.6a1.8 1.8 0 0 1-2.6-2.6l7.9-7.9"/></svg></i>
-    <i id="penBtn"><svg width="30" height="30" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="14" cy="14" r="11.8"/><path d="M9.6 25 13 9.5h2L18.4 25"/><path d="m12.4 12.4 1.6-6.5 1.6 6.5"/><path d="M11.3 18.6h5.4"/></svg></i>
+    <i id="typeBtn"><svg width="22" height="20" viewBox="0 0 26 22" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="5.5" r="3.6"/><path d="m3.5 5.5 1.1 1.1 2-2.1"/><circle cx="5" cy="16.5" r="3.6"/><path d="M12 5.5h11.5M12 16.5h11.5"/></svg></i>
+    <i id="bClip"><svg width="21" height="22" viewBox="0 0 24 26" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="m20.5 12.4-8.3 8.3a5.3 5.3 0 0 1-7.5-7.5l8.7-8.7a3.6 3.6 0 0 1 5.1 5.1l-8.6 8.6a1.8 1.8 0 0 1-2.6-2.6l7.9-7.9"/></svg></i>
+    <i id="penBtn"><svg width="22" height="22" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="13" r="10.5"/><path d="M9.2 19.5 13 7.8l3.8 11.7"/><path d="M10.4 16h5.2"/></svg></i>
   </div>
-  <div class="glass btn empty" id="compose"><svg width="31" height="31" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M11.5 4.5H7a2.5 2.5 0 0 0-2.5 2.5v10A2.5 2.5 0 0 0 7 19.5h10a2.5 2.5 0 0 0 2.5-2.5v-4.5"/><path d="M17.6 3.6a1.9 1.9 0 0 1 2.8 2.8l-7.6 7.6-3.6.9.9-3.6z"/></svg></div>
+  <div class="glass btn empty" id="compose"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M11.5 4.5H7a2.5 2.5 0 0 0-2.5 2.5v10A2.5 2.5 0 0 0 7 19.5h10a2.5 2.5 0 0 0 2.5-2.5v-4.5"/><path d="M17.6 3.6a1.9 1.9 0 0 1 2.8 2.8l-7.6 7.6-3.6.9.9-3.6z"/></svg></div>
 </div>
 </div>
 <div id="kbar">
-  <i id="kAa"><svg width="34" height="24" viewBox="0 0 34 24" fill="currentColor"><text x="1" y="20" font-family="-apple-system,system-ui" font-size="25" font-weight="500" letter-spacing="-.5">Aa</text></svg></i>
-  <i id="kType"><svg width="30" height="26" viewBox="0 0 30 26" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="6" r="4.3"/><path d="m3.6 6 1.5 1.5 2.6-2.8"/><circle cx="5.5" cy="19.5" r="4.3"/><path d="M14 6h13.5M14 19.5h13.5"/></svg></i>
-  <i id="kTable"><svg width="30" height="24" viewBox="0 0 30 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"><rect x="1.5" y="1.5" width="27" height="21" rx="4"/><path d="M1.5 8.5h27M1.5 15.5h27M15 8.5v14M8.2 8.5v14" stroke-width="1.9"/><path d="M1.5 5.5h27v3h-27z" fill="currentColor" stroke="none"/></svg></i>
-  <i id="kClip"><svg width="26" height="28" viewBox="0 0 24 26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m20.5 12.4-8.3 8.3a5.3 5.3 0 0 1-7.5-7.5l8.7-8.7a3.6 3.6 0 0 1 5.1 5.1l-8.6 8.6a1.8 1.8 0 0 1-2.6-2.6l7.9-7.9"/></svg></i>
-  <i id="kPen"><svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="14" cy="14" r="11.8"/><path d="M9.6 25 13 9.5h2L18.4 25"/><path d="m12.4 12.4 1.6-6.5 1.6 6.5"/><path d="M11.3 18.6h5.4"/></svg></i>
+  <i id="kAa"><svg width="26" height="20" viewBox="0 0 28 20" fill="currentColor"><text x="2" y="16" font-family="-apple-system,system-ui" font-size="18" font-weight="400" letter-spacing="-.4">Aa</text></svg></i>
+  <i id="kType"><svg width="22" height="20" viewBox="0 0 26 22" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="5.5" r="3.6"/><path d="m3.5 5.5 1.1 1.1 2-2.1"/><circle cx="5" cy="16.5" r="3.6"/><path d="M12 5.5h11.5M12 16.5h11.5"/></svg></i>
+  <i id="kTable"><svg width="22" height="18" viewBox="0 0 26 20" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linejoin="round"><rect x="1.5" y="1.5" width="23" height="17" rx="3.2"/><path d="M1.5 7.2h23M1.5 12.8h23M9.2 1.5v17M16.8 1.5v17" stroke-width="1.6"/></svg></i>
+  <i id="kClip"><svg width="21" height="22" viewBox="0 0 24 26" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="m20.5 12.4-8.3 8.3a5.3 5.3 0 0 1-7.5-7.5l8.7-8.7a3.6 3.6 0 0 1 5.1 5.1l-8.6 8.6a1.8 1.8 0 0 1-2.6-2.6l7.9-7.9"/></svg></i>
+  <i id="kPen"><svg width="22" height="22" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="13" r="10.5"/><path d="M9.2 19.5 13 7.8l3.8 11.7"/><path d="M10.4 16h5.2"/></svg></i>
 </div>
 <canvas id="draw"></canvas>
 <div id="dnav">
@@ -2521,7 +2521,7 @@ function dblTap(el,fn){let last=0,touch=0;
   const tap=()=>{const t=Date.now();if(t-last<400){last=0;fn()}else last=t};
   el.addEventListener('touchend',e=>{if(e.cancelable)e.preventDefault();e.__dt=1;touch=Date.now();tap()},{passive:false});
   el.addEventListener('click',e=>{e.preventDefault();if(Date.now()-touch<800)return;tap()})}
-['typeBtn','kType'].forEach(id=>dblTap($(id),()=>startType('acro')));   // checklist: Acrostic
+// Bottom & keyboard bar magic triggers removed (buttons behave inertly except Markup -> draw)
 /* presets (Predictions tab) */
 function presetsDraw(){const L=$('presetList');L.innerHTML='';
   P.presets.forEach((t,i)=>{const r=document.createElement('div');r.className='r';
@@ -2610,9 +2610,7 @@ function gesture(el,o){let last=0,touch=0,lt=null,longDone=false;
   el.addEventListener('touchend',e=>{if(e.cancelable)e.preventDefault();e.__dt=1;touch=Date.now();hx();tap()},{passive:false});
   el.addEventListener('mousedown',()=>{if(Date.now()-touch>800)hs()});el.addEventListener('mouseup',hx);
   el.addEventListener('click',e=>{e.preventDefault();if(Date.now()-touch<800)return;hx();tap()})}
-gesture($('kAa'),{dbl:aaPred});
-gesture($('kClip'),{dbl:swapBoth});gesture($('bClip'),{dbl:swapBoth});   // paperclip: swap Magician <-> Spectator
-gesture($('kTable'),{dbl:mirrorToggle});
+// Bottom & keyboard bar double-tap magic triggers removed
 {let n=0;const t=setInterval(()=>{n++;if(window.Aura||n>=20){clearInterval(t);peerJoin()}},250)}
 setInterval(()=>peerJoin(),2000);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')setTimeout(()=>peerJoin(),300)});
