@@ -1514,7 +1514,8 @@ html,body{height:100%;background:var(--page);color:var(--label);overscroll-behav
   font-family:-apple-system,system-ui,"SF Pro Text","Helvetica Neue",sans-serif;-webkit-text-size-adjust:100%}
 body{position:fixed;inset:0;overflow:hidden}
 .nav{position:fixed;left:0;right:0;top:0;z-index:5;padding:max(env(safe-area-inset-top),12px) 16px 8px 16px;
-  display:flex;justify-content:space-between;align-items:center;background:linear-gradient(var(--page) 72%,transparent);pointer-events:none}
+  display:flex;justify-content:space-between;align-items:center;background:linear-gradient(var(--page) 72%,transparent);pointer-events:none;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .nav>*{pointer-events:auto}
 #navCenterHold{flex:1;height:44px;min-width:40px;-webkit-user-select:none;user-select:none;touch-action:manipulation}
 .right{display:flex;gap:12px;align-items:center}
@@ -1547,7 +1548,8 @@ svg{display:block}
 #note:empty{min-height:max(60vh,40px)}
 #note:empty::before{content:'';display:inline-block;height:40px}
 .bar{position:fixed;left:0;right:0;bottom:0;z-index:5;padding:12px 28px max(calc(env(safe-area-inset-bottom) - 7px),24px) 28px;
-  display:flex;justify-content:space-between;align-items:center;background:linear-gradient(transparent,var(--page) 48%);pointer-events:none}
+  display:flex;justify-content:space-between;align-items:center;background:linear-gradient(transparent,var(--page) 48%);pointer-events:none;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .bar>*{pointer-events:auto}
 .bar .pill{width:163px;height:47px;padding:0 6px;justify-content:space-evenly}
 .bar .pill i{width:46px;height:47px}
@@ -1570,9 +1572,9 @@ svg{display:block}
 .drawing .nav,.drawing .bar{display:none}
 #dnav,#dbar{display:none}
 .drawing #dnav{display:flex}.drawing #dbar{display:flex}
-#dnav{position:fixed;left:0;right:0;top:0;z-index:6;padding:calc(env(safe-area-inset-top) + 8px) 16px 10px;justify-content:space-between;align-items:center}
-#dnav .pill{width:110px;justify-content:space-around;padding:0 6px}
-#dnav .pill i{width:46px}
+#dnav{position:fixed;left:0;right:0;top:0;z-index:6;padding:max(env(safe-area-inset-top),12px) 16px 8px 16px;justify-content:space-between;align-items:center;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#dnav .pill{width:98px;justify-content:space-evenly;padding:0 4px}
+#dnav .pill i{width:42px}
 /* drawing palette (look of aura_note): one row of real-looking tools, colour wheel */
 #dbar{position:fixed;left:20px;right:20px;bottom:calc(env(safe-area-inset-bottom) + 14px);z-index:6;height:100px;border-radius:34px;overflow:hidden;
   display:none;align-items:stretch;justify-content:flex-start;background:linear-gradient(#202020,#282828);
@@ -2051,10 +2053,7 @@ let predStartOnClose=false;
 const openSheet=()=>{note.blur();document.body.classList.add('open')},closeSheet=()=>{document.body.classList.remove('open');
   if(predStartOnClose){predStartOnClose=false;setTimeout(()=>predStart(),300)}};   // a prediction type set in the settings starts when they close
 $('sDone').onclick=closeSheet;$('sheetBg').onclick=closeSheet;
-(function(){const el=$('share');let tm=null;
-  const go=()=>{tm=setTimeout(openSheet,1000)},stop=()=>clearTimeout(tm);
-  el.addEventListener('touchstart',go,{passive:true});el.addEventListener('touchend',stop);el.addEventListener('touchmove',stop,{passive:true});
-  el.addEventListener('mousedown',go);el.addEventListener('mouseup',stop)})();
+// Share hold settings sheet disabled (Share long-hold is reserved for optional redirect URL)
 /* ================= Markup (drawing) — like the iOS Notes pen tools ================= */
 const cv=$('draw'),cx=cv.getContext('2d');
 const ink=()=>getComputedStyle(document.documentElement).getPropertyValue('--label').trim()||'#000';
