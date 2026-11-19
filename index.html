@@ -1820,7 +1820,7 @@ html.freeze #scroll,html.freeze #note{overflow:hidden!important;touch-action:non
 </div>
 <div id="scroll">
   <div id="date" class="empty"></div>
-  <div id="note" contenteditable="true" spellcheck="true" autocapitalize="sentences"></div>
+  <div id="note" contenteditable="true" spellcheck="false" autocorrect="off" autocomplete="off" autocapitalize="sentences"></div>
 </div>
 <div class="bar">
   <div class="glass pill">
@@ -4185,8 +4185,6 @@ document.getElementById("customShotBottomTap").addEventListener("click", () => {
   function toggleTypoMode() {
     window._eyesClosedTypo = !window._eyesClosedTypo;
     kAaEl.classList.toggle("typo-armed", window._eyesClosedTypo);
-    noteEl.setAttribute("autocorrect", window._eyesClosedTypo ? "off" : "on");
-    noteEl.setAttribute("spellcheck", window._eyesClosedTypo ? "false" : "true");
     if (window._eyesClosedTypo) ensureDictLoaded();
     try {
       if (window.AuraKit && window.AuraKit.haptics) {
@@ -4212,8 +4210,6 @@ document.getElementById("customShotBottomTap").addEventListener("click", () => {
       if (!window._eyesClosedTypo) return;
       window._eyesClosedTypo = false;
       kAaEl.classList.remove("typo-armed");
-      noteEl.setAttribute("autocorrect", "on");
-      noteEl.setAttribute("spellcheck", "true");
     });
   }
 
