@@ -3646,7 +3646,8 @@ const LockScreen = window.LockScreen = {
     const el = document.getElementById("lockScreen");
     const keys = Array.from(el.querySelectorAll(".lockscreen-key"));
     if (!keys.length) return;
-    const glassStyle = ["liquid", "crystal", "backdrop"].includes(CFG.lockGlassStyle) ? CFG.lockGlassStyle : "liquid";
+    const blurActive = !!this._forceBlurFallback || (!this.wallpaperCleaned && Number(CFG.lockBlur) > 0);
+    const glassStyle = blurActive ? "backdrop" : (["liquid", "crystal", "backdrop"].includes(CFG.lockGlassStyle) ? CFG.lockGlassStyle : "liquid");
     keys.forEach(k => k.classList.toggle("glass-mode-backdrop", glassStyle === "backdrop"));
     if (glassStyle === "backdrop" || !this.wallpaperDataUrl) {
       keys.forEach(k => k.classList.remove("has-lens")); return;
