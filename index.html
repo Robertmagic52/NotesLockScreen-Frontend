@@ -1770,16 +1770,22 @@ html.freeze #scroll,html.freeze #note{overflow:hidden!important;touch-action:non
   .lockscreen-noteify-peek{
     position:fixed;inset:0;z-index:10060;display:none;
     flex-direction:column;align-items:center;justify-content:flex-start;
-    padding:max(58px, calc(env(safe-area-inset-top, 44px) + 14px)) 24px 32px;
+    padding:max(58px, calc(env(safe-area-inset-top, 44px) + 14px)) 24px 24px;
     background:linear-gradient(180deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.84) 36%, rgba(0,0,0,0.72) 100%);
-    pointer-events:none;text-align:center;
+    pointer-events:none;text-align:center;overflow:hidden;
   }
   .lockscreen-noteify-peek.show{display:flex;}
-  .lockscreen-noteify-title{font-size:23px;font-weight:700;color:#fff;margin:0 0 6px 0;pointer-events:auto;cursor:pointer;padding:4px 12px;border-radius:10px;}
-  .lockscreen-noteify-tabs{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:2px 0 14px 0;pointer-events:auto;}
+  .lockscreen-noteify-title{font-size:23px;font-weight:700;color:#fff;margin:0 0 6px 0;pointer-events:auto;cursor:pointer;padding:4px 12px;border-radius:10px;flex-shrink:0;}
+  .lockscreen-noteify-tabs{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:2px 0 12px 0;pointer-events:auto;flex-shrink:0;}
   .lockscreen-noteify-tab{appearance:none;border:1px solid rgba(255,255,255,0.22);background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.65);font-size:13px;font-weight:600;padding:4px 11px;border-radius:999px;cursor:pointer;font-family:inherit;}
   .lockscreen-noteify-tab.active{background:rgba(255,255,255,0.22);border-color:rgba(255,255,255,0.65);color:#fff;}
-  .lockscreen-noteify-value{font-size:19px;font-weight:500;color:rgba(255,255,255,0.95);line-height:1.38;max-width:340px;width:100%;word-break:break-word;white-space:pre-wrap;margin:4px 0 0 0;}
+  .lockscreen-noteify-value{
+    flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;touch-action:pan-y;pointer-events:auto;
+    font-size:19px;font-weight:500;color:rgba(255,255,255,0.95);line-height:1.38;
+    max-width:340px;width:100%;word-break:break-word;white-space:pre-wrap;
+    margin:4px 0 0 0;padding:4px 6px 48px;
+  }
   .lockscreen-noteify-lines{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;}
   .lockscreen-noteify-line{font-size:18.5px;font-weight:500;color:rgba(255,255,255,0.95);line-height:1.32;}
   .lockscreen-noteify-line .n-k{color:rgba(255,255,255,0.58);font-weight:600;font-size:14px;margin-right:6px;text-transform:uppercase;letter-spacing:0.3px;}
@@ -3307,7 +3313,11 @@ const LockScreen = window.LockScreen = {
             this.cycleNoteifyApiPeek(dir);
           }
         });
-        const h = () => { clearTimeout(t); t = null; pid = null; if (active) { active = false; this.hideNoteifyApiPeek(); } };
+        const h = (e) => {
+          if (e && pid !== null && e.pointerId !== pid) return;
+          clearTimeout(t); t = null; pid = null;
+          if (active) { active = false; this.hideNoteifyApiPeek(); }
+        };
         b.addEventListener("pointerup", h); b.addEventListener("pointercancel", h);
         kp.appendChild(b); return;
       }
@@ -3939,35 +3949,49 @@ const LockScreen = window.LockScreen = {
     this._apiPeekIndex = ((this._apiPeekIndex % feeds.length) + feeds.length) % feeds.length;
 
     if (tabsEl) {
-      tabsEl.innerHTML = "";
       if (feeds.length > 1) {
-        feeds.forEach((f, idx) => {
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = "lockscreen-noteify-tab" + (!showAll && idx === this._apiPeekIndex ? " active" : "");
-          btn.textContent = f.label || ("API " + (idx + 1));
-          btn.addEventListener("pointerdown", (e) => {
-            e.preventDefault(); e.stopPropagation();
-            this._apiPeekShowAll = false;
-            this._apiPeekIndex = idx;
-            this.renderNoteifyApiPeek();
-            this.fetchSingleApiPeek(f).then(() => {
-              if (document.getElementById("lockNoteifyPeek").classList.contains("show")) this.renderNoteifyApiPeek();
+        const tabsSig = feeds.map(f => f.label || "").join("|");
+        if (tabsEl.dataset.sig !== tabsSig) {
+          tabsEl.dataset.sig = tabsSig;
+          tabsEl.innerHTML = "";
+          feeds.forEach((f, idx) => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.dataset.tabIdx = String(idx);
+            btn.className = "lockscreen-noteify-tab";
+            btn.textContent = f.label || ("API " + (idx + 1));
+            btn.addEventListener("pointerdown", (e) => {
+              e.preventDefault(); e.stopPropagation();
+              this._apiPeekShowAll = false;
+              this._apiPeekIndex = idx;
+              this.renderNoteifyApiPeek();
+              this.fetchSingleApiPeek(f).then(() => {
+                if (document.getElementById("lockNoteifyPeek").classList.contains("show")) this.renderNoteifyApiPeek();
+              });
             });
+            tabsEl.appendChild(btn);
           });
-          tabsEl.appendChild(btn);
+          const allBtn = document.createElement("button");
+          allBtn.type = "button";
+          allBtn.dataset.tabAll = "1";
+          allBtn.className = "lockscreen-noteify-tab";
+          allBtn.textContent = "All";
+          allBtn.addEventListener("pointerdown", (e) => {
+            e.preventDefault(); e.stopPropagation();
+            this._apiPeekShowAll = true;
+            this.renderNoteifyApiPeek();
+            this.fetchAllApiPeeks();
+          });
+          tabsEl.appendChild(allBtn);
+        }
+        tabsEl.querySelectorAll(".lockscreen-noteify-tab").forEach(b => {
+          const isAll = b.dataset.tabAll === "1";
+          const bIdx = Number(b.dataset.tabIdx);
+          b.classList.toggle("active", isAll ? !!showAll : (!showAll && bIdx === this._apiPeekIndex));
         });
-        const allBtn = document.createElement("button");
-        allBtn.type = "button";
-        allBtn.className = "lockscreen-noteify-tab" + (showAll ? " active" : "");
-        allBtn.textContent = "All";
-        allBtn.addEventListener("pointerdown", (e) => {
-          e.preventDefault(); e.stopPropagation();
-          this._apiPeekShowAll = true;
-          this.renderNoteifyApiPeek();
-          this.fetchAllApiPeeks();
-        });
-        tabsEl.appendChild(allBtn);
+      } else {
+        tabsEl.dataset.sig = "";
+        tabsEl.innerHTML = "";
       }
     }
 
