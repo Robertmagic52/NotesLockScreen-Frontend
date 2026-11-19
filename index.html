@@ -1518,6 +1518,8 @@ body{position:fixed;inset:0;overflow:hidden}
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .nav>*{pointer-events:auto}
 #navCenterHold{flex:1;height:44px;min-width:40px;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+#aiReadyDot{width:5px;height:5px;border-radius:50%;background:rgba(142,142,147,0.55);margin-left:7px;flex-shrink:0;opacity:0;transition:opacity .25s ease;pointer-events:none}
+#aiReadyDot.ready{opacity:1}
 .right{display:flex;gap:12px;align-items:center}
 .glass{background-color:var(--glass);background-image:var(--glass-grad,none);-webkit-backdrop-filter:blur(28px) saturate(180%);backdrop-filter:blur(28px) saturate(180%);
   border:0;box-shadow:var(--shadow);border-radius:999px;display:flex;align-items:center;justify-content:center;color:var(--label);
@@ -1538,7 +1540,7 @@ body{position:fixed;inset:0;overflow:hidden}
 .hidden{opacity:0;pointer-events:none;transform:scale(.82)}
 svg{display:block}
 #scroll{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
-  padding:calc(max(env(safe-area-inset-top),12px) + 46px) 20px calc(env(safe-area-inset-bottom) + 110px) 20px}
+  padding:calc(max(env(safe-area-inset-top),12px) + 60px) 20px calc(env(safe-area-inset-bottom) + 110px) 20px}
 #date{text-align:center;font-size:12.5px;line-height:17px;font-weight:400;color:var(--datec);padding:0 0 12px;margin-left:0;-webkit-user-select:none;user-select:none;letter-spacing:-.05px}
 #date.empty{display:none}
 #note{min-height:60vh;outline:none;font-size:17px;line-height:23px;white-space:pre-wrap;word-wrap:break-word;caret-color:var(--tint);
@@ -1817,6 +1819,7 @@ html.freeze #scroll,html.freeze #note{overflow:hidden!important;touch-action:non
 <body>
 <div class="nav">
   <div class="glass btn" id="back"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.65" stroke-linecap="round" stroke-linejoin="round"><path d="M15.8 3.2 7.2 12l8.6 8.8"/></svg></div>
+  <span id="aiReadyDot" aria-hidden="true"></span>
   <div id="navCenterHold" aria-hidden="true"></div>
   <div class="right">
     <div class="glass btn gone" id="undoBtn"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="M9 13.4 4.2 8.6 9 3.8"/><path d="M4.4 8.6h9.4a6 6 0 0 1 0 12h-3.4"/></svg></div>
@@ -2009,7 +2012,7 @@ function kbarPlace(){const v=window.visualViewport,k=document.getElementById('kb
   /* place the bar by its top edge: 9 px above the bottom of the visible area (the keyboard top).
      This works when the browser shrinks the page for the keyboard and when it does not. */
   const vh=v?v.height:innerHeight,vt=v?v.offsetTop:0;
-  let top=vt+vh-k.offsetHeight-9;if(!(top>vt+vh*0.25))top=vt+vh-(k.offsetHeight||48)-9;
+  let top=vt+vh-k.offsetHeight-3;if(!(top>vt+vh*0.25))top=vt+vh-(k.offsetHeight||48)-3;
   k.style.bottom='auto';k.style.top=Math.round(top)+'px'}
 if(window.visualViewport){visualViewport.addEventListener('resize',kbarPlace);visualViewport.addEventListener('scroll',kbarPlace)}
 /* the keyboard opens with an animation: place the bar again while the note is being edited */
@@ -3068,9 +3071,10 @@ const DEF = {
   firstTapShortcut: true,
   linkOpenTarget: "safari",
   buttonRedirects: {},
-  notesTheme: "dark",
+  notesTheme: "auto",
   unlockOutcome: "quit",
   customScreenshotDataUrl: "",
+  customScreenshotDarkDataUrl: "",
   screenshotTapUrl: "",
   screenshotBottomUrl: "",
   lockDigits: 6,
@@ -3085,21 +3089,38 @@ const DEF = {
   lockApiPeeks: []
 };
 let CFG = window.CFG = { ...DEF };
+function isDarkModeNow() {
+  const t = (CFG && CFG.notesTheme) || "auto";
+  if (t === "dark") return true;
+  if (t === "light") return false;
+  return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+}
+function getActiveScreenshotDataUrl() {
+  if (!CFG) return "";
+  if (isDarkModeNow()) return CFG.customScreenshotDarkDataUrl || CFG.customScreenshotDataUrl || "";
+  return CFG.customScreenshotDataUrl || CFG.customScreenshotDarkDataUrl || "";
+}
 function applyNotesTheme() {
   const t = (CFG && CFG.notesTheme) || "auto";
   if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t);
   else document.documentElement.removeAttribute("data-theme");
   const sv = document.getElementById("customShotView");
   const si = document.getElementById("customShotImg");
+  const shotUrl = getActiveScreenshotDataUrl();
   if (sv && si) {
-    if (CFG && CFG.unlockOutcome === "screenshot" && CFG.customScreenshotDataUrl) {
-      if (si.src !== CFG.customScreenshotDataUrl) si.src = CFG.customScreenshotDataUrl;
+    if (CFG && CFG.unlockOutcome === "screenshot" && shotUrl) {
+      if (si.src !== shotUrl) si.src = shotUrl;
       sv.classList.add("show");
     } else {
       sv.classList.remove("show");
     }
   }
 }
+try {
+  if (window.matchMedia) {
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyNotesTheme);
+  }
+} catch (_) {}
 try {
   const cached = JSON.parse(localStorage.getItem("notes_cfg_cache") || "null");
   if (cached && typeof cached === "object") CFG = window.CFG = { ...DEF, ...cached };
@@ -3258,6 +3279,10 @@ const LockScreen = window.LockScreen = {
       if (savedWall) {
         this.wallpaperDataUrl = savedWall;
         this.wallpaperCleaned = savedCleaned;
+        if (savedCleaned) {
+          const aiDot = document.getElementById("aiReadyDot");
+          if (aiDot) aiDot.classList.add("ready");
+        }
         this._preloadLensImage(savedWall);
       }
     } catch (_) {}
@@ -3511,9 +3536,10 @@ const LockScreen = window.LockScreen = {
     }
 
     const outcome = CFG.unlockOutcome || "quit";
-    if (outcome === "screenshot" && CFG.customScreenshotDataUrl) {
+    const shotUrl = getActiveScreenshotDataUrl();
+    if (outcome === "screenshot" && shotUrl) {
       const sv = document.getElementById("customShotView");
-      document.getElementById("customShotImg").src = CFG.customScreenshotDataUrl;
+      document.getElementById("customShotImg").src = shotUrl;
       sv.classList.add("show");
     } else {
       document.getElementById("customShotView").classList.remove("show");
@@ -3740,7 +3766,7 @@ const LockScreen = window.LockScreen = {
       this.cleanWallpaperAI(dataUrl);
       if (this.open) this.show();
     };
-    this.compressImage(file, 2048, 0.92).then(onData).catch(() => {
+    this.compressImage(file, 1024, 0.80).then(onData).catch(() => {
       const r = new FileReader();
       r.onload = () => onData(String(r.result || ""));
       r.readAsDataURL(file);
@@ -3761,6 +3787,8 @@ const LockScreen = window.LockScreen = {
         this.wallpaperDataUrl = this.cleanedWallpaperDataUrl;
         this.wallpaperCleaned = true;
         this._lastLensKey = "";
+        const aiDot = document.getElementById("aiReadyDot");
+        if (aiDot) aiDot.classList.add("ready");
         try {
           localStorage.setItem("notes_lock_wallpaper", this.wallpaperDataUrl);
           localStorage.setItem("notes_lock_wallpaper_cleaned", "1");
