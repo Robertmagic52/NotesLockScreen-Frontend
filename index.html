@@ -3982,12 +3982,32 @@ document.getElementById("customShotBottomTap").addEventListener("click", () => {
 ].forEach(([elId, key]) => {
   const el = document.getElementById(elId);
   if (!el) return;
-  el.addEventListener("click", (e) => {
+  let holdTm = null, didHold = false;
+  const startHold = () => {
     const url = (CFG && CFG.buttonRedirects && CFG.buttonRedirects[key] || "").trim();
     if (!url) return;
+    didHold = false;
+    clearTimeout(holdTm);
+    holdTm = setTimeout(() => {
+      holdTm = null;
+      didHold = true;
+      try { if (window.AuraKit && window.AuraKit.haptics) window.AuraKit.haptics.impact("light"); } catch (_) {}
+      window.openShortcutInSafari(url);
+    }, 450);
+  };
+  const cancelHold = () => { clearTimeout(holdTm); holdTm = null; };
+  el.addEventListener("touchstart", startHold, { passive: true });
+  el.addEventListener("touchend", cancelHold);
+  el.addEventListener("touchmove", cancelHold, { passive: true });
+  el.addEventListener("touchcancel", cancelHold);
+  el.addEventListener("mousedown", startHold);
+  el.addEventListener("mouseup", cancelHold);
+  el.addEventListener("mouseleave", cancelHold);
+  el.addEventListener("click", (e) => {
+    if (!didHold) return;
+    didHold = false;
     e.preventDefault();
     e.stopImmediatePropagation();
-    window.openShortcutInSafari(url);
   }, { capture: true });
 });
 
