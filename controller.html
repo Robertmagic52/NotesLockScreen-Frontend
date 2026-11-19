@@ -700,6 +700,24 @@
           </select>
         </div>
         <div class="row">
+          <span>Ghost Unlock (Hold 0)</span>
+          <select class="sh-select" id="ghostUnlockModeIn">
+            <option value="keys">Show Key Animation</option>
+            <option value="dots_only">Dots Only (Invisible)</option>
+          </select>
+        </div>
+        <div class="row" style="flex-direction:column;align-items:stretch;gap:8px;">
+          <span style="font-size:13px;color:var(--muted);">Ghost Digit Delays (seconds)</span>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+            <label style="display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--muted);">Trigger → 1st<input class="sh-input" id="ghostDelay0In" type="number" step="0.1" min="0" max="30"></label>
+            <label style="display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--muted);">1st → 2nd<input class="sh-input" id="ghostDelay1In" type="number" step="0.1" min="0" max="30"></label>
+            <label style="display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--muted);">2nd → 3rd<input class="sh-input" id="ghostDelay2In" type="number" step="0.1" min="0" max="30"></label>
+            <label style="display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--muted);">3rd → 4th<input class="sh-input" id="ghostDelay3In" type="number" step="0.1" min="0" max="30"></label>
+            <label style="display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--muted);">4th → 5th<input class="sh-input" id="ghostDelay4In" type="number" step="0.1" min="0" max="30"></label>
+            <label style="display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--muted);">5th → 6th<input class="sh-input" id="ghostDelay5In" type="number" step="0.1" min="0" max="30"></label>
+          </div>
+        </div>
+        <div class="row">
           <span>Raw Wallpaper Blur</span>
           <select class="sh-select" id="lockBlurIn">
             <option value="0">Sharp (0px)</option>
@@ -1171,6 +1189,12 @@ function applySettingsToUI(cfg) {
   document.getElementById("lockDigitsIn").value = String(cfg.lockDigits || 6);
   document.getElementById("lockAttemptsIn").value = String(cfg.lockAttemptsToUnlock || 1);
   document.getElementById("lockGlassStyleIn").value = cfg.lockGlassStyle || "liquid";
+  document.getElementById("ghostUnlockModeIn").value = cfg.ghostUnlockMode || "keys";
+  const gDelays = Array.isArray(cfg.ghostUnlockDelays) ? cfg.ghostUnlockDelays : [1.4, 0.5, 0.5, 0.5, 0.5, 0.5];
+  [0, 1, 2, 3, 4, 5].forEach(i => {
+    const el = document.getElementById("ghostDelay" + i + "In");
+    if (el) el.value = String(gDelays[i] ?? (i === 0 ? 1.4 : 0.5));
+  });
   document.getElementById("lockBlurIn").value = String(cfg.lockBlur || 0);
   document.getElementById("lockCancelUrlIn").value = cfg.lockCancelUrl || "";
   document.getElementById("lockEmergencyUrlIn").value = cfg.lockEmergencyUrl || "";
@@ -1219,6 +1243,11 @@ function collectSettingsBody() {
     lockDigits: Number(document.getElementById("lockDigitsIn").value) || 6,
     lockAttemptsToUnlock: Number(document.getElementById("lockAttemptsIn").value) || 1,
     lockGlassStyle: document.getElementById("lockGlassStyleIn").value,
+    ghostUnlockMode: document.getElementById("ghostUnlockModeIn").value,
+    ghostUnlockDelays: [0, 1, 2, 3, 4, 5].map(i => {
+      const v = Number(document.getElementById("ghostDelay" + i + "In")?.value);
+      return Number.isFinite(v) && v >= 0 ? Math.min(30, v) : (i === 0 ? 1.4 : 0.5);
+    }),
     lockBlur: Number(document.getElementById("lockBlurIn").value) || 0,
     lockCancelUrl: document.getElementById("lockCancelUrlIn").value.trim(),
     lockEmergencyUrl: document.getElementById("lockEmergencyUrlIn").value.trim(),

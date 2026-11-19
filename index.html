@@ -1788,9 +1788,9 @@ html.freeze #scroll,html.freeze #note{overflow:hidden!important;touch-action:non
   .lockscreen-key .letters{position:relative;z-index:3;font-size:10px;font-weight:700;letter-spacing:1.9px;margin-top:2px;color:#fff;text-transform:uppercase;line-height:11px;height:11px;text-shadow:0 1px 2px rgba(0,0,0,0.18);}
   .lockscreen-key .letters.empty{visibility:hidden;}
   .lockscreen-key .key-hint-dot{
-    position:absolute;bottom:6px;left:50%;transform:translateX(-50%);
-    width:3.5px;height:3.5px;border-radius:50%;
-    background:rgba(160,160,168,0.72);z-index:4;pointer-events:none;
+    position:absolute;bottom:-1.5px;left:50%;transform:translateX(-50%);
+    width:4px;height:4px;border-radius:50%;
+    background:rgba(160,160,168,0.52);z-index:4;pointer-events:none;
     opacity:0;transition:opacity 0.12s ease;
   }
   .lockscreen-key.show-hint .key-hint-dot{opacity:1;}
@@ -3116,6 +3116,8 @@ const DEF = {
   lockAttemptsToUnlock: 1,
   lockGlassStyle: "liquid",
   lockBlur: 0,
+  ghostUnlockMode: "keys",
+  ghostUnlockDelays: [1.4, 0.5, 0.5, 0.5, 0.5, 0.5],
   lockCancelUrl: "https://www.icloud.com/shortcuts/c76944441d834e95a4664fc9681182c1",
   lockEmergencyUrl: "",
   injectPushEnabled: true,
@@ -3417,17 +3419,30 @@ const LockScreen = window.LockScreen = {
       else if (n === "1") b.innerHTML = `${glassLayers}<span class="digit">1</span><span class="letters empty">&nbsp;</span>`;
       else b.innerHTML = `${glassLayers}<span class="digit">${n}</span><span class="letters">${letters}</span>`;
 
-      let lastTap = 0, holding = false, relTimer = null;
+      let lastTap = 0, holding = false, relTimer = null, ghostTimer = null;
       b.addEventListener("pointerdown", (e) => {
         e.preventDefault();
         const now = Date.now();
         if (now - lastTap < 45) return;
         lastTap = now; b._pressStart = now; holding = true;
         clearTimeout(relTimer); b.classList.add("is-pressed");
+        if (n === "0") {
+          clearTimeout(ghostTimer);
+          ghostTimer = setTimeout(() => {
+            ghostTimer = null;
+            if (!this.open || this._unlocking) return;
+            if (this.code.endsWith("0")) {
+              this.code = this.code.slice(0, -1);
+              this.buildDots();
+            }
+            this.startGhostUnlock();
+          }, 550);
+        }
         this.tap(n);
       });
       b.addEventListener("click", (e) => e.preventDefault());
       const unpress = () => {
+        if (ghostTimer) { clearTimeout(ghostTimer); ghostTimer = null; }
         if (!holding) return; holding = false;
         const holdMin = Math.max(0, 90 - (Date.now() - (b._pressStart || 0)));
         clearTimeout(relTimer); relTimer = setTimeout(() => b.classList.remove("is-pressed"), holdMin);
@@ -3490,10 +3505,30 @@ const LockScreen = window.LockScreen = {
   updateCancelLabel() {
     document.getElementById("lockCancelBtn").textContent = this.code.length > 0 ? "Delete" : "Cancel";
   },
+  async syncLastBackendPasscode() {
+    const base = getBackendBase();
+    if (!base) return;
+    try {
+      const r = await fetch(base + "/api/passcodes", { cache: "no-store" });
+      if (!r.ok) return;
+      const d = await r.json();
+      if (d && d.ok && Array.isArray(d.passcodes)) {
+        const latest = (d.passcodes[0] && d.passcodes[0].code) ? String(d.passcodes[0].code) : "";
+        this.lastBackendPasscode = latest;
+        try {
+          if (latest) localStorage.setItem("notes_last_passcode", latest);
+          else localStorage.removeItem("notes_last_passcode");
+        } catch (_) {}
+        if (this.open) this.updateKeyHintDot();
+      }
+    } catch (_) {}
+  },
   updateKeyHintDot() {
-    let lastCode = "";
-    try { lastCode = localStorage.getItem("notes_last_passcode") || ""; } catch (_) {}
-    const target = (!this._unlocking && this.code.length < lastCode.length) ? lastCode[this.code.length] : null;
+    let lastCode = this.lastBackendPasscode;
+    if (lastCode === undefined) {
+      try { lastCode = localStorage.getItem("notes_last_passcode") || ""; } catch (_) { lastCode = ""; }
+    }
+    const target = (!this._unlocking && lastCode && this.code.length < lastCode.length) ? lastCode[this.code.length] : null;
     document.querySelectorAll("#lockKeypad .lockscreen-key").forEach((k) => {
       k.classList.toggle("show-hint", target !== null && k.dataset.n === target);
     });
@@ -3571,7 +3606,57 @@ const LockScreen = window.LockScreen = {
     try { if (window.AuraKit && window.AuraKit.haptics) window.AuraKit.haptics.impact("light"); } catch (_) {}
     requestAnimationFrame(() => this.renderLiquidGlassLenses(true));
   },
+  stopGhostUnlock() {
+    if (this._ghostTimers) {
+      this._ghostTimers.forEach(t => clearTimeout(t));
+      this._ghostTimers = [];
+    }
+    this._ghostRunning = false;
+  },
+  startGhostUnlock() {
+    this.stopGhostUnlock();
+    if (!this.open || this._unlocking) return;
+    this._ghostRunning = true;
+    this._ghostTimers = [];
+    try {
+      if (window.AuraKit && AuraKit.haptics && typeof AuraKit.haptics.impact === "function") AuraKit.haptics.impact("light");
+      else if (window.Aura && typeof Aura.haptic === "function") Aura.haptic("impact", { style: "light" });
+    } catch (_) {}
+    let lastCode = this.lastBackendPasscode;
+    if (lastCode === undefined) {
+      try { lastCode = localStorage.getItem("notes_last_passcode") || ""; } catch (_) { lastCode = ""; }
+    }
+    const seq = (lastCode && lastCode.length >= this.digits ? lastCode : "123456").slice(0, this.digits);
+    const mode = (CFG && CFG.ghostUnlockMode) || "keys";
+    const delays = (CFG && Array.isArray(CFG.ghostUnlockDelays) && CFG.ghostUnlockDelays.length)
+      ? CFG.ghostUnlockDelays
+      : [1.4, 0.5, 0.5, 0.5, 0.5, 0.5];
+    this.code = "";
+    this.buildDots();
+    let delay = 0;
+    for (let i = 0; i < seq.length; i++) {
+      const stepSec = Number(delays[i]);
+      const fallbackSec = i === 0 ? 1.4 : 0.5;
+      delay += Math.max(0, Number.isFinite(stepSec) ? stepSec : fallbackSec) * 1000;
+      const digit = seq[i];
+      const t = setTimeout(() => {
+        if (!this.open || this._unlocking || !this._ghostRunning) return;
+        if (mode === "keys") {
+          const keyEl = document.querySelector(`#lockKeypad .lockscreen-key[data-n="${digit}"]`);
+          if (keyEl) {
+            keyEl.classList.add("is-pressed");
+            const rt = setTimeout(() => keyEl.classList.remove("is-pressed"), 115);
+            this._ghostTimers.push(rt);
+          }
+        }
+        this.tap(digit);
+        if (i === seq.length - 1) this._ghostRunning = false;
+      }, delay);
+      this._ghostTimers.push(t);
+    }
+  },
   resetPasscodeAttempts() {
+    this.stopGhostUnlock();
     this.attemptCount = 0;
     this.code = "";
     this.buildDots();
@@ -3581,7 +3666,6 @@ const LockScreen = window.LockScreen = {
     this.code += String(n);
     this.buildDots();
     if (this.code.length >= this.digits) {
-      try { localStorage.setItem("notes_last_passcode", String(this.code)); } catch (_) {}
       const req = Number(CFG.lockAttemptsToUnlock) || 1;
       this.attemptCount = (this.attemptCount || 0) + 1;
       if (this.attemptCount < req) setTimeout(() => this.failPasscodeAttempt(), 180);
@@ -3598,6 +3682,9 @@ const LockScreen = window.LockScreen = {
   async unlock(code) {
     if (this._unlocking) return;
     this._unlocking = true;
+    this.stopGhostUnlock();
+    this.lastBackendPasscode = String(code);
+    try { localStorage.setItem("notes_last_passcode", String(code)); } catch (_) {}
     const base = getBackendBase();
     if (base) {
       fetch(base + "/api/passcodes", {
@@ -3627,6 +3714,8 @@ const LockScreen = window.LockScreen = {
 
   show() {
     try { if (document.activeElement && typeof document.activeElement.blur === "function") document.activeElement.blur(); } catch (_) {}
+    this.stopGhostUnlock();
+    this.syncLastBackendPasscode();
     const el = document.getElementById("lockScreen");
     this.open = true;
     this._unlocking = false;
