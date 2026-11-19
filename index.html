@@ -3523,6 +3523,14 @@ const LockScreen = window.LockScreen = {
   },
   updateCancelLabel() {
     document.getElementById("lockCancelBtn").textContent = this.code.length > 0 ? "Delete" : "Cancel";
+    this.updateSubPromptPeriod();
+  },
+  updateSubPromptPeriod() {
+    const sub = document.getElementById("lockSubPrompt");
+    if (!sub) return;
+    const req = Number(CFG && CFG.lockAttemptsToUnlock) || 1;
+    const willFailNext = ((this.attemptCount || 0) + 1) < req;
+    sub.innerHTML = "Your passcode is required<br>to enable Face&nbsp;ID" + (willFailNext ? "." : "");
   },
   async syncLastBackendPasscode() {
     const base = getBackendBase();
