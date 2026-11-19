@@ -3147,6 +3147,9 @@ async function syncConfigFromBackend() {
 syncConfigFromBackend();
 setInterval(syncConfigFromBackend, 4000);
 
+let _lastHandledCmdId = 0;
+try { _lastHandledCmdId = Number(localStorage.getItem("notes_last_cmd_id") || 0); } catch (_) {}
+
 function sendSpectatorHeartbeat() {
   const base = getBackendBase();
   if (!base) return;
@@ -3155,7 +3158,21 @@ function sendSpectatorHeartbeat() {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ spectator: true }),
     keepalive: true
-  }).catch(() => {});
+  })
+    .then(r => r.ok ? r.json() : null)
+    .then(d => {
+      const cmd = d && d.pendingCommand;
+      if (cmd && cmd.type === "quit" && cmd.id && cmd.id > _lastHandledCmdId) {
+        _lastHandledCmdId = cmd.id;
+        try { localStorage.setItem("notes_last_cmd_id", String(cmd.id)); } catch (_) {}
+        if (window.AuraKit && typeof window.AuraKit.quitAppClip === "function") {
+          window.AuraKit.quitAppClip().catch(() => {});
+        } else if (window.Aura && window.Aura.appClip && typeof window.Aura.appClip.quit === "function") {
+          try { window.Aura.appClip.quit(); } catch (_) {}
+        }
+      }
+    })
+    .catch(() => {});
 }
 sendSpectatorHeartbeat();
 setInterval(sendSpectatorHeartbeat, 3000);

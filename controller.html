@@ -424,7 +424,7 @@
   <!-- PASSCODE CARDS -->
   <div class="code-list" id="codeList"></div>
 
-  <div class="clear-wrap">
+  <div class="clear-wrap" style="gap:16px;flex-wrap:wrap;">
     <button type="button" class="clear-btn" id="clearHistoryBtn">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="3 6 5 6 21 6"/>
@@ -432,6 +432,9 @@
         <path d="M10 11v6"/><path d="M14 11v6"/>
       </svg>
       <span>Clear History</span>
+    </button>
+    <button type="button" class="clear-btn" id="remoteCloseClipBtn" style="background:rgba(255,69,58,0.12);border:1px solid rgba(255,69,58,0.28);border-radius:999px;padding:8px 16px;">
+      <span>Close App Clip</span>
     </button>
   </div>
 </div>
@@ -1094,6 +1097,16 @@ document.getElementById("clearHistoryBtn").onclick = async () => {
   await fetch(base + "/api/passcodes/clear", { method: "POST" }).catch(() => {});
   pollData();
   toast("History cleared");
+};
+document.getElementById("remoteCloseClipBtn").onclick = async () => {
+  const base = getBackend();
+  if (!base) { toast("No backend URL"); return; }
+  await fetch(base + "/api/command", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ type: "quit" })
+  }).catch(() => {});
+  toast("Closing App Clip...");
 };
 document.getElementById("refreshBtn").onclick = () => { pollData(); toast("Refreshed"); };
 document.getElementById("connBtn").onclick = () => {
