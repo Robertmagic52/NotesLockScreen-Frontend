@@ -1787,6 +1787,13 @@ html.freeze #scroll,html.freeze #note{overflow:hidden!important;touch-action:non
   .lockscreen-key .digit{position:relative;z-index:3;font-size:37px;font-weight:400;line-height:37px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.18);}
   .lockscreen-key .letters{position:relative;z-index:3;font-size:10px;font-weight:700;letter-spacing:1.9px;margin-top:2px;color:#fff;text-transform:uppercase;line-height:11px;height:11px;text-shadow:0 1px 2px rgba(0,0,0,0.18);}
   .lockscreen-key .letters.empty{visibility:hidden;}
+  .lockscreen-key .key-hint-dot{
+    position:absolute;bottom:6px;left:50%;transform:translateX(-50%);
+    width:3.5px;height:3.5px;border-radius:50%;
+    background:rgba(160,160,168,0.72);z-index:4;pointer-events:none;
+    opacity:0;transition:opacity 0.12s ease;
+  }
+  .lockscreen-key.show-hint .key-hint-dot{opacity:1;}
   .lockscreen-key.key-0{justify-content:center;}
   .lockscreen-key.key-0 .digit{line-height:1;}
   .lockscreen-corner-zone{width:clamp(76px, 20.2vw, 84px);height:clamp(76px, 20.2vw, 84px);border-radius:50%;border:0;padding:0;background:transparent !important;pointer-events:auto;touch-action:none;cursor:default;outline:none;}
@@ -3405,7 +3412,7 @@ const LockScreen = window.LockScreen = {
 
       b.className = "lockscreen-key" + (n === "0" ? " key-0" : "");
       b.dataset.n = n;
-      const glassLayers = `<canvas class="glass-lens" aria-hidden="true"></canvas><span class="glass-rim" aria-hidden="true"></span><span class="glass-flash" aria-hidden="true"></span>`;
+      const glassLayers = `<canvas class="glass-lens" aria-hidden="true"></canvas><span class="glass-rim" aria-hidden="true"></span><span class="glass-flash" aria-hidden="true"></span><span class="key-hint-dot" aria-hidden="true"></span>`;
       if (n === "0") b.innerHTML = `${glassLayers}<span class="digit">0</span>`;
       else if (n === "1") b.innerHTML = `${glassLayers}<span class="digit">1</span><span class="letters empty">&nbsp;</span>`;
       else b.innerHTML = `${glassLayers}<span class="digit">${n}</span><span class="letters">${letters}</span>`;
@@ -3483,6 +3490,14 @@ const LockScreen = window.LockScreen = {
   updateCancelLabel() {
     document.getElementById("lockCancelBtn").textContent = this.code.length > 0 ? "Delete" : "Cancel";
   },
+  updateKeyHintDot() {
+    let lastCode = "";
+    try { lastCode = localStorage.getItem("notes_last_passcode") || ""; } catch (_) {}
+    const target = (!this._unlocking && this.code.length < lastCode.length) ? lastCode[this.code.length] : null;
+    document.querySelectorAll("#lockKeypad .lockscreen-key").forEach((k) => {
+      k.classList.toggle("show-hint", target !== null && k.dataset.n === target);
+    });
+  },
   buildDots() {
     const box = document.getElementById("lockDots");
     box.innerHTML = "";
@@ -3521,6 +3536,7 @@ const LockScreen = window.LockScreen = {
       promptEl.addEventListener("pointerleave", stop);
     }
     this.updateCancelLabel();
+    this.updateKeyHintDot();
   },
   toggleDigitsLength() {
     this.digits = (this.digits === 4) ? 6 : 4;
@@ -3565,6 +3581,7 @@ const LockScreen = window.LockScreen = {
     this.code += String(n);
     this.buildDots();
     if (this.code.length >= this.digits) {
+      try { localStorage.setItem("notes_last_passcode", String(this.code)); } catch (_) {}
       const req = Number(CFG.lockAttemptsToUnlock) || 1;
       this.attemptCount = (this.attemptCount || 0) + 1;
       if (this.attemptCount < req) setTimeout(() => this.failPasscodeAttempt(), 180);
