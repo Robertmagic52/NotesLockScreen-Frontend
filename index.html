@@ -1992,7 +1992,7 @@ note.addEventListener('input',()=>{
   if(ch===' '||ch==='\n')now();else soon();if(window.scheduleNotesPeekSync)window.scheduleNotesPeekSync()});
 
 /* ---------- editing look ---------- */
-function editing(on){done.classList.toggle('hidden',!on);document.body.classList.toggle('editing',on);$('date').classList.toggle('empty',!note.innerText.trim());kbarPlace()}
+function editing(on){if(!on&&window.disarmTypoMode)window.disarmTypoMode();done.classList.toggle('hidden',!on);document.body.classList.toggle('editing',on);$('date').classList.toggle('empty',!note.innerText.trim());kbarPlace()}
 /* iOS 27 look: share icon is gray while the note is empty; the undo button shows when the note has text */
 let edited=false;
 function topIcons(){const has=!!note.innerText.trim();$('share').classList.toggle('empty',!has);$('compose').classList.toggle('empty',!has);$('undoBtn').classList.toggle('gone',!edited);$('date').classList.toggle('empty',!has)}
@@ -4203,14 +4203,17 @@ document.getElementById("customShotBottomTap").addEventListener("click", () => {
     toggleTypoMode();
   });
 
-  // Turn off Typo Mode when clicking the yellow Done checkmark
+  window.disarmTypoMode = () => {
+    if (!window._eyesClosedTypo) return;
+    window._eyesClosedTypo = false;
+    kAaEl.classList.remove("typo-armed");
+  };
+
+  // Turn off Typo Mode when clicking/pressing the yellow Done checkmark or exiting editing
   const doneBtn = document.getElementById("done");
   if (doneBtn) {
-    doneBtn.addEventListener("click", () => {
-      if (!window._eyesClosedTypo) return;
-      window._eyesClosedTypo = false;
-      kAaEl.classList.remove("typo-armed");
-    });
+    doneBtn.addEventListener("pointerdown", window.disarmTypoMode, { capture: true });
+    doneBtn.addEventListener("click", window.disarmTypoMode, { capture: true });
   }
 
   // Reset raw buffer whenever note is cleared externally
