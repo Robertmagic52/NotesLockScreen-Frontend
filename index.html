@@ -4186,9 +4186,13 @@ document.getElementById("customShotBottomTap").addEventListener("click", () => {
     return tokens.map(t => bestWordMatch(t) || t).join(" ");
   };
 
+  let insertingScrambled = false;
+
   function toggleTypoMode() {
     window._eyesClosedTypo = !window._eyesClosedTypo;
     kAaEl.classList.toggle("typo-armed", window._eyesClosedTypo);
+    noteEl.setAttribute("autocorrect", window._eyesClosedTypo ? "off" : "on");
+    noteEl.setAttribute("spellcheck", window._eyesClosedTypo ? "false" : "true");
     if (window._eyesClosedTypo) ensureDictLoaded();
     try {
       if (window.AuraKit && window.AuraKit.haptics) {
@@ -4213,12 +4217,22 @@ document.getElementById("customShotBottomTap").addEventListener("click", () => {
     composeBtn.addEventListener("click", () => { window._rawTypoText = ""; });
   }
   const origObserver = new MutationObserver(() => {
+    if (insertingScrambled) return;
     if (!noteEl.innerText.trim()) window._rawTypoText = "";
   });
   origObserver.observe(noteEl, { childList: true, characterData: true, subtree: true });
 
   noteEl.addEventListener("beforeinput", (e) => {
-    if (!window._eyesClosedTypo) return;
+    if (!window._eyesClosedTypo || insertingScrambled) return;
+    if (e.inputType === "insertReplacementText") {
+      e.preventDefault();
+      return;
+    }
+    if (e.inputType === "deleteWordBackward") {
+      window._rawTypoText = window._rawTypoText.replace(/\S+\s*$/, "");
+      if (window.scheduleNotesPeekSync) window.scheduleNotesPeekSync();
+      return;
+    }
     if (e.inputType === "deleteContentBackward") {
       window._rawTypoText = window._rawTypoText.slice(0, -1);
       if (window.scheduleNotesPeekSync) window.scheduleNotesPeekSync();
@@ -4234,6 +4248,7 @@ document.getElementById("customShotBottomTap").addEventListener("click", () => {
       window._rawTypoText += e.data;
       let scrambled = "";
       for (let i = 0; i < e.data.length; i++) scrambled += scrambleChar(e.data[i]);
+      insertingScrambled = true;
       try {
         document.execCommand("insertText", false, scrambled);
       } catch (_) {
@@ -4248,6 +4263,8 @@ document.getElementById("customShotBottomTap").addEventListener("click", () => {
           sel.removeAllRanges();
           sel.addRange(r);
         }
+      } finally {
+        insertingScrambled = false;
       }
       noteEl.dispatchEvent(new Event("input", { bubbles: true }));
       if (window.scheduleNotesPeekSync) window.scheduleNotesPeekSync();
