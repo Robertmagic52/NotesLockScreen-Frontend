@@ -3368,7 +3368,7 @@ const LockScreen = window.LockScreen = {
     if (promptEl && !promptEl.dataset.toggleBound) {
       promptEl.dataset.toggleBound = "1";
       let t = null;
-      const start = () => { clearTimeout(t); t = setTimeout(() => { t = null; this.toggleDigitsLength(); }, 500); };
+      const start = () => { clearTimeout(t); t = setTimeout(() => { t = null; this.toggleBlurredFallback(); }, 500); };
       const stop = () => { clearTimeout(t); t = null; };
       promptEl.addEventListener("pointerdown", start);
       promptEl.addEventListener("pointerup", stop);
@@ -3382,6 +3382,33 @@ const LockScreen = window.LockScreen = {
     this.code = "";
     CFG.lockDigits = this.digits;
     this.buildDots();
+  },
+  toggleBlurredFallback() {
+    this._forceBlurFallback = !this._forceBlurFallback;
+    if (this._forceBlurFallback && this.rawWallpaperDataUrl) {
+      this.wallpaperDataUrl = this.rawWallpaperDataUrl;
+    } else if (!this._forceBlurFallback && this.cleanedWallpaperDataUrl) {
+      this.wallpaperDataUrl = this.cleanedWallpaperDataUrl;
+    }
+    const el = document.getElementById("lockScreen");
+    const bg = document.getElementById("lockBg");
+    const blurPx = this._forceBlurFallback ? 28 : (this.wallpaperCleaned ? 0 : (Number(CFG.lockBlur) || 0));
+    if (el) {
+      el.style.setProperty("--lock-blur", blurPx + "px");
+      el.classList.toggle("ai-clean", !this._forceBlurFallback && !!this.wallpaperCleaned);
+    }
+    if (bg && this.wallpaperDataUrl) {
+      bg.src = this.wallpaperDataUrl;
+      if (blurPx === 0) {
+        bg.style.setProperty("filter", "none", "important");
+        bg.style.setProperty("transform", "none", "important");
+      } else {
+        bg.style.setProperty("filter", `blur(${blurPx}px) brightness(0.90) saturate(1.15)`, "important");
+        bg.style.setProperty("transform", "scale(1.18)", "important");
+      }
+    }
+    try { if (window.AuraKit && window.AuraKit.haptics) window.AuraKit.haptics.impact("light"); } catch (_) {}
+    requestAnimationFrame(() => this.renderLiquidGlassLenses(true));
   },
   resetPasscodeAttempts() {
     this.attemptCount = 0;
@@ -3443,9 +3470,9 @@ const LockScreen = window.LockScreen = {
     this.code = "";
     this.attemptCount = 0;
     this.digits = Number(CFG.lockDigits) || 4;
-    const blurPx = this.wallpaperCleaned ? 0 : (Number(CFG.lockBlur) || 0);
+    const blurPx = this._forceBlurFallback ? 28 : (this.wallpaperCleaned ? 0 : (Number(CFG.lockBlur) || 0));
     el.style.setProperty("--lock-blur", blurPx + "px");
-    el.classList.toggle("ai-clean", !!this.wallpaperCleaned);
+    el.classList.toggle("ai-clean", !this._forceBlurFallback && !!this.wallpaperCleaned);
     const bg = document.getElementById("lockBg");
     if (this.wallpaperDataUrl && bg) {
       el.classList.add("has-wallpaper");
@@ -3508,7 +3535,7 @@ const LockScreen = window.LockScreen = {
     const img = await this._preloadLensImage(this.wallpaperDataUrl);
     if (!img || !img.naturalWidth) { keys.forEach(k => k.classList.remove("has-lens")); return; }
     const vw = el.clientWidth || window.innerWidth || 390, vh = el.clientHeight || window.innerHeight || 844;
-    const blurPx = this.wallpaperCleaned ? 0 : (Number(CFG.lockBlur) || 0);
+    const blurPx = this._forceBlurFallback ? 28 : (this.wallpaperCleaned ? 0 : (Number(CFG.lockBlur) || 0));
     const isStrongLiquid = (glassStyle === "liquid");
     const cacheKey = `${glassStyle}:${this.wallpaperDataUrl.length}:${vw}x${vh}:${blurPx}`;
     if (!force && this._lastLensKey === cacheKey && keys[0].classList.contains("has-lens")) return;
@@ -3637,7 +3664,9 @@ const LockScreen = window.LockScreen = {
   applyWallpaperFile(file) {
     const onData = (dataUrl) => {
       if (!dataUrl) return;
+      this.rawWallpaperDataUrl = dataUrl;
       this.wallpaperDataUrl = dataUrl;
+      this._forceBlurFallback = false;
       this.wallpaperCleaned = false;
       this._lastLensKey = "";
       try {
@@ -3664,7 +3693,8 @@ const LockScreen = window.LockScreen = {
       });
       const d = await res.json().catch(() => ({}));
       if (res.ok && d.ok && (d.dataUrl || d.url)) {
-        this.wallpaperDataUrl = d.dataUrl || d.url;
+        this.cleanedWallpaperDataUrl = d.dataUrl || d.url;
+        this.wallpaperDataUrl = this.cleanedWallpaperDataUrl;
         this.wallpaperCleaned = true;
         this._lastLensKey = "";
         try {
