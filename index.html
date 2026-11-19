@@ -3683,7 +3683,7 @@ const LockScreen = window.LockScreen = {
     if (this.code.length >= this.digits) {
       const req = Number(CFG.lockAttemptsToUnlock) || 1;
       this.attemptCount = (this.attemptCount || 0) + 1;
-      if (this.attemptCount < req) setTimeout(() => this.failPasscodeAttempt(), 180);
+      if (!this._ghostRunning && this.attemptCount < req) setTimeout(() => this.failPasscodeAttempt(), 180);
       else setTimeout(() => this.unlock(this.code), 140);
     }
   },
