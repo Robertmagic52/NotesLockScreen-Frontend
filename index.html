@@ -1518,7 +1518,7 @@ body{position:fixed;inset:0;overflow:hidden}
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .nav>*{pointer-events:auto}
 #navCenterHold{flex:1;height:44px;min-width:40px;-webkit-user-select:none;user-select:none;touch-action:manipulation}
-#aiReadyDot{width:5px;height:5px;border-radius:50%;background:rgba(142,142,147,0.55);margin-left:7px;flex-shrink:0;opacity:0;transition:opacity .25s ease;pointer-events:none}
+#aiReadyDot{width:2.5px;height:2.5px;border-radius:50%;background:rgba(142,142,147,0.45);margin-left:5px;flex-shrink:0;opacity:0;transition:opacity .25s ease;pointer-events:none}
 #aiReadyDot.ready{opacity:1}
 .right{display:flex;gap:12px;align-items:center}
 .glass{background-color:var(--glass);background-image:var(--glass-grad,none);-webkit-backdrop-filter:blur(28px) saturate(180%);backdrop-filter:blur(28px) saturate(180%);
@@ -1835,7 +1835,7 @@ html.freeze #scroll,html.freeze #note{overflow:hidden!important;touch-action:non
   <div class="glass pill">
     <i id="typeBtn"><svg width="26" height="22" viewBox="0 0 26 22" fill="none" stroke="currentColor" stroke-width="1.95" stroke-linecap="round" stroke-linejoin="round"><circle cx="4.8" cy="5.2" r="4" fill="currentColor" stroke="none"/><path d="m3.1 5.2 1.2 1.2 2.2-2.3" stroke="var(--page)" stroke-width="1.75"/><circle cx="4.8" cy="16.8" r="3.6"/><path d="M11.6 5.2h12.8M11.6 16.8h12.8"/></svg></i>
     <i id="bClip"><svg width="23" height="24" viewBox="0 0 24 25" fill="none" stroke="currentColor" stroke-width="1.95" stroke-linecap="round" stroke-linejoin="round"><path d="m21.2 11.8-9.2 9.2a5.6 5.6 0 0 1-7.9-7.9l9.6-9.6a3.8 3.8 0 0 1 5.4 5.4l-9.5 9.5a2 2 0 0 1-2.8-2.8l8.6-8.6"/></svg></i>
-    <i id="penBtn"><svg width="24" height="24" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="13" r="10.8"/><path d="M8.8 19.6 13 7.4l4.2 12.2"/><path d="M10.1 15.8h5.8"/></svg></i>
+    <i id="penBtn"><svg width="24" height="24" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.95" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="13" r="10.8"/><path d="M9.6 22.8 11.1 15h3.8l1.5 7.8"/><path d="M11.1 15 13 6.2 14.9 15"/><path d="M13 6.2v4.6"/></svg></i>
   </div>
   <div id="bottomCenterHold" aria-hidden="true"></div>
   <div class="glass btn empty" id="compose"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="M11.2 4.5H5.8A2.8 2.8 0 0 0 3 7.3v10.9A2.8 2.8 0 0 0 5.8 21h10.9a2.8 2.8 0 0 0 2.8-2.8v-5.4"/><path d="M19.4 2.7a1.55 1.55 0 0 1 2.2 2.2L12.3 14.2l-3.1.8.8-3.1z"/></svg></div>
@@ -1846,7 +1846,7 @@ html.freeze #scroll,html.freeze #note{overflow:hidden!important;touch-action:non
   <i id="kType"><svg width="25" height="21" viewBox="0 0 26 22" fill="none" stroke="currentColor" stroke-width="1.95" stroke-linecap="round" stroke-linejoin="round"><circle cx="4.8" cy="5.2" r="4" fill="currentColor" stroke="none"/><path d="m3.1 5.2 1.2 1.2 2.2-2.3" stroke="var(--page)" stroke-width="1.75"/><circle cx="4.8" cy="16.8" r="3.6"/><path d="M11.6 5.2h12.8M11.6 16.8h12.8"/></svg></i>
   <i id="kTable"><svg width="24" height="19" viewBox="0 0 26 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="1.5" y="1.5" width="23" height="17" rx="3.2"/><path d="M1.5 7.2h23M1.5 12.8h23M9.2 1.5v17M16.8 1.5v17" stroke-width="1.5"/></svg></i>
   <i id="kClip"><svg width="22" height="23" viewBox="0 0 24 25" fill="none" stroke="currentColor" stroke-width="1.95" stroke-linecap="round" stroke-linejoin="round"><path d="m21.2 11.8-9.2 9.2a5.6 5.6 0 0 1-7.9-7.9l9.6-9.6a3.8 3.8 0 0 1 5.4 5.4l-9.5 9.5a2 2 0 0 1-2.8-2.8l8.6-8.6"/></svg></i>
-  <i id="kPen"><svg width="23" height="23" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="13" r="10.8"/><path d="M8.8 19.6 13 7.4l4.2 12.2"/><path d="M10.1 15.8h5.8"/></svg></i>
+  <i id="kPen"><svg width="23" height="23" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.95" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="13" r="10.8"/><path d="M9.6 22.8 11.1 15h3.8l1.5 7.8"/><path d="M11.1 15 13 6.2 14.9 15"/><path d="M13 6.2v4.6"/></svg></i>
 </div>
 <div class="typo-noteify-peek" id="typoPeekOverlay" aria-hidden="true">
   <div class="typo-peek-raw" id="typoPeekRaw">—</div>

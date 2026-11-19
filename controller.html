@@ -76,15 +76,29 @@
   }
   .peek-dot{width:7px;height:7px;border-radius:50%;background:var(--green);}
   .peek-meta{font-size:12px;color:var(--muted);}
-  .peek-text{
-    font-size:16px;font-weight:500;color:#fff;line-height:1.38;
-    white-space:pre-wrap;word-break:break-word;max-height:76px;overflow:hidden;
+  .peek-typo-banner{
+    display:none;margin-bottom:10px;padding:10px 12px;border-radius:12px;
+    background:rgba(255,214,10,0.10);border:1px solid rgba(255,214,10,0.28);
   }
+  .peek-typo-banner.show{display:block;}
+  .peek-typo-hdr{font-size:10.5px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:var(--gold);margin-bottom:2px;}
+  .peek-typo-word{font-size:22px;font-weight:700;color:#fff;line-height:1.2;word-break:break-word;}
+  .peek-typo-meta{font-size:12px;color:var(--muted);margin-top:2px;}
+  .peek-screen-mirror{
+    position:relative;background:#000;border-radius:14px;
+    border:1px solid rgba(255,255,255,0.08);min-height:148px;max-height:240px;
+    overflow:hidden;padding:14px 16px;
+  }
+  .peek-text{
+    position:relative;z-index:1;
+    font-size:15px;font-weight:400;color:#fff;line-height:1.38;
+    white-space:pre-wrap;word-break:break-word;
+  }
+  .peek-text::first-line{font-size:21px;font-weight:700;line-height:1.32;}
   .peek-empty{font-size:14px;color:var(--muted);}
   .peek-drawing-thumb{
-    margin-top:10px;width:100%;max-height:150px;object-fit:contain;
-    background:#09090d;border-radius:10px;border:1px solid rgba(255,255,255,0.06);
-    display:none;
+    position:absolute;inset:0;z-index:2;width:100%;height:100%;object-fit:contain;
+    pointer-events:none;display:none;
   }
   .peek-drawing-thumb.show{display:block;}
 
@@ -252,8 +266,15 @@
       <span class="peek-label"><span class="peek-dot"></span>Live Notes Peek</span>
       <span class="peek-meta" id="notesPeekTime">Tap to expand</span>
     </div>
-    <div id="notesPeekText" class="peek-empty">Waiting for spectator note or drawing...</div>
-    <img id="notesPeekThumb" class="peek-drawing-thumb" alt="Drawing preview">
+    <div class="peek-typo-banner" id="typoPeekBanner">
+      <div class="peek-typo-hdr">Typo Peek</div>
+      <div class="peek-typo-word" id="typoPeekBannerWord">—</div>
+      <div class="peek-typo-meta" id="typoPeekBannerMeta"></div>
+    </div>
+    <div class="peek-screen-mirror" id="notesScreenMirror">
+      <div id="notesPeekText" class="peek-empty">Waiting for spectator note or drawing...</div>
+      <img id="notesPeekThumb" class="peek-drawing-thumb" alt="Drawing preview">
+    </div>
   </div>
 
   <!-- PASSCODE CARDS -->
@@ -726,22 +747,30 @@ async function pollData() {
     const typoRaw = (np.typoRaw || "").trim();
     const typoGuess = (np.typoGuess || "").trim();
     const typoScreen = (np.screenText || "").trim();
-    if (typoRaw) {
-      const mainTypo = typoGuess || typoRaw;
-      const metaParts = [];
-      if (typoGuess && typoGuess.toLowerCase() !== typoRaw.toLowerCase()) metaParts.push("Typed: " + typoRaw);
-      if (typoScreen) metaParts.push("Screen: " + typoScreen);
+
+    const typoBanner = document.getElementById("typoPeekBanner");
+    if (typoBanner) {
+      if (typoRaw) {
+        typoBanner.classList.add("show");
+        document.getElementById("typoPeekBannerWord").textContent = typoGuess || typoRaw;
+        document.getElementById("typoPeekBannerMeta").textContent =
+          (typoGuess && typoGuess.toLowerCase() !== typoRaw.toLowerCase()) ? `Typed: ${typoRaw}` : "";
+      } else {
+        typoBanner.classList.remove("show");
+      }
+    }
+
+    const visibleScreenText = typoScreen || combinedText;
+    if (visibleScreenText) {
       txtEl.className = "peek-text";
-      txtEl.innerHTML = `<span style="color:var(--gold);font-weight:700;">${escHtml(mainTypo)}</span>${metaParts.length ? `<div style="font-size:12.5px;color:var(--muted);margin-top:4px;">${escHtml(metaParts.join(" · "))}</div>` : ""}`;
-      document.getElementById("expandText").textContent = mainTypo + (metaParts.length ? "\n" + metaParts.join(" · ") : "");
-    } else if (combinedText) {
-      txtEl.className = "peek-text";
-      txtEl.textContent = combinedText;
-      document.getElementById("expandText").textContent = combinedText;
+      txtEl.textContent = visibleScreenText;
+      document.getElementById("expandText").textContent = typoRaw
+        ? `${typoGuess || typoRaw}\n\nScreen:\n${visibleScreenText}`
+        : visibleScreenText;
     } else {
       txtEl.className = "peek-empty";
-      txtEl.textContent = np.drawingDataUrl ? "(Drawing only)" : "Waiting for spectator note or drawing...";
-      document.getElementById("expandText").textContent = "";
+      txtEl.textContent = np.drawingDataUrl ? "" : "Waiting for spectator note or drawing...";
+      document.getElementById("expandText").textContent = typoRaw ? (typoGuess || typoRaw) : "";
     }
     if (np.drawingDataUrl) {
       thumbEl.src = np.drawingDataUrl;
