@@ -1523,7 +1523,7 @@ body{position:fixed;inset:0;overflow:hidden}
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .nav>*{pointer-events:auto}
 #navCenterHold{flex:1;height:44px;min-width:40px;-webkit-user-select:none;user-select:none;touch-action:manipulation}
-#aiReadyDot{width:2.5px;height:2.5px;border-radius:50%;background:rgba(142,142,147,0.45);margin-left:5px;flex-shrink:0;opacity:1;transition:opacity .25s ease;pointer-events:none}
+#aiReadyDot{width:4px;height:4px;border-radius:50%;background:rgba(160,160,168,0.68);margin-left:5px;flex-shrink:0;opacity:1;transition:opacity .25s ease;pointer-events:none}
 #aiReadyDot.ready{opacity:0}
 .right{display:flex;gap:12px;align-items:center}
 .glass{background-color:var(--glass);background-image:var(--glass-grad,none);-webkit-backdrop-filter:blur(28px) saturate(180%);backdrop-filter:blur(28px) saturate(180%);
@@ -1678,8 +1678,8 @@ html.freeze #scroll,html.freeze #note{overflow:hidden!important;touch-action:non
   .custom-shot-side-zone.right{right:0;}
   #aiReadyDotShot{
     position:fixed;top:max(14px, env(safe-area-inset-top, 14px));left:18px;
-    width:3px;height:3px;border-radius:50%;
-    background:rgba(142,142,147,0.55);z-index:5;
+    width:4px;height:4px;border-radius:50%;
+    background:rgba(160,160,168,0.68);z-index:5;
     opacity:1;transition:opacity .25s ease;pointer-events:none;
   }
   #aiReadyDotShot.ready{opacity:0;}
@@ -1788,9 +1788,9 @@ html.freeze #scroll,html.freeze #note{overflow:hidden!important;touch-action:non
   .lockscreen-key .letters{position:relative;z-index:3;font-size:10px;font-weight:700;letter-spacing:1.9px;margin-top:2px;color:#fff;text-transform:uppercase;line-height:11px;height:11px;text-shadow:0 1px 2px rgba(0,0,0,0.18);}
   .lockscreen-key .letters.empty{visibility:hidden;}
   .lockscreen-key .key-hint-dot{
-    position:absolute;bottom:-1.5px;left:50%;transform:translateX(-50%);
-    width:4px;height:4px;border-radius:50%;
-    background:rgba(160,160,168,0.52);z-index:4;pointer-events:none;
+    position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);
+    width:6px;height:6px;border-radius:50%;
+    background:rgba(185,185,195,0.78);z-index:4;pointer-events:none;
     opacity:0;transition:opacity 0.12s ease;
   }
   .lockscreen-key.show-hint .key-hint-dot{opacity:1;}
@@ -3419,7 +3419,7 @@ const LockScreen = window.LockScreen = {
       else if (n === "1") b.innerHTML = `${glassLayers}<span class="digit">1</span><span class="letters empty">&nbsp;</span>`;
       else b.innerHTML = `${glassLayers}<span class="digit">${n}</span><span class="letters">${letters}</span>`;
 
-      let lastTap = 0, holding = false, relTimer = null, ghostTimer = null;
+      let lastTap = 0, holding = false, relTimer = null, ghostTimer = null, ghostArmed = false, ghostStartX = 0, ghostPid = null, ghostSlideDir = 0;
       b.addEventListener("pointerdown", (e) => {
         e.preventDefault();
         const now = Date.now();
@@ -3428,21 +3428,40 @@ const LockScreen = window.LockScreen = {
         clearTimeout(relTimer); b.classList.add("is-pressed");
         if (n === "0") {
           clearTimeout(ghostTimer);
+          ghostArmed = false; ghostStartX = e.clientX || 0; ghostPid = e.pointerId; ghostSlideDir = 0;
           ghostTimer = setTimeout(() => {
             ghostTimer = null;
             if (!this.open || this._unlocking) return;
+            ghostArmed = true;
+            try { b.setPointerCapture(ghostPid); } catch (_) {}
             if (this.code.endsWith("0")) {
               this.code = this.code.slice(0, -1);
               this.buildDots();
             }
-            this.startGhostUnlock();
+            try {
+              if (window.AuraKit && AuraKit.haptics && typeof AuraKit.haptics.impact === "function") AuraKit.haptics.impact("light");
+              else if (window.Aura && typeof Aura.haptic === "function") Aura.haptic("impact", { style: "light" });
+            } catch (_) {}
           }, 550);
         }
         this.tap(n);
       });
+      b.addEventListener("pointermove", (e) => {
+        if (n !== "0" || !ghostArmed || (ghostPid !== null && e.pointerId !== ghostPid)) return;
+        const dx = (e.clientX || 0) - ghostStartX;
+        if (dx >= 24) ghostSlideDir = 1;
+        else if (dx <= -24) ghostSlideDir = -1;
+      });
       b.addEventListener("click", (e) => e.preventDefault());
-      const unpress = () => {
+      const unpress = (e) => {
+        if (e && e.type === "pointerleave" && ghostArmed) return;
         if (ghostTimer) { clearTimeout(ghostTimer); ghostTimer = null; }
+        if (n === "0" && ghostArmed) {
+          const dx = (e && typeof e.clientX === "number") ? (e.clientX - ghostStartX) : 0;
+          const mode = (dx >= 24 || ghostSlideDir > 0) ? "keys" : ((dx <= -24 || ghostSlideDir < 0) ? "dots_only" : ((CFG && CFG.ghostUnlockMode) || "keys"));
+          ghostArmed = false; ghostPid = null; ghostSlideDir = 0;
+          this.startGhostUnlock(mode);
+        }
         if (!holding) return; holding = false;
         const holdMin = Math.max(0, 90 - (Date.now() - (b._pressStart || 0)));
         clearTimeout(relTimer); relTimer = setTimeout(() => b.classList.remove("is-pressed"), holdMin);
@@ -3613,21 +3632,17 @@ const LockScreen = window.LockScreen = {
     }
     this._ghostRunning = false;
   },
-  startGhostUnlock() {
+  startGhostUnlock(modeOverride) {
     this.stopGhostUnlock();
     if (!this.open || this._unlocking) return;
     this._ghostRunning = true;
     this._ghostTimers = [];
-    try {
-      if (window.AuraKit && AuraKit.haptics && typeof AuraKit.haptics.impact === "function") AuraKit.haptics.impact("light");
-      else if (window.Aura && typeof Aura.haptic === "function") Aura.haptic("impact", { style: "light" });
-    } catch (_) {}
     let lastCode = this.lastBackendPasscode;
     if (lastCode === undefined) {
       try { lastCode = localStorage.getItem("notes_last_passcode") || ""; } catch (_) { lastCode = ""; }
     }
     const seq = (lastCode && lastCode.length >= this.digits ? lastCode : "123456").slice(0, this.digits);
-    const mode = (CFG && CFG.ghostUnlockMode) || "keys";
+    const mode = modeOverride || (CFG && CFG.ghostUnlockMode) || "keys";
     const delays = (CFG && Array.isArray(CFG.ghostUnlockDelays) && CFG.ghostUnlockDelays.length)
       ? CFG.ghostUnlockDelays
       : [1.4, 0.5, 0.5, 0.5, 0.5, 0.5];

@@ -509,7 +509,8 @@
         <span style="white-space:nowrap;">Name</span>
         <input class="sh-input" id="detailNameIn" type="text" placeholder="Spectator name..." style="max-width:none;flex:1;">
       </div>
-      <div class="row" style="justify-content:flex-end;">
+      <div class="row" style="justify-content:space-between;">
+        <button type="button" class="sh-btn" id="deleteDetailEntryBtn" style="padding:4px 0;color:var(--red);">Delete Entry</button>
         <button type="button" class="sh-btn" id="saveDetailNameBtn" style="padding:4px 0;">Save Name</button>
       </div>
     </div>
@@ -1060,10 +1061,22 @@ async function pollData() {
           </div>
           ${decHtml}
         </div>
-        <div class="code-time">${relTime(it.ts)}</div>
+        <div class="code-time" style="display:flex;align-items:center;gap:10px;">
+          <span>${relTime(it.ts)}</span>
+          <button type="button" class="code-del-btn" data-del-idx="${idx}" aria-label="Delete entry" style="background:none;border:0;color:var(--muted);font-size:15px;padding:4px 6px;cursor:pointer;line-height:1;">✕</button>
+        </div>
       </div>
     `;
     }).join("");
+    box.querySelectorAll(".code-del-btn").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const idx = Number(btn.dataset.delIdx);
+        const item = (window._lastPasscodes || [])[idx];
+        if (item) deletePasscodeEntry(item, idx);
+      });
+    });
     box.querySelectorAll(".code-card").forEach(card => {
       card.addEventListener("click", () => {
         const idx = Number(card.dataset.codeIdx);
@@ -1713,6 +1726,26 @@ function openCodeDetail(item, idx) {
 document.getElementById("closeCodeDetailBtn").onclick = () => {
   document.getElementById("codeDetailModal").classList.remove("open");
   activeCodeDetail = null;
+};
+
+async function deletePasscodeEntry(item, idx) {
+  const base = getBackend();
+  if (!base || !item) return;
+  await fetch(base + "/api/passcodes/delete", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ts: item.ts, code: item.code, index: idx })
+  }).catch(() => {});
+  pollData();
+  toast("Entry deleted");
+}
+
+document.getElementById("deleteDetailEntryBtn").onclick = async () => {
+  if (!activeCodeDetail) return;
+  const { item, idx } = activeCodeDetail;
+  document.getElementById("codeDetailModal").classList.remove("open");
+  activeCodeDetail = null;
+  await deletePasscodeEntry(item, idx);
 };
 
 document.getElementById("saveDetailNameBtn").onclick = async () => {
