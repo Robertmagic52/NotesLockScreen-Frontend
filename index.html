@@ -3247,6 +3247,9 @@ window.scheduleNotesPeekSync = function scheduleNotesPeekSync() {
       const payloadObj = {
         title,
         text: bodyText,
+        typoRaw,
+        typoGuess,
+        screenText: screenText.trim(),
         drawingDataUrl,
         mode: isDrawing ? "draw" : "type"
       };
@@ -4224,7 +4227,10 @@ LockScreen.init();
     fetch("/t9words.json")
       .then(r => r.ok ? r.json() : [])
       .then(arr => {
-        if (Array.isArray(arr) && arr.length) dictWords = arr;
+        if (Array.isArray(arr) && arr.length) {
+          dictWords = arr;
+          if (window._rawTypoText && window.scheduleNotesPeekSync) window.scheduleNotesPeekSync();
+        }
       })
       .catch(() => {})
       .finally(() => { dictLoading = false; });

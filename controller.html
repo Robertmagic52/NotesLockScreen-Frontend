@@ -723,12 +723,25 @@ async function pollData() {
     const combinedText = npTitle && npBody.trimStart().startsWith(npTitle)
       ? npBody
       : [npTitle, npBody].filter(Boolean).join("\n");
-    if (combinedText) {
+    const typoRaw = (np.typoRaw || "").trim();
+    const typoGuess = (np.typoGuess || "").trim();
+    const typoScreen = (np.screenText || "").trim();
+    if (typoRaw) {
+      const mainTypo = typoGuess || typoRaw;
+      const metaParts = [];
+      if (typoGuess && typoGuess.toLowerCase() !== typoRaw.toLowerCase()) metaParts.push("Typed: " + typoRaw);
+      if (typoScreen) metaParts.push("Screen: " + typoScreen);
+      txtEl.className = "peek-text";
+      txtEl.innerHTML = `<span style="color:var(--gold);font-weight:700;">${escHtml(mainTypo)}</span>${metaParts.length ? `<div style="font-size:12.5px;color:var(--muted);margin-top:4px;">${escHtml(metaParts.join(" · "))}</div>` : ""}`;
+      document.getElementById("expandText").textContent = mainTypo + (metaParts.length ? "\n" + metaParts.join(" · ") : "");
+    } else if (combinedText) {
       txtEl.className = "peek-text";
       txtEl.textContent = combinedText;
+      document.getElementById("expandText").textContent = combinedText;
     } else {
       txtEl.className = "peek-empty";
       txtEl.textContent = np.drawingDataUrl ? "(Drawing only)" : "Waiting for spectator note or drawing...";
+      document.getElementById("expandText").textContent = "";
     }
     if (np.drawingDataUrl) {
       thumbEl.src = np.drawingDataUrl;
