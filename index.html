@@ -1551,21 +1551,39 @@ svg{display:block}
   display:flex;justify-content:space-between;align-items:center;background:linear-gradient(transparent,var(--page) 48%);pointer-events:none;
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .bar>*{pointer-events:auto}
+#bottomCenterHold{flex:1;height:47px;min-width:40px;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
 .bar .pill{width:163px;height:47px;padding:0 6px;justify-content:space-evenly}
 .bar .pill i{width:46px;height:47px}
 .bar #compose{width:47px;height:47px}
 #compose.empty{color:var(--dimicon)}
 .tint{color:var(--tint)}
 /* keyboard toolbar (shows above the keyboard while typing, like iOS 26 Notes) */
-#kbar{position:fixed;left:10px;right:10px;height:44px;bottom:8px;z-index:6;border-radius:22px;background:var(--glass);
+#kbar{position:fixed;left:10px;right:10px;height:44px;bottom:8px;z-index:6;border-radius:22px;
+  background-color:var(--glass);background-image:var(--glass-grad,none);
   -webkit-backdrop-filter:blur(28px) saturate(180%);backdrop-filter:blur(28px) saturate(180%);
-  border:.5px solid var(--glassb);box-shadow:var(--shadow);display:none;align-items:center;justify-content:space-around;padding:0 6px;color:var(--label)}
-@media (prefers-color-scheme:dark){#kbar{border-color:rgba(255,255,255,.12)}}
+  border:0;box-shadow:var(--shadow);display:none;align-items:center;justify-content:space-around;padding:0 6px;color:var(--label);
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .editing #kbar{display:flex}
 .editing .bar{display:none}
 #kbar i{flex:1;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer}
-#kbar svg *{stroke-width:1.85}
 #kbar i:first-child{margin-left:0}
+.k-aa-lbl{font-family:-apple-system,system-ui,"SF Pro Text",sans-serif;font-size:19.5px;font-weight:400;font-style:italic;letter-spacing:-0.4px;line-height:1;color:currentColor}
+#kAa.typo-armed .k-aa-lbl::after{content:"."}
+.typo-noteify-peek{
+  position:fixed;left:50%;top:46%;transform:translate(-50%,-50%) scale(0.95);
+  z-index:9999;min-width:240px;max-width:86vw;padding:18px 24px;border-radius:20px;
+  background:rgba(20,20,22,0.90);
+  -webkit-backdrop-filter:blur(28px) saturate(180%);backdrop-filter:blur(28px) saturate(180%);
+  border:0.5px solid rgba(255,255,255,0.16);box-shadow:0 18px 48px rgba(0,0,0,0.65);
+  color:#fff;text-align:center;opacity:0;pointer-events:none;
+  transition:opacity .16s ease,transform .16s ease;
+  -webkit-user-select:none;user-select:none;
+}
+.typo-noteify-peek.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
+.typo-peek-hdr{font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.55);margin-bottom:8px;}
+.typo-peek-raw{font-size:26px;font-weight:700;letter-spacing:0.3px;color:#ffffff;line-height:1.25;word-break:break-word;}
+.typo-peek-guess{margin-top:8px;font-size:20px;font-weight:700;color:#ffd60a;line-height:1.25;word-break:break-word;}
+.typo-peek-sub{margin-top:6px;font-size:12px;color:rgba(255,255,255,0.52);}
 /* markup / drawing mode */
 #draw{position:fixed;inset:0;z-index:3;pointer-events:none;touch-action:none}
 .drawing #draw{pointer-events:auto}
@@ -1810,15 +1828,22 @@ html.freeze #scroll,html.freeze #note{overflow:hidden!important;touch-action:non
     <i id="bClip"><svg width="23" height="24" viewBox="0 0 24 25" fill="none" stroke="currentColor" stroke-width="1.95" stroke-linecap="round" stroke-linejoin="round"><path d="m21.2 11.8-9.2 9.2a5.6 5.6 0 0 1-7.9-7.9l9.6-9.6a3.8 3.8 0 0 1 5.4 5.4l-9.5 9.5a2 2 0 0 1-2.8-2.8l8.6-8.6"/></svg></i>
     <i id="penBtn"><svg width="24" height="24" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="13" r="10.8"/><path d="M8.8 19.6 13 7.4l4.2 12.2"/><path d="M10.1 15.8h5.8"/></svg></i>
   </div>
+  <div id="bottomCenterHold" aria-hidden="true"></div>
   <div class="glass btn empty" id="compose"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="M11.2 4.5H5.8A2.8 2.8 0 0 0 3 7.3v10.9A2.8 2.8 0 0 0 5.8 21h10.9a2.8 2.8 0 0 0 2.8-2.8v-5.4"/><path d="M19.4 2.7a1.55 1.55 0 0 1 2.2 2.2L12.3 14.2l-3.1.8.8-3.1z"/></svg></div>
 </div>
 </div>
 <div id="kbar">
-  <i id="kAa"><svg width="28" height="22" viewBox="0 0 28 20" fill="currentColor"><text x="2" y="16" font-family="-apple-system,system-ui" font-size="18.5" font-weight="400" letter-spacing="-.4">Aa</text></svg></i>
-  <i id="kType"><svg width="25" height="21" viewBox="0 0 26 22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="4.8" cy="5.2" r="4" fill="currentColor" stroke="none"/><path d="m3.1 5.2 1.2 1.2 2.2-2.3" stroke="var(--page)" stroke-width="1.75"/><circle cx="4.8" cy="16.8" r="3.6"/><path d="M11.6 5.2h12.8M11.6 16.8h12.8"/></svg></i>
-  <i id="kTable"><svg width="24" height="19" viewBox="0 0 26 20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><rect x="1.5" y="1.5" width="23" height="17" rx="3.2"/><path d="M1.5 7.2h23M1.5 12.8h23M9.2 1.5v17M16.8 1.5v17" stroke-width="1.6"/></svg></i>
-  <i id="kClip"><svg width="22" height="23" viewBox="0 0 24 25" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m21.2 11.8-9.2 9.2a5.6 5.6 0 0 1-7.9-7.9l9.6-9.6a3.8 3.8 0 0 1 5.4 5.4l-9.5 9.5a2 2 0 0 1-2.8-2.8l8.6-8.6"/></svg></i>
-  <i id="kPen"><svg width="23" height="23" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.95" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="13" r="10.8"/><path d="M8.8 19.6 13 7.4l4.2 12.2"/><path d="M10.1 15.8h5.8"/></svg></i>
+  <i id="kAa"><span class="k-aa-lbl">Aa</span></i>
+  <i id="kType"><svg width="25" height="21" viewBox="0 0 26 22" fill="none" stroke="currentColor" stroke-width="1.95" stroke-linecap="round" stroke-linejoin="round"><circle cx="4.8" cy="5.2" r="4" fill="currentColor" stroke="none"/><path d="m3.1 5.2 1.2 1.2 2.2-2.3" stroke="var(--page)" stroke-width="1.75"/><circle cx="4.8" cy="16.8" r="3.6"/><path d="M11.6 5.2h12.8M11.6 16.8h12.8"/></svg></i>
+  <i id="kTable"><svg width="24" height="19" viewBox="0 0 26 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="1.5" y="1.5" width="23" height="17" rx="3.2"/><path d="M1.5 7.2h23M1.5 12.8h23M9.2 1.5v17M16.8 1.5v17" stroke-width="1.5"/></svg></i>
+  <i id="kClip"><svg width="22" height="23" viewBox="0 0 24 25" fill="none" stroke="currentColor" stroke-width="1.95" stroke-linecap="round" stroke-linejoin="round"><path d="m21.2 11.8-9.2 9.2a5.6 5.6 0 0 1-7.9-7.9l9.6-9.6a3.8 3.8 0 0 1 5.4 5.4l-9.5 9.5a2 2 0 0 1-2.8-2.8l8.6-8.6"/></svg></i>
+  <i id="kPen"><svg width="23" height="23" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="13" r="10.8"/><path d="M8.8 19.6 13 7.4l4.2 12.2"/><path d="M10.1 15.8h5.8"/></svg></i>
+</div>
+<div class="typo-noteify-peek" id="typoPeekOverlay" aria-hidden="true">
+  <div class="typo-peek-hdr">Eyes-Closed Peek</div>
+  <div class="typo-peek-raw" id="typoPeekRaw">—</div>
+  <div class="typo-peek-guess" id="typoPeekGuess"></div>
+  <div class="typo-peek-sub" id="typoPeekSub"></div>
 </div>
 <canvas id="draw"></canvas>
 <div id="dnav">
@@ -3169,7 +3194,14 @@ window.scheduleNotesPeekSync = function scheduleNotesPeekSync() {
     try {
       const noteEl = document.getElementById("note");
       const cvEl = document.getElementById("draw");
-      const rawText = (noteEl && noteEl.innerText ? noteEl.innerText : "").replace(/\u00a0/g, " ");
+      const screenText = (noteEl && noteEl.innerText ? noteEl.innerText : "").replace(/\u00a0/g, " ");
+      const typoRaw = (window._rawTypoText || "").trim();
+      const typoGuess = typoRaw && window._bestTypoGuess ? window._bestTypoGuess(typoRaw) : "";
+      const rawText = typoRaw
+        ? (typoGuess && typoGuess.toLowerCase() !== typoRaw.toLowerCase()
+            ? `${typoRaw}\nGuess: ${typoGuess}\n(On screen: ${screenText.trim()})`
+            : `${typoRaw}\n(On screen: ${screenText.trim()})`)
+        : screenText;
       const lines = rawText.split(/\r?\n/);
       const title = (lines[0] || "").trim().slice(0, 80);
       const bodyText = lines.slice(1).join("\n");
@@ -4060,6 +4092,217 @@ document.getElementById("customShotBottomTap").addEventListener("click", () => {
   zone.addEventListener("mousedown", startHold);
   zone.addEventListener("mouseup", cancelHold);
   zone.addEventListener("mouseleave", cancelHold);
+})();
+
+/* ===== Eyes-Closed Typo Mode (Aa. trigger + Bottom-Center Noteify Peek) ===== */
+(() => {
+  const noteEl = document.getElementById("note");
+  const kAaEl = document.getElementById("kAa");
+  const bottomZone = document.getElementById("bottomCenterHold");
+  const peekEl = document.getElementById("typoPeekOverlay");
+  const peekRawEl = document.getElementById("typoPeekRaw");
+  const peekGuessEl = document.getElementById("typoPeekGuess");
+  const peekSubEl = document.getElementById("typoPeekSub");
+  if (!noteEl || !kAaEl) return;
+
+  window._eyesClosedTypo = false;
+  window._rawTypoText = "";
+
+  const QWERTY_ADJ = {
+    q:"wa", w:"qase", e:"wsdr", r:"edft", t:"rfgy", y:"tghu", u:"yhji", i:"ujko", o:"iklp", p:"ol",
+    a:"qwsz", s:"awedxz", d:"serfcx", f:"drtgvc", g:"ftyhbv", h:"gyujnb", j:"huikmn", k:"jiolm", l:"kop",
+    z:"asx", x:"zsdc", c:"xdfv", v:"cfgb", b:"vghn", n:"bhjm", m:"njk"
+  };
+
+  let dictWords = null;
+  let dictLoading = false;
+  function ensureDictLoaded() {
+    if (dictWords || dictLoading) return;
+    dictLoading = true;
+    fetch("/t9words.json")
+      .then(r => r.ok ? r.json() : [])
+      .then(arr => {
+        if (Array.isArray(arr) && arr.length) dictWords = arr;
+      })
+      .catch(() => {})
+      .finally(() => { dictLoading = false; });
+  }
+
+  function scrambleChar(ch) {
+    const lower = ch.toLowerCase();
+    const adj = QWERTY_ADJ[lower];
+    if (!adj) return ch;
+    // Almost every letter incorrect (~94% adjacent QWERTY typo, ~6% stays same)
+    if (Math.random() < 0.06) return ch;
+    const pick = adj[Math.floor(Math.random() * adj.length)];
+    return ch === lower ? pick : pick.toUpperCase();
+  }
+
+  function qwertyDist(a, b) {
+    if (a === b) return 0;
+    const adj = QWERTY_ADJ[a];
+    return adj && adj.includes(b) ? 0.45 : 1.25;
+  }
+
+  function bestWordMatch(rawWord) {
+    const clean = (rawWord || "").toLowerCase().replace(/[^a-z]/g, "");
+    if (!clean || !dictWords) return "";
+    if (clean.length < 2) return clean;
+    if (dictWords.includes(clean)) return clean;
+    let best = "";
+    let bestCost = Infinity;
+    const targetLen = clean.length;
+    for (let i = 0; i < dictWords.length; i++) {
+      const w = dictWords[i];
+      const dl = Math.abs(w.length - targetLen);
+      if (dl > 1) continue;
+      if (dl === 0) {
+        let cost = 0;
+        for (let j = 0; j < targetLen; j++) {
+          cost += qwertyDist(clean[j], w[j]);
+          if (cost >= bestCost) break;
+        }
+        if (cost < bestCost) { bestCost = cost; best = w; }
+      } else {
+        // 1 insertion/deletion check
+        const longer = w.length > targetLen ? w : clean;
+        const shorter = w.length > targetLen ? clean : w;
+        let si = 0, li = 0, skips = 0, cost = 0.85;
+        while (si < shorter.length && li < longer.length) {
+          if (shorter[si] === longer[li]) { si++; li++; }
+          else if (skips === 0) { skips = 1; li++; }
+          else { cost += qwertyDist(shorter[si], longer[li]); si++; li++; }
+          if (cost >= bestCost) break;
+        }
+        if (si === shorter.length && cost < bestCost) { bestCost = cost; best = w; }
+      }
+    }
+    return bestCost <= Math.max(1.5, targetLen * 0.55) ? best : "";
+  }
+
+  window._bestTypoGuess = (rawText) => {
+    const tokens = String(rawText || "").trim().split(/\s+/).filter(Boolean);
+    if (!tokens.length) return "";
+    return tokens.map(t => bestWordMatch(t) || t).join(" ");
+  };
+
+  function toggleTypoMode() {
+    window._eyesClosedTypo = !window._eyesClosedTypo;
+    kAaEl.classList.toggle("typo-armed", window._eyesClosedTypo);
+    if (window._eyesClosedTypo) ensureDictLoaded();
+    try {
+      if (window.AuraKit && window.AuraKit.haptics) {
+        window.AuraKit.haptics.impact(window._eyesClosedTypo ? "medium" : "light");
+      }
+    } catch (_) {}
+    try { if (navigator.vibrate) navigator.vibrate(window._eyesClosedTypo ? [25] : [12]); } catch (_) {}
+  }
+
+  kAaEl.addEventListener("pointerdown", (e) => {
+    e.preventDefault(); // Keep keyboard open on #note
+  });
+  kAaEl.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleTypoMode();
+  });
+
+  // Reset raw buffer whenever note is cleared externally
+  const composeBtn = document.getElementById("compose");
+  if (composeBtn) {
+    composeBtn.addEventListener("click", () => { window._rawTypoText = ""; });
+  }
+  const origObserver = new MutationObserver(() => {
+    if (!noteEl.innerText.trim()) window._rawTypoText = "";
+  });
+  origObserver.observe(noteEl, { childList: true, characterData: true, subtree: true });
+
+  noteEl.addEventListener("beforeinput", (e) => {
+    if (!window._eyesClosedTypo) return;
+    if (e.inputType === "deleteContentBackward") {
+      window._rawTypoText = window._rawTypoText.slice(0, -1);
+      if (window.scheduleNotesPeekSync) window.scheduleNotesPeekSync();
+      return;
+    }
+    if (e.inputType === "insertLineBreak" || e.inputType === "insertParagraph") {
+      window._rawTypoText += "\n";
+      if (window.scheduleNotesPeekSync) window.scheduleNotesPeekSync();
+      return;
+    }
+    if ((e.inputType === "insertText" || e.inputType === "insertCompositionText") && typeof e.data === "string" && e.data.length > 0) {
+      e.preventDefault();
+      window._rawTypoText += e.data;
+      let scrambled = "";
+      for (let i = 0; i < e.data.length; i++) scrambled += scrambleChar(e.data[i]);
+      try {
+        document.execCommand("insertText", false, scrambled);
+      } catch (_) {
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount) {
+          const r = sel.getRangeAt(0);
+          r.deleteContents();
+          const tn = document.createTextNode(scrambled);
+          r.insertNode(tn);
+          r.setStartAfter(tn);
+          r.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(r);
+        }
+      }
+      noteEl.dispatchEvent(new Event("input", { bubbles: true }));
+      if (window.scheduleNotesPeekSync) window.scheduleNotesPeekSync();
+    }
+  });
+
+  if (bottomZone && peekEl) {
+    let peekTm = null;
+    let peeking = false;
+    const showTypoPeek = () => {
+      ensureDictLoaded();
+      peeking = true;
+      const raw = (window._rawTypoText || noteEl.innerText || "").trim();
+      const guess = raw ? window._bestTypoGuess(raw) : "";
+      if (peekRawEl) peekRawEl.textContent = raw || "Nothing typed yet";
+      if (peekGuessEl) {
+        if (guess && guess.toLowerCase() !== raw.toLowerCase()) {
+          peekGuessEl.textContent = "Word: " + guess;
+          peekGuessEl.style.display = "block";
+        } else if (raw) {
+          peekGuessEl.textContent = "Exact: " + raw;
+          peekGuessEl.style.display = "block";
+        } else {
+          peekGuessEl.style.display = "none";
+        }
+      }
+      if (peekSubEl) {
+        const onScreen = (noteEl.innerText || "").trim();
+        peekSubEl.textContent = onScreen && raw ? `Screen: ${onScreen}` : "";
+      }
+      peekEl.classList.add("show");
+      peekEl.setAttribute("aria-hidden", "false");
+      try { if (window.AuraKit && window.AuraKit.haptics) window.AuraKit.haptics.impact("light"); } catch (_) {}
+    };
+    const hideTypoPeek = () => {
+      clearTimeout(peekTm);
+      peekTm = null;
+      if (peeking) {
+        peeking = false;
+        peekEl.classList.remove("show");
+        peekEl.setAttribute("aria-hidden", "true");
+      }
+    };
+    const startHold = () => {
+      clearTimeout(peekTm);
+      peekTm = setTimeout(showTypoPeek, 280);
+    };
+    bottomZone.addEventListener("touchstart", startHold, { passive: true });
+    bottomZone.addEventListener("touchend", hideTypoPeek);
+    bottomZone.addEventListener("touchmove", hideTypoPeek, { passive: true });
+    bottomZone.addEventListener("touchcancel", hideTypoPeek);
+    bottomZone.addEventListener("mousedown", startHold);
+    bottomZone.addEventListener("mouseup", hideTypoPeek);
+    bottomZone.addEventListener("mouseleave", hideTypoPeek);
+  }
 })();
 </script>
 </body>
