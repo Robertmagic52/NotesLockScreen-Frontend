@@ -3073,7 +3073,7 @@ const DEF = {
   customScreenshotDataUrl: "",
   screenshotTapUrl: "",
   screenshotBottomUrl: "",
-  lockDigits: 4,
+  lockDigits: 6,
   lockAttemptsToUnlock: 1,
   lockGlassStyle: "liquid",
   lockBlur: 0,
@@ -3411,6 +3411,23 @@ const LockScreen = window.LockScreen = {
       d.className = "lockscreen-dot" + (i < this.code.length ? " filled" : "");
       box.appendChild(d);
     }
+    if (!box.dataset.holdToggleBound) {
+      box.dataset.holdToggleBound = "1";
+      let dt = null;
+      const dStart = () => {
+        clearTimeout(dt);
+        dt = setTimeout(() => {
+          dt = null;
+          this.toggleDigitsLength();
+          try { if (window.AuraKit && window.AuraKit.haptics) window.AuraKit.haptics.impact("light"); } catch (_) {}
+        }, 500);
+      };
+      const dStop = () => { clearTimeout(dt); dt = null; };
+      box.addEventListener("pointerdown", dStart);
+      box.addEventListener("pointerup", dStop);
+      box.addEventListener("pointercancel", dStop);
+      box.addEventListener("pointerleave", dStop);
+    }
     const promptEl = document.getElementById("lockPrompt");
     if (promptEl && !promptEl.dataset.toggleBound) {
       promptEl.dataset.toggleBound = "1";
@@ -3516,7 +3533,7 @@ const LockScreen = window.LockScreen = {
     this._unlocking = false;
     this.code = "";
     this.attemptCount = 0;
-    this.digits = Number(CFG.lockDigits) || 4;
+    this.digits = Number(CFG.lockDigits) || 6;
     const blurPx = this._forceBlurFallback ? 28 : (this.wallpaperCleaned ? 0 : (Number(CFG.lockBlur) || 0));
     el.style.setProperty("--lock-blur", blurPx + "px");
     el.classList.toggle("ai-clean", !this._forceBlurFallback && !!this.wallpaperCleaned);
