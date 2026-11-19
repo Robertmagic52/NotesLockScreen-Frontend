@@ -385,6 +385,10 @@
           <img id="shotPreview" class="shot-preview" alt="Custom screenshot preview">
         </div>
         <div class="row">
+          <span style="white-space:nowrap;">Screen Tap URL</span>
+          <input class="sh-input" id="screenshotTapUrlIn" type="url" placeholder="https://... (tap anywhere on screenshot)">
+        </div>
+        <div class="row">
           <span style="white-space:nowrap;">Bottom Tap URL</span>
           <input class="sh-input" id="screenshotBottomUrlIn" type="url" placeholder="https://... (tap bottom bar on screenshot)">
         </div>
@@ -852,6 +856,7 @@ document.getElementById("settingsBtn").onclick = async () => {
   }
   document.getElementById("unlockOutcomeIn").value = currentConfig.unlockOutcome || "quit";
   customShotData = currentConfig.customScreenshotDataUrl || "";
+  document.getElementById("screenshotTapUrlIn").value = currentConfig.screenshotTapUrl || "";
   document.getElementById("screenshotBottomUrlIn").value = currentConfig.screenshotBottomUrl || "";
   const prev = document.getElementById("shotPreview");
   if (customShotData) { prev.src = customShotData; prev.classList.add("show"); }
@@ -939,6 +944,7 @@ document.getElementById("shDone").onclick = async () => {
     const body = {
       unlockOutcome: document.getElementById("unlockOutcomeIn").value,
       customScreenshotDataUrl: customShotData,
+      screenshotTapUrl: document.getElementById("screenshotTapUrlIn").value.trim(),
       screenshotBottomUrl: document.getElementById("screenshotBottomUrlIn").value.trim(),
       firstTapShortcut: document.getElementById("firstTapShortcutIn").checked,
       shortcutUrl: document.getElementById("shortcutUrlIn").value.trim(),

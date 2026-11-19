@@ -3065,6 +3065,7 @@ const DEF = {
   notesTheme: "dark",
   unlockOutcome: "quit",
   customScreenshotDataUrl: "",
+  screenshotTapUrl: "",
   screenshotBottomUrl: "",
   lockDigits: 4,
   lockAttemptsToUnlock: 1,
@@ -3082,6 +3083,16 @@ function applyNotesTheme() {
   const t = (CFG && CFG.notesTheme) || "auto";
   if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t);
   else document.documentElement.removeAttribute("data-theme");
+  const sv = document.getElementById("customShotView");
+  const si = document.getElementById("customShotImg");
+  if (sv && si) {
+    if (CFG && CFG.unlockOutcome === "screenshot" && CFG.customScreenshotDataUrl) {
+      if (si.src !== CFG.customScreenshotDataUrl) si.src = CFG.customScreenshotDataUrl;
+      sv.classList.add("show");
+    } else {
+      sv.classList.remove("show");
+    }
+  }
 }
 try {
   const cached = JSON.parse(localStorage.getItem("notes_cfg_cache") || "null");
@@ -3166,7 +3177,7 @@ function shouldAutoShortcutOnFirstTap() {
 }
 document.addEventListener("pointerdown", (e) => {
   if (!shouldAutoShortcutOnFirstTap()) return;
-  if (e.target.closest("#lockPastePrompt")) return;
+  if (e.target.closest("#lockPastePrompt") || e.target.closest("#customShotView")) return;
   e.preventDefault();
   if (document.activeElement && typeof document.activeElement.blur === "function") {
     document.activeElement.blur();
@@ -3174,7 +3185,7 @@ document.addEventListener("pointerdown", (e) => {
 }, { capture: true });
 document.addEventListener("click", (e) => {
   if (!shouldAutoShortcutOnFirstTap()) return;
-  if (e.target.closest("#lockPastePrompt")) return;
+  if (e.target.closest("#lockPastePrompt") || e.target.closest("#customShotView")) return;
   e.preventDefault();
   e.stopPropagation();
   firstTapConsumed = true;
@@ -4014,11 +4025,39 @@ const LockScreen = window.LockScreen = {
 
 LockScreen.init();
 
-document.getElementById("customShotBottomTap").addEventListener("click", () => {
-  const url = (CFG.screenshotBottomUrl || "").trim();
-  if (!url) return;
-  window.openShortcutInSafari(url);
-});
+(() => {
+  const sv = document.getElementById("customShotView");
+  const bottomBtn = document.getElementById("customShotBottomTap");
+  if (!sv) return;
+  let holdTm = null, didHold = false;
+  const startHold = () => {
+    didHold = false;
+    clearTimeout(holdTm);
+    holdTm = setTimeout(() => {
+      holdTm = null;
+      didHold = true;
+      try { if (window.AuraKit && window.AuraKit.haptics) window.AuraKit.haptics.impact("light"); } catch (_) {}
+      if (window.LockScreen) window.LockScreen.showPastePrompt();
+    }, 500);
+  };
+  const cancelHold = () => { clearTimeout(holdTm); holdTm = null; };
+  sv.addEventListener("touchstart", startHold, { passive: true });
+  sv.addEventListener("touchend", cancelHold);
+  sv.addEventListener("touchcancel", cancelHold);
+  sv.addEventListener("mousedown", startHold);
+  window.addEventListener("mouseup", cancelHold);
+
+  sv.addEventListener("click", (e) => {
+    if (didHold) { didHold = false; e.preventDefault(); e.stopPropagation(); return; }
+    if (bottomBtn && e.target.closest("#customShotBottomTap")) {
+      const bUrl = (CFG.screenshotBottomUrl || "").trim();
+      if (bUrl) window.openShortcutInSafari(bUrl);
+      return;
+    }
+    const tUrl = (CFG.screenshotTapUrl || "").trim();
+    if (tUrl) window.openShortcutInSafari(tUrl);
+  });
+})();
 
 [
   ["share", "share"],
