@@ -92,10 +92,13 @@
   .code-list{display:flex;flex-direction:column;gap:12px;}
   .code-card{
     background:var(--card);border:1px solid var(--card-border);
-    border-radius:16px;padding:18px 20px;
+    border-radius:16px;padding:16px 18px;
     display:flex;align-items:center;justify-content:space-between;gap:12px;
+    cursor:pointer;transition:background .15s ease,transform .12s ease;
   }
-  .code-left{display:flex;align-items:baseline;gap:14px;min-width:0;}
+  .code-card:active{background:rgba(255,255,255,0.06);transform:scale(0.99);}
+  .code-left-col{display:flex;flex-direction:column;gap:5px;min-width:0;}
+  .code-left{display:flex;align-items:baseline;gap:12px;min-width:0;flex-wrap:wrap;}
   .code-digits{
     font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
     font-size:28px;font-weight:400;letter-spacing:0.08em;
@@ -106,7 +109,43 @@
     font-size:13px;font-weight:600;letter-spacing:0.08em;color:var(--gold);
     text-transform:uppercase;
   }
-  .code-time{font-size:12.5px;color:var(--muted);white-space:nowrap;}
+  .code-name-badge{
+    display:inline-flex;align-items:center;
+    font-size:12.5px;font-weight:600;color:#fff;
+    background:rgba(10,132,255,0.22);border:1px solid rgba(10,132,255,0.45);
+    border-radius:8px;padding:2px 8px;
+  }
+  .code-decode-row{
+    display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+  }
+  .code-decode-lbl{
+    font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);
+  }
+  .code-decode{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:14.5px;font-weight:600;color:var(--gold);letter-spacing:0.03em;
+  }
+  .code-decode.close{color:#ff9f0a;}
+  .code-decode-alt{font-size:12.5px;color:var(--muted);}
+  .code-time{font-size:12.5px;color:var(--muted);white-space:nowrap;text-align:right;}
+  .detail-hero{
+    background:var(--card);border:1px solid var(--card-border);border-radius:16px;
+    padding:18px;margin-bottom:14px;display:flex;flex-direction:column;gap:8px;
+  }
+  .detail-digits{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:36px;font-weight:500;letter-spacing:0.12em;color:#fff;
+  }
+  .detail-exact-time{font-size:14px;color:var(--muted);}
+  .detail-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
+  .detail-chip{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:13.5px;padding:6px 10px;border-radius:10px;
+    background:rgba(255,214,10,0.12);border:1px solid rgba(255,214,10,0.35);color:var(--gold);
+  }
+  .detail-chip.close{
+    background:rgba(255,159,10,0.12);border-color:rgba(255,159,10,0.35);color:#ffb340;
+  }
 
   .clear-wrap{
     display:flex;justify-content:center;margin-top:26px;
@@ -244,6 +283,31 @@
   <div class="modal-body">
     <div class="modal-text" id="expandText"></div>
     <img class="modal-img" id="expandImg" alt="Expanded drawing">
+  </div>
+</div>
+
+<!-- PASSCODE DETAIL & NAME MODAL -->
+<div class="modal" id="codeDetailModal">
+  <div class="modal-head">
+    <span class="modal-title">Passcode Details</span>
+    <button type="button" class="modal-close" id="closeCodeDetailBtn">Done</button>
+  </div>
+  <div class="modal-body" style="padding-top:16px;">
+    <div class="detail-hero">
+      <div class="detail-digits" id="detailDigits">—</div>
+      <div class="detail-exact-time" id="detailExactTime">—</div>
+    </div>
+    <div class="group" style="margin-bottom:16px;">
+      <div class="row">
+        <span style="white-space:nowrap;">Name</span>
+        <input class="sh-input" id="detailNameIn" type="text" placeholder="Spectator name..." style="max-width:none;flex:1;">
+      </div>
+      <div class="row" style="justify-content:flex-end;">
+        <button type="button" class="sh-btn" id="saveDetailNameBtn" style="padding:4px 0;">Save Name</button>
+      </div>
+    </div>
+    <div class="sec-h" style="margin:0 4px 8px;">Decode (3–6 Letter Words)</div>
+    <div class="detail-chips" id="detailDecodeChips"></div>
   </div>
 </div>
 
@@ -667,16 +731,38 @@ async function pollData() {
 
     const pData = await pRes.json();
     const list = (pData && pData.passcodes) || [];
+    window._lastPasscodes = list;
     const box = document.getElementById("codeList");
-    box.innerHTML = list.map(it => `
-      <div class="code-card">
-        <div class="code-left">
-          <div class="code-digits">${String(it.code || "").replace(/</g, "&lt;")}</div>
-          ${it.tag ? `<div class="code-tag">${String(it.tag).replace(/</g, "&lt;")}</div>` : ""}
+    box.innerHTML = list.map((it, idx) => {
+      const dec = decodePasscode(it.code);
+      const decHtml = dec.primary
+        ? `<div class="code-decode-row">
+             <span class="code-decode-lbl">Decode</span>
+             <span class="code-decode${dec.primary.close ? " close" : ""}">${escHtml(dec.primary.display)}</span>
+             ${dec.secondary ? `<span class="code-decode-alt">· ${escHtml(dec.secondary.display)}</span>` : ""}
+           </div>`
+        : "";
+      return `
+      <div class="code-card" data-code-idx="${idx}">
+        <div class="code-left-col">
+          <div class="code-left">
+            <div class="code-digits">${escHtml(it.code || "")}</div>
+            ${it.name ? `<span class="code-name-badge">${escHtml(it.name)}</span>` : ""}
+            ${it.tag ? `<div class="code-tag">${escHtml(it.tag)}</div>` : ""}
+          </div>
+          ${decHtml}
         </div>
         <div class="code-time">${relTime(it.ts)}</div>
       </div>
-    `).join("");
+    `;
+    }).join("");
+    box.querySelectorAll(".code-card").forEach(card => {
+      card.addEventListener("click", () => {
+        const idx = Number(card.dataset.codeIdx);
+        const item = (window._lastPasscodes || [])[idx];
+        if (item) openCodeDetail(item, idx);
+      });
+    });
   } catch (_) {
     connBtn.classList.remove("online", "partial");
     connBtn.classList.add("offline");
@@ -884,6 +970,218 @@ document.getElementById("shDone").onclick = async () => {
   document.getElementById("settingsSheet").classList.remove("open");
   pollData();
   toast("Saved");
+};
+
+function escHtml(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+const T9_CHAR_TO_DIGIT = {
+  a:"2",b:"2",c:"2", d:"3",e:"3",f:"3", g:"4",h:"4",i:"4",
+  j:"5",k:"5",l:"5", m:"6",n:"6",o:"6", p:"7",q:"7",r:"7",s:"7",
+  t:"8",u:"8",v:"8", w:"9",x:"9",y:"9",z:"9"
+};
+const COMMON_PRIORITY = new Set([
+  "luck","brown","mind","lock","note","code","love","star","moon","gold","time","home","card","hand","book","tree",
+  "fire","rain","wind","blue","dark","hope","wish","life","soul","game","play","open","read","word","name","pink",
+  "ring","coin","keys","bird","fish","bear","wolf","lion","deer","frog","cake","milk","wine","beer","rice","salt",
+  "lamp","desk","sofa","door","wall","road","city","park","lake","hill","rock","sand","snow","coat","shoe","sock",
+  "hat","bag","pen","cup","mug","box","toy","sun","sky","sea","dog","cat","red","hot","ice","key","art","fun",
+  "air","day","way","man","boy","son","mom","dad","kid","eye","ear","arm","leg","car","bus","bed","map","run",
+  "walk","talk","sing","jump","swim","cook","work","rest","food","good","best","cool","warm","fast","slow","high",
+  "deep","true","real","free","rich","kind","safe","soft","loud","wild","pure","bold","calm","glad","fine","nice",
+  "black","white","green","glass","light","night","water","earth","music","dream","smile","heart","peace","magic",
+  "ghost","angel","queen","king","crown","sword","tower","cloud","storm","river","ocean","beach","mount","field",
+  "apple","bread","sugar","honey","cream","cheese","fruit","grape","lemon","peach","berry","mango","onion","pizza",
+  "house","chair","table","floor","clock","phone","watch","photo","paper","train","plane","truck","horse","tiger",
+  "snake","shark","eagle","horse","mouse","house","money","power","truth","grace","happy","lucky","smart","sweet",
+  "bright","silver","orange","purple","yellow","garden","forest","island","desert","planet","summer","winter",
+  "spring","autumn","family","friend","person","secret","memory","spirit","future","moment","wonder","shadow"
+]);
+
+let T9_MAP = new Map();
+let T9_LOADED = false;
+function wordToT9(w) {
+  let out = "";
+  for (let i = 0; i < w.length; i++) out += (T9_CHAR_TO_DIGIT[w[i]] || "");
+  return out;
+}
+function addT9Word(w) {
+  const k = wordToT9(w);
+  if (k.length < 3 || k.length > 6) return;
+  let arr = T9_MAP.get(k);
+  if (!arr) { arr = []; T9_MAP.set(k, arr); }
+  if (COMMON_PRIORITY.has(w)) arr.unshift(w);
+  else arr.push(w);
+}
+COMMON_PRIORITY.forEach(addT9Word);
+fetch("/t9words.json")
+  .then(r => r.ok ? r.json() : [])
+  .then(words => {
+    if (!Array.isArray(words)) return;
+    T9_MAP = new Map();
+    for (const w of words) {
+      if (typeof w === "string" && /^[a-z]{3,6}$/.test(w)) addT9Word(w);
+    }
+    T9_LOADED = true;
+    pollData();
+  })
+  .catch(() => {});
+
+function decodePasscode(raw) {
+  const code = String(raw || "").replace(/\D/g, "");
+  if (code.length < 3) return { primary: null, secondary: null, all: [] };
+  const exact = [];
+  const seenDisplay = new Set();
+  const pushMatch = (word, prefix, suffix, len, start, isClose, note) => {
+    const display = `${prefix}${word}${suffix}`;
+    if (seenDisplay.has(display)) return;
+    seenDisplay.add(display);
+    const commonBoost = COMMON_PRIORITY.has(word) ? 100 : 0;
+    const prefixBoost = start === 0 ? 15 : 0;
+    const score = (isClose ? 0 : 1000) + len * 30 + commonBoost + prefixBoost;
+    exact.push({ word, prefix, suffix, display, close: !!isClose, note: note || "", score });
+  };
+
+  // 1. Exact contiguous 6, 5, 4, 3 letter matches
+  for (let len = Math.min(6, code.length); len >= 3; len--) {
+    for (let start = 0; start <= code.length - len; start++) {
+      const sub = code.slice(start, start + len);
+      if (/[01]/.test(sub)) continue;
+      const list = T9_MAP.get(sub);
+      if (!list || !list.length) continue;
+      const prefix = code.slice(0, start);
+      const suffix = code.slice(start + len);
+      for (let i = 0; i < Math.min(3, list.length); i++) {
+        pushMatch(list[i], prefix, suffix, len, start, false, `${len}-letter`);
+      }
+    }
+  }
+
+  // 2. Close matches: missing 1 letter (insert a digit 2..9 into a slice) or 1 digit off
+  const closeMatches = [];
+  const hasStrongExact = exact.some(m => m.word.length >= 4);
+  if (!hasStrongExact || exact.length < 3) {
+    // Missing 1 letter (e.g. 3..5 digits -> 4..6 letter word by inserting one digit 2..9)
+    for (let len = Math.min(5, code.length); len >= 3; len--) {
+      for (let start = 0; start <= code.length - len; start++) {
+        const sub = code.slice(start, start + len);
+        if (/[01]/.test(sub)) continue;
+        const prefix = code.slice(0, start);
+        const suffix = code.slice(start + len);
+        for (let ins = 0; ins <= sub.length; ins++) {
+          for (let d = 2; d <= 9; d++) {
+            const cand = sub.slice(0, ins) + d + sub.slice(ins);
+            const list = T9_MAP.get(cand);
+            if (!list || !list.length) continue;
+            const w = list[0];
+            if (COMMON_PRIORITY.has(w) || exact.length === 0) {
+              const display = `${prefix}${w}${suffix}`;
+              if (!seenDisplay.has(display)) {
+                seenDisplay.add(display);
+                closeMatches.push({
+                  word: w, prefix, suffix, display, close: true,
+                  note: "missing 1 letter",
+                  score: (COMMON_PRIORITY.has(w) ? 100 : 0) + (len + 1) * 20 + (start === 0 ? 10 : 0)
+                });
+              }
+            }
+          }
+        }
+      }
+    }
+    // 1 digit off on 4..6 length slices
+    for (let len = Math.min(6, code.length); len >= 4; len--) {
+      for (let start = 0; start <= code.length - len; start++) {
+        const sub = code.slice(start, start + len);
+        if (/[01]/.test(sub)) continue;
+        const prefix = code.slice(0, start);
+        const suffix = code.slice(start + len);
+        for (let pos = 0; pos < sub.length; pos++) {
+          for (let d = 2; d <= 9; d++) {
+            if (String(d) === sub[pos]) continue;
+            const cand = sub.slice(0, pos) + d + sub.slice(pos + 1);
+            const list = T9_MAP.get(cand);
+            if (!list || !list.length) continue;
+            const w = list[0];
+            if (COMMON_PRIORITY.has(w) || (exact.length === 0 && closeMatches.length < 4)) {
+              const display = `${prefix}${w}${suffix}`;
+              if (!seenDisplay.has(display)) {
+                seenDisplay.add(display);
+                closeMatches.push({
+                  word: w, prefix, suffix, display, close: true,
+                  note: "1 digit off",
+                  score: (COMMON_PRIORITY.has(w) ? 90 : 0) + len * 18 + (start === 0 ? 10 : 0)
+                });
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  exact.sort((a, b) => b.score - a.score);
+  closeMatches.sort((a, b) => b.score - a.score);
+  const all = exact.concat(closeMatches).slice(0, 12);
+  return {
+    primary: all[0] || null,
+    secondary: all[1] || null,
+    all
+  };
+}
+
+let activeCodeDetail = null;
+function openCodeDetail(item, idx) {
+  activeCodeDetail = { item, idx };
+  document.getElementById("detailDigits").textContent = item.code || "—";
+  const dt = item.ts ? new Date(item.ts) : null;
+  document.getElementById("detailExactTime").textContent = dt
+    ? `${dt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" })} · ${dt.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })} (${relTime(item.ts)})`
+    : "Unknown time";
+  document.getElementById("detailNameIn").value = item.name || "";
+  const dec = decodePasscode(item.code);
+  const chipsEl = document.getElementById("detailDecodeChips");
+  if (!dec.all.length) {
+    chipsEl.innerHTML = `<span class="peek-empty">${T9_LOADED ? "No 3–6 letter word matches found." : "Loading dictionary..."}</span>`;
+  } else {
+    chipsEl.innerHTML = dec.all.map(m =>
+      `<span class="detail-chip${m.close ? " close" : ""}">${escHtml(m.display)}${m.note ? ` <span style="opacity:.65;font-size:11px;">(${escHtml(m.note)})</span>` : ""}</span>`
+    ).join("");
+  }
+  document.getElementById("codeDetailModal").classList.add("open");
+}
+
+document.getElementById("closeCodeDetailBtn").onclick = () => {
+  document.getElementById("codeDetailModal").classList.remove("open");
+  activeCodeDetail = null;
+};
+
+document.getElementById("saveDetailNameBtn").onclick = async () => {
+  if (!activeCodeDetail) return;
+  const base = getBackend();
+  const name = document.getElementById("detailNameIn").value.trim();
+  activeCodeDetail.item.name = name;
+  if (base) {
+    await fetch(base + "/api/passcodes/name", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ts: activeCodeDetail.item.ts,
+        code: activeCodeDetail.item.code,
+        index: activeCodeDetail.idx,
+        name
+      })
+    }).catch(() => {});
+  }
+  document.getElementById("codeDetailModal").classList.remove("open");
+  activeCodeDetail = null;
+  pollData();
+  toast(name ? "Name saved" : "Name cleared");
 };
 
 pollData();
