@@ -1567,7 +1567,7 @@ svg{display:block}
 .editing .bar{display:none}
 #kbar i{flex:1;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 #kbar i:first-child{margin-left:0}
-.k-aa-lbl{font-family:-apple-system,system-ui,"SF Pro Text",sans-serif;font-size:19.5px;font-weight:400;font-style:italic;letter-spacing:-0.4px;line-height:1;color:currentColor}
+.k-aa-lbl{font-family:-apple-system,system-ui,"SF Pro Text",sans-serif;font-size:19.5px;font-weight:400;font-style:normal;letter-spacing:-0.4px;line-height:1;color:currentColor}
 #kAa.typo-armed .k-aa-lbl::after{content:"."}
 .typo-noteify-peek{
   position:fixed;left:50%;top:46%;transform:translate(-50%,-50%) scale(0.95);
@@ -1813,9 +1813,9 @@ html.freeze #scroll,html.freeze #note{overflow:hidden!important;touch-action:non
   <div class="glass btn" id="back"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.65" stroke-linecap="round" stroke-linejoin="round"><path d="M15.8 3.2 7.2 12l8.6 8.8"/></svg></div>
   <div id="navCenterHold" aria-hidden="true"></div>
   <div class="right">
-    <div class="glass btn gone" id="undoBtn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M9 13.4 4.2 8.6 9 3.8"/><path d="M4.4 8.6h9.4a6 6 0 0 1 0 12h-3.4"/></svg></div>
+    <div class="glass btn gone" id="undoBtn"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="M9 13.4 4.2 8.6 9 3.8"/><path d="M4.4 8.6h9.4a6 6 0 0 1 0 12h-3.4"/></svg></div>
     <div class="glass pill"><i id="share" class="empty"><svg width="22" height="25" viewBox="0 0 22 25" fill="none" stroke="currentColor" stroke-width="1.95" style="margin-top:-2px" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2.2v12.5M6.8 6.4 11 2.2l4.2 4.2"/><path d="M7.2 9.5H5a2.4 2.4 0 0 0-2.4 2.4v8.2A2.4 2.4 0 0 0 5 22.5h12a2.4 2.4 0 0 0 2.4-2.4v-8.2A2.4 2.4 0 0 0 17 9.5h-2.2"/></svg></i><i id="more"><svg width="22" height="22" viewBox="0 0 22 22" fill="currentColor"><circle cx="3.5" cy="11" r="1.75"/><circle cx="11" cy="11" r="1.75"/><circle cx="18.5" cy="11" r="1.75"/></svg></i></div>
-    <div class="glass btn done hidden" id="done"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4.2 12.5 9.8 18 20 5.5"/></svg></div>
+    <div class="glass btn done hidden" id="done"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.15" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.6 9.8 18 19.8 5.8"/></svg></div>
   </div>
 </div>
 <div id="scroll">
@@ -1846,7 +1846,7 @@ html.freeze #scroll,html.freeze #note{overflow:hidden!important;touch-action:non
 <canvas id="draw"></canvas>
 <div id="dnav">
   <div class="glass pill"><i id="undo"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></i><i id="redo"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></i></div>
-  <div class="glass btn done" id="drawDone"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4.2 12.5 9.8 18 20 5.5"/></svg></div>
+  <div class="glass btn done" id="drawDone"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.15" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.6 9.8 18 19.8 5.8"/></svg></div>
 </div>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <linearGradient id="gBody" x1="0" x2="1"><stop offset="0" stop-color="#151517"/><stop offset=".3" stop-color="#3b3b3e"/><stop offset=".62" stop-color="#26262a"/><stop offset="1" stop-color="#101012"/></linearGradient>
@@ -1992,10 +1992,10 @@ note.addEventListener('input',()=>{
   if(ch===' '||ch==='\n')now();else soon();if(window.scheduleNotesPeekSync)window.scheduleNotesPeekSync()});
 
 /* ---------- editing look ---------- */
-function editing(on){done.classList.toggle('hidden',!on);document.body.classList.toggle('editing',on);$('date').classList.toggle('empty',!on&&!note.innerText.trim());kbarPlace()}
+function editing(on){done.classList.toggle('hidden',!on);document.body.classList.toggle('editing',on);$('date').classList.toggle('empty',!note.innerText.trim());kbarPlace()}
 /* iOS 27 look: share icon is gray while the note is empty; the undo button shows when the note has text */
 let edited=false;
-function topIcons(){const has=!!note.innerText.trim();$('share').classList.toggle('empty',!has);$('compose').classList.toggle('empty',!has);$('undoBtn').classList.toggle('gone',!edited);$('date').classList.toggle('empty',!has&&!document.body.classList.contains('editing'))}
+function topIcons(){const has=!!note.innerText.trim();$('share').classList.toggle('empty',!has);$('compose').classList.toggle('empty',!has);$('undoBtn').classList.toggle('gone',!edited);$('date').classList.toggle('empty',!has)}
 note.addEventListener('input',()=>{edited=true;topIcons()});
 function newNote(){edited=false;note.classList.remove('plain');topIcons()}
 /* keep the keyboard toolbar just above the keyboard */
