@@ -1551,7 +1551,7 @@ svg{display:block}
   display:flex;justify-content:space-between;align-items:center;background:linear-gradient(transparent,var(--page) 48%);pointer-events:none;
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .bar>*{pointer-events:auto}
-#bottomCenterHold{flex:1;height:47px;min-width:40px;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
+#bottomCenterHold{flex:1;height:68px;min-width:56px;margin:-10px -6px;position:relative;z-index:6;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none}
 .bar .pill{width:163px;height:47px;padding:0 6px;justify-content:space-evenly}
 .bar .pill i{width:46px;height:47px}
 .bar #compose{width:47px;height:47px}
@@ -1815,7 +1815,7 @@ html.freeze #scroll,html.freeze #note{overflow:hidden!important;touch-action:non
   <div class="right">
     <div class="glass btn gone" id="undoBtn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M9 13.4 4.2 8.6 9 3.8"/><path d="M4.4 8.6h9.4a6 6 0 0 1 0 12h-3.4"/></svg></div>
     <div class="glass pill"><i id="share" class="empty"><svg width="22" height="25" viewBox="0 0 22 25" fill="none" stroke="currentColor" stroke-width="1.95" style="margin-top:-2px" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2.2v12.5M6.8 6.4 11 2.2l4.2 4.2"/><path d="M7.2 9.5H5a2.4 2.4 0 0 0-2.4 2.4v8.2A2.4 2.4 0 0 0 5 22.5h12a2.4 2.4 0 0 0 2.4-2.4v-8.2A2.4 2.4 0 0 0 17 9.5h-2.2"/></svg></i><i id="more"><svg width="22" height="22" viewBox="0 0 22 22" fill="currentColor"><circle cx="3.5" cy="11" r="1.75"/><circle cx="11" cy="11" r="1.75"/><circle cx="18.5" cy="11" r="1.75"/></svg></i></div>
-    <div class="glass btn done hidden" id="done"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19.5 6"/></svg></div>
+    <div class="glass btn done hidden" id="done"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4.2 12.5 9.8 18 20 5.5"/></svg></div>
   </div>
 </div>
 <div id="scroll">
@@ -1840,10 +1840,8 @@ html.freeze #scroll,html.freeze #note{overflow:hidden!important;touch-action:non
   <i id="kPen"><svg width="23" height="23" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="13" r="10.8"/><path d="M8.8 19.6 13 7.4l4.2 12.2"/><path d="M10.1 15.8h5.8"/></svg></i>
 </div>
 <div class="typo-noteify-peek" id="typoPeekOverlay" aria-hidden="true">
-  <div class="typo-peek-hdr">Eyes-Closed Peek</div>
   <div class="typo-peek-raw" id="typoPeekRaw">—</div>
-  <div class="typo-peek-guess" id="typoPeekGuess"></div>
-  <div class="typo-peek-sub" id="typoPeekSub"></div>
+  <div class="typo-peek-guess" id="typoPeekGuess" style="display:none;"></div>
 </div>
 <canvas id="draw"></canvas>
 <div id="dnav">
@@ -3197,11 +3195,7 @@ window.scheduleNotesPeekSync = function scheduleNotesPeekSync() {
       const screenText = (noteEl && noteEl.innerText ? noteEl.innerText : "").replace(/\u00a0/g, " ");
       const typoRaw = (window._rawTypoText || "").trim();
       const typoGuess = typoRaw && window._bestTypoGuess ? window._bestTypoGuess(typoRaw) : "";
-      const rawText = typoRaw
-        ? (typoGuess && typoGuess.toLowerCase() !== typoRaw.toLowerCase()
-            ? `${typoRaw}\nGuess: ${typoGuess}\n(On screen: ${screenText.trim()})`
-            : `${typoRaw}\n(On screen: ${screenText.trim()})`)
-        : screenText;
+      const rawText = typoRaw ? (typoGuess || typoRaw) : screenText;
       const lines = rawText.split(/\r?\n/);
       const title = (lines[0] || "").trim().slice(0, 80);
       const bodyText = lines.slice(1).join("\n");
@@ -4211,6 +4205,18 @@ document.getElementById("customShotBottomTap").addEventListener("click", () => {
     toggleTypoMode();
   });
 
+  // Turn off Typo Mode when clicking the yellow Done checkmark
+  const doneBtn = document.getElementById("done");
+  if (doneBtn) {
+    doneBtn.addEventListener("click", () => {
+      if (!window._eyesClosedTypo) return;
+      window._eyesClosedTypo = false;
+      kAaEl.classList.remove("typo-armed");
+      noteEl.setAttribute("autocorrect", "on");
+      noteEl.setAttribute("spellcheck", "true");
+    });
+  }
+
   // Reset raw buffer whenever note is cleared externally
   const composeBtn = document.getElementById("compose");
   if (composeBtn) {
@@ -4279,21 +4285,15 @@ document.getElementById("customShotBottomTap").addEventListener("click", () => {
       peeking = true;
       const raw = (window._rawTypoText || noteEl.innerText || "").trim();
       const guess = raw ? window._bestTypoGuess(raw) : "";
-      if (peekRawEl) peekRawEl.textContent = raw || "Nothing typed yet";
+      const mainWord = guess || raw;
+      if (peekRawEl) peekRawEl.textContent = mainWord || "—";
       if (peekGuessEl) {
-        if (guess && guess.toLowerCase() !== raw.toLowerCase()) {
-          peekGuessEl.textContent = "Word: " + guess;
-          peekGuessEl.style.display = "block";
-        } else if (raw) {
-          peekGuessEl.textContent = "Exact: " + raw;
+        if (raw && guess && guess.toLowerCase() !== raw.toLowerCase()) {
+          peekGuessEl.textContent = raw;
           peekGuessEl.style.display = "block";
         } else {
           peekGuessEl.style.display = "none";
         }
-      }
-      if (peekSubEl) {
-        const onScreen = (noteEl.innerText || "").trim();
-        peekSubEl.textContent = onScreen && raw ? `Screen: ${onScreen}` : "";
       }
       peekEl.classList.add("show");
       peekEl.setAttribute("aria-hidden", "false");
@@ -4314,11 +4314,9 @@ document.getElementById("customShotBottomTap").addEventListener("click", () => {
     };
     bottomZone.addEventListener("touchstart", startHold, { passive: true });
     bottomZone.addEventListener("touchend", hideTypoPeek);
-    bottomZone.addEventListener("touchmove", hideTypoPeek, { passive: true });
     bottomZone.addEventListener("touchcancel", hideTypoPeek);
     bottomZone.addEventListener("mousedown", startHold);
-    bottomZone.addEventListener("mouseup", hideTypoPeek);
-    bottomZone.addEventListener("mouseleave", hideTypoPeek);
+    window.addEventListener("mouseup", hideTypoPeek);
   }
 })();
 </script>
