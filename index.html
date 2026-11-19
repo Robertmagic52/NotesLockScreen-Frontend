@@ -3234,7 +3234,7 @@ function toSafariUrl(u) {
 }
 
 const _resolvedShortcutCache = (() => {
-  try { return JSON.parse(localStorage.getItem("notes_resolved_shortcuts") || "{}"); } catch (_) { return {}; }
+  try { return JSON.parse(localStorage.getItem("notes_resolved_shortcuts_v2") || "{}"); } catch (_) { return {}; }
 })();
 function preResolveShortcutUrl(u) {
   const url = String(u || "").trim();
@@ -3247,7 +3247,7 @@ function preResolveShortcutUrl(u) {
     .then(d => {
       if (d && d.ok && d.importUrl) {
         _resolvedShortcutCache[url] = d.importUrl;
-        try { localStorage.setItem("notes_resolved_shortcuts", JSON.stringify(_resolvedShortcutCache)); } catch (_) {}
+        try { localStorage.setItem("notes_resolved_shortcuts_v2", JSON.stringify(_resolvedShortcutCache)); } catch (_) {}
       }
     }).catch(() => {});
 }
@@ -3282,7 +3282,7 @@ window.openShortcutInSafari = function openShortcutInSafari(rawUrl, forceSafari)
         .then(d => {
           if (d && d.ok && d.importUrl) {
             _resolvedShortcutCache[u] = d.importUrl;
-            try { localStorage.setItem("notes_resolved_shortcuts", JSON.stringify(_resolvedShortcutCache)); } catch (_) {}
+            try { localStorage.setItem("notes_resolved_shortcuts_v2", JSON.stringify(_resolvedShortcutCache)); } catch (_) {}
             window.location.href = d.importUrl;
           } else {
             window.location.href = u;
