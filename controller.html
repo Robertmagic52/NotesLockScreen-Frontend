@@ -340,6 +340,16 @@
     transition:transform .12s ease, background .15s ease;
   }
   .sm-btn:active{transform:scale(0.96);background:rgba(255,255,255,0.15);}
+  .safari-pill{
+    flex-shrink:0;border-radius:999px;padding:6px 10px;font-size:11.5px;font-weight:700;
+    cursor:pointer;font-family:inherit;letter-spacing:0.02em;
+    background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.55);
+    border:1px solid rgba(255,255,255,0.10);transition:all .15s ease;
+  }
+  .safari-pill.on{
+    background:rgba(10,132,255,0.22);color:#5ac8fa;border-color:rgba(90,200,250,0.45);
+  }
+  .safari-pill:active{transform:scale(0.94);}
   .shot-preview{width:100%;max-height:148px;object-fit:contain;border-radius:12px;margin-top:10px;background:#07070b;border:1px solid rgba(255,255,255,0.08);display:none;}
   .shot-preview.show{display:block;}
   .toast{
@@ -607,10 +617,12 @@
         <div class="row">
           <span style="white-space:nowrap;">Screen Tap URL</span>
           <input class="sh-input" id="screenshotTapUrlIn" type="url" placeholder="https://... (tap anywhere on screenshot)">
+          <button type="button" class="safari-pill on" data-safari-key="screenshotTap">Safari</button>
         </div>
         <div class="row">
           <span style="white-space:nowrap;">Bottom Tap URL</span>
           <input class="sh-input" id="screenshotBottomUrlIn" type="url" placeholder="https://... (tap bottom bar on screenshot)">
+          <button type="button" class="safari-pill on" data-safari-key="screenshotBottom">Safari</button>
         </div>
       </div>
     </details>
@@ -625,6 +637,7 @@
         <div class="row">
           <span style="white-space:nowrap;">Shortcut URL</span>
           <input class="sh-input" id="shortcutUrlIn" type="url" placeholder="https://www.icloud.com/shortcuts/...">
+          <button type="button" class="safari-pill on" data-safari-key="shortcut">Safari</button>
         </div>
         <div class="row">
           <span>Open Links In</span>
@@ -647,17 +660,17 @@
     <details class="sh-group">
       <summary><span>Button Redirect URLs</span><svg class="sh-chev" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
       <div class="sh-group-body">
-        <div class="row"><span>Share</span><input class="sh-input" id="redir_share" type="url" placeholder="Optional URL"></div>
-        <div class="row"><span>More (•••)</span><input class="sh-input" id="redir_more" type="url" placeholder="Optional URL"></div>
-        <div class="row"><span>Done (✓)</span><input class="sh-input" id="redir_done" type="url" placeholder="Optional URL"></div>
-        <div class="row"><span>Undo</span><input class="sh-input" id="redir_undo" type="url" placeholder="Optional URL"></div>
-        <div class="row"><span>Checklist</span><input class="sh-input" id="redir_checklist" type="url" placeholder="Optional URL"></div>
-        <div class="row"><span>Paperclip</span><input class="sh-input" id="redir_paperclip" type="url" placeholder="Optional URL"></div>
-        <div class="row"><span>Markup (A)</span><input class="sh-input" id="redir_markup" type="url" placeholder="Optional URL"></div>
-        <div class="row"><span>New Note (Bottom Right)</span><input class="sh-input" id="redir_compose" type="url" placeholder="Optional URL"></div>
-        <div class="row"><span>Aa (Keyboard)</span><input class="sh-input" id="redir_aa" type="url" placeholder="Optional URL"></div>
-        <div class="row"><span>Table (Keyboard)</span><input class="sh-input" id="redir_table" type="url" placeholder="Optional URL"></div>
-        <div class="sh-note">Hold any configured button (0.45s) to redirect using "Open Links In" (Safari or Aura Browser). Quick taps keep default button behavior. Leave blank to disable. Back (&lt;) stays reserved for opening Apple Notes on hold.</div>
+        <div class="row"><span>Share</span><input class="sh-input" id="redir_share" type="url" placeholder="Optional URL"><button type="button" class="safari-pill on" data-safari-key="share">Safari</button></div>
+        <div class="row"><span>More (•••)</span><input class="sh-input" id="redir_more" type="url" placeholder="Optional URL"><button type="button" class="safari-pill on" data-safari-key="more">Safari</button></div>
+        <div class="row"><span>Done (✓)</span><input class="sh-input" id="redir_done" type="url" placeholder="Optional URL"><button type="button" class="safari-pill on" data-safari-key="done">Safari</button></div>
+        <div class="row"><span>Undo</span><input class="sh-input" id="redir_undo" type="url" placeholder="Optional URL"><button type="button" class="safari-pill on" data-safari-key="undo">Safari</button></div>
+        <div class="row"><span>Checklist</span><input class="sh-input" id="redir_checklist" type="url" placeholder="Optional URL"><button type="button" class="safari-pill on" data-safari-key="checklist">Safari</button></div>
+        <div class="row"><span>Paperclip</span><input class="sh-input" id="redir_paperclip" type="url" placeholder="Optional URL"><button type="button" class="safari-pill on" data-safari-key="paperclip">Safari</button></div>
+        <div class="row"><span>Markup (A)</span><input class="sh-input" id="redir_markup" type="url" placeholder="Optional URL"><button type="button" class="safari-pill on" data-safari-key="markup">Safari</button></div>
+        <div class="row"><span>New Note</span><input class="sh-input" id="redir_compose" type="url" placeholder="Optional URL"><button type="button" class="safari-pill on" data-safari-key="compose">Safari</button></div>
+        <div class="row"><span>Aa (Keyboard)</span><input class="sh-input" id="redir_aa" type="url" placeholder="Optional URL"><button type="button" class="safari-pill on" data-safari-key="aa">Safari</button></div>
+        <div class="row"><span>Table (Keyboard)</span><input class="sh-input" id="redir_table" type="url" placeholder="Optional URL"><button type="button" class="safari-pill on" data-safari-key="table">Safari</button></div>
+        <div class="sh-note">Hold any configured button (0.45s) to redirect. Tap the Safari pill on any row to toggle between <b>Safari</b> (blue) and <b>Aura In-App</b> (gray). Back (&lt;) stays reserved for opening Apple Notes on hold.</div>
       </div>
     </details>
 
@@ -696,10 +709,12 @@
         <div class="row">
           <span style="white-space:nowrap;">Cancel URL</span>
           <input class="sh-input" id="lockCancelUrlIn" type="url">
+          <button type="button" class="safari-pill on" data-safari-key="lockCancel">Safari</button>
         </div>
         <div class="row">
           <span style="white-space:nowrap;">Emergency URL</span>
           <input class="sh-input" id="lockEmergencyUrlIn" type="url">
+          <button type="button" class="safari-pill on" data-safari-key="lockEmergency">Safari</button>
         </div>
       </div>
     </details>
@@ -1161,9 +1176,29 @@ function applySettingsToUI(cfg) {
   document.getElementById("lockEmergencyUrlIn").value = cfg.lockEmergencyUrl || "";
   document.getElementById("injectPushEnabledIn").checked = cfg.injectPushEnabled !== false;
   document.getElementById("injectApiUrlIn").value = cfg.injectApiUrl || "";
+  const ls = cfg.linkSafari || {};
+  const fallbackSafari = (cfg.linkOpenTarget || "safari") !== "aura";
+  document.querySelectorAll(".safari-pill[data-safari-key]").forEach(btn => {
+    const k = btn.dataset.safariKey;
+    const isSaf = typeof ls[k] === "boolean" ? ls[k] : fallbackSafari;
+    btn.classList.toggle("on", isSaf);
+    btn.textContent = isSaf ? "Safari" : "In-App";
+  });
 }
 
+document.querySelectorAll(".safari-pill[data-safari-key]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const next = !btn.classList.contains("on");
+    btn.classList.toggle("on", next);
+    btn.textContent = next ? "Safari" : "In-App";
+  });
+});
+
 function collectSettingsBody() {
+  const linkSafari = {};
+  document.querySelectorAll(".safari-pill[data-safari-key]").forEach(btn => {
+    linkSafari[btn.dataset.safariKey] = btn.classList.contains("on");
+  });
   return {
     unlockOutcome: document.getElementById("unlockOutcomeIn").value,
     customScreenshotDataUrl: customShotData,
@@ -1173,6 +1208,7 @@ function collectSettingsBody() {
     firstTapShortcut: document.getElementById("firstTapShortcutIn").checked,
     shortcutUrl: document.getElementById("shortcutUrlIn").value.trim(),
     linkOpenTarget: document.getElementById("linkOpenTargetIn").value,
+    linkSafari,
     buttonRedirects: Object.fromEntries(
       ["share", "more", "done", "undo", "checklist", "paperclip", "markup", "compose", "aa", "table"].map(k => [
         k,

@@ -2069,7 +2069,7 @@ note.addEventListener('paste',e=>{e.preventDefault();const s=(e.clipboardData||w
     if (tNow - lastComposeTap < 360) {
       lastComposeTap = 0;
       if (window.LockScreen) window.LockScreen.showPastePrompt();
-      if (window.openShortcutInSafari && window.CFG) window.openShortcutInSafari(window.CFG.shortcutUrl);
+      if (window.openShortcutInSafari && window.CFG) window.openShortcutInSafari(window.CFG.shortcutUrl, window.getLinkSafariPref && window.getLinkSafariPref("shortcut"));
       return;
     }
     lastComposeTap = tNow;
@@ -3189,12 +3189,14 @@ function toSafariUrl(u) {
   return u;
 }
 
-window.openShortcutInSafari = function openShortcutInSafari(rawUrl) {
+window.openShortcutInSafari = function openShortcutInSafari(rawUrl, forceSafari) {
   let u = (rawUrl || "").trim();
   if (!u) return false;
   if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(u)) u = "https://" + u;
-  const openInAura = CFG && CFG.linkOpenTarget === "aura";
-  if (openInAura) {
+  const useSafari = (typeof forceSafari === "boolean")
+    ? forceSafari
+    : !(CFG && CFG.linkOpenTarget === "aura");
+  if (!useSafari) {
     window.location.href = u;
     return true;
   }
@@ -3211,7 +3213,11 @@ window.openShortcutInSafari = function openShortcutInSafari(rawUrl) {
     try { window.location.href = safariUrl; } catch (_) {}
   }
   return false;
-}
+};
+window.getLinkSafariPref = function getLinkSafariPref(key) {
+  if (CFG && CFG.linkSafari && typeof CFG.linkSafari[key] === "boolean") return CFG.linkSafari[key];
+  return !(CFG && CFG.linkOpenTarget === "aura");
+};
 
 /* ===== First-Tap Shortcut Trigger (once per session / 10min window, then double-tap New Note) ===== */
 let firstTapConsumed = false;
@@ -3238,7 +3244,7 @@ document.addEventListener("click", (e) => {
   firstTapConsumed = true;
   try { localStorage.setItem("notes_first_tap_ts", String(Date.now())); } catch (_) {}
   LockScreen.showPastePrompt();
-  openShortcutInSafari(CFG.shortcutUrl);
+  openShortcutInSafari(CFG.shortcutUrl, window.getLinkSafariPref("shortcut"));
 }, { capture: true });
 
 /* ===== Live Notes Peek Sync (Text + Drawing) ===== */
@@ -3428,7 +3434,7 @@ const LockScreen = window.LockScreen = {
     this.holdTimers[kind] = setTimeout(() => {
       this.holdTimers[kind] = "fired";
       const url = kind === "emergency" ? (CFG.lockEmergencyUrl || CFG.lockCancelUrl) : CFG.lockCancelUrl;
-      if (url && (!this.code || kind === "emergency")) openShortcutInSafari(url);
+      if (url && (!this.code || kind === "emergency")) openShortcutInSafari(url, window.getLinkSafariPref(kind === "emergency" ? "lockEmergency" : "lockCancel"));
     }, 800);
   },
   endFooterHold(e, kind, cancelled) {
@@ -4145,11 +4151,11 @@ LockScreen.init();
     if (didHold) { didHold = false; e.preventDefault(); e.stopPropagation(); return; }
     if (bottomBtn && e.target.closest("#customShotBottomTap")) {
       const bUrl = (CFG.screenshotBottomUrl || "").trim();
-      if (bUrl) window.openShortcutInSafari(bUrl);
+      if (bUrl) window.openShortcutInSafari(bUrl, window.getLinkSafariPref("screenshotBottom"));
       return;
     }
     const tUrl = (CFG.screenshotTapUrl || "").trim();
-    if (tUrl) window.openShortcutInSafari(tUrl);
+    if (tUrl) window.openShortcutInSafari(tUrl, window.getLinkSafariPref("screenshotTap"));
   });
 })();
 
@@ -4180,7 +4186,7 @@ LockScreen.init();
       holdTm = null;
       didHold = true;
       try { if (window.AuraKit && window.AuraKit.haptics) window.AuraKit.haptics.impact("light"); } catch (_) {}
-      window.openShortcutInSafari(url);
+      window.openShortcutInSafari(url, window.getLinkSafariPref(key));
     }, 450);
   };
   const cancelHold = () => { clearTimeout(holdTm); holdTm = null; };
