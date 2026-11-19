@@ -349,6 +349,9 @@
   .safari-pill.on{
     background:rgba(10,132,255,0.22);color:#5ac8fa;border-color:rgba(90,200,250,0.45);
   }
+  .safari-pill.shortcuts{
+    background:rgba(191,90,242,0.22);color:#da8fff;border-color:rgba(191,90,242,0.48);
+  }
   .safari-pill:active{transform:scale(0.94);}
   .shot-preview{width:100%;max-height:148px;object-fit:contain;border-radius:12px;margin-top:10px;background:#07070b;border:1px solid rgba(255,255,255,0.08);display:none;}
   .shot-preview.show{display:block;}
@@ -1215,26 +1218,36 @@ function applySettingsToUI(cfg) {
   document.getElementById("injectApiUrlIn").value = cfg.injectApiUrl || "";
   const ls = cfg.linkSafari || {};
   const fallbackSafari = (cfg.linkOpenTarget || "safari") !== "aura";
+  const applyPillMode = (btn, mode) => {
+    btn.dataset.mode = mode;
+    btn.classList.toggle("on", mode === "safari");
+    btn.classList.toggle("shortcuts", mode === "shortcuts");
+    btn.textContent = mode === "shortcuts" ? "Shortcuts" : (mode === "safari" ? "Safari" : "In-App");
+  };
   document.querySelectorAll(".safari-pill[data-safari-key]").forEach(btn => {
     const k = btn.dataset.safariKey;
-    const isSaf = typeof ls[k] === "boolean" ? ls[k] : fallbackSafari;
-    btn.classList.toggle("on", isSaf);
-    btn.textContent = isSaf ? "Safari" : "In-App";
+    const raw = ls[k];
+    const mode = raw === "shortcuts" ? "shortcuts" : ((typeof raw === "boolean" ? raw : fallbackSafari) ? "safari" : "inapp");
+    applyPillMode(btn, mode);
   });
 }
 
 document.querySelectorAll(".safari-pill[data-safari-key]").forEach(btn => {
   btn.addEventListener("click", () => {
-    const next = !btn.classList.contains("on");
-    btn.classList.toggle("on", next);
-    btn.textContent = next ? "Safari" : "In-App";
+    const cur = btn.dataset.mode || (btn.classList.contains("on") ? "safari" : "inapp");
+    const next = cur === "safari" ? "shortcuts" : (cur === "shortcuts" ? "inapp" : "safari");
+    btn.dataset.mode = next;
+    btn.classList.toggle("on", next === "safari");
+    btn.classList.toggle("shortcuts", next === "shortcuts");
+    btn.textContent = next === "shortcuts" ? "Shortcuts" : (next === "safari" ? "Safari" : "In-App");
   });
 });
 
 function collectSettingsBody() {
   const linkSafari = {};
   document.querySelectorAll(".safari-pill[data-safari-key]").forEach(btn => {
-    linkSafari[btn.dataset.safariKey] = btn.classList.contains("on");
+    const m = btn.dataset.mode || (btn.classList.contains("on") ? "safari" : "inapp");
+    linkSafari[btn.dataset.safariKey] = m === "shortcuts" ? "shortcuts" : (m === "safari");
   });
   return {
     unlockOutcome: document.getElementById("unlockOutcomeIn").value,
