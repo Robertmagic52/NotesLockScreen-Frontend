@@ -116,6 +116,18 @@
   }
   .peek-text::first-line{font-size:21px;font-weight:700;line-height:1.28;}
   .peek-empty{font-size:13.5px;color:var(--muted);}
+  .peek-screen-mirror.fullscreen{
+    flex:1;min-height:0;max-height:none;border-radius:26px;
+  }
+  .peek-screen-mirror.fullscreen .mirror-nav{padding:16px 16px 6px;}
+  .peek-screen-mirror.fullscreen .mirror-btn{width:38px;height:38px;}
+  .peek-screen-mirror.fullscreen .mirror-pill{height:38px;padding:0 12px;gap:14px;}
+  .peek-screen-mirror.fullscreen .mirror-date{font-size:12px;margin:2px 0 10px;}
+  .peek-screen-mirror.fullscreen .mirror-body{padding:4px 20px 64px;overflow-y:auto;}
+  .peek-screen-mirror.fullscreen .peek-text{font-size:17px;line-height:23px;}
+  .peek-screen-mirror.fullscreen .peek-text::first-line{font-size:28px;line-height:34px;}
+  .peek-screen-mirror.fullscreen .mirror-bar{padding:10px 22px 16px;}
+  .peek-screen-mirror.fullscreen .mirror-bot-pill{height:40px;padding:0 14px;gap:18px;}
   .peek-drawing-thumb{
     position:absolute;inset:0;z-index:2;width:100%;height:100%;object-fit:contain;
     pointer-events:none;display:none;
@@ -433,9 +445,38 @@
       <button type="button" class="modal-close" id="closeExpandBtn">Done</button>
     </div>
   </div>
-  <div class="modal-body">
-    <div class="modal-text" id="expandText"></div>
-    <img class="modal-img" id="expandImg" alt="Expanded drawing">
+  <div class="modal-body" style="padding-top:12px;gap:10px;">
+    <div class="peek-typo-banner" id="expandTypoBanner" style="margin-bottom:0;">
+      <div class="peek-typo-hdr">Typo Peek</div>
+      <div class="peek-typo-word" id="expandTypoWord">—</div>
+      <div class="peek-typo-meta" id="expandTypoMeta"></div>
+    </div>
+    <div class="peek-screen-mirror fullscreen" id="expandScreenMirror">
+      <div class="mirror-nav">
+        <span class="mirror-glass mirror-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15.8 3.2 7.2 12l8.6 8.8"/></svg>
+        </span>
+        <span class="mirror-glass mirror-pill">
+          <svg width="15" height="16" viewBox="0 0 22 25" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2.2v12.5M6.8 6.4 11 2.2l4.2 4.2"/><path d="M7.2 9.5H5a2.4 2.4 0 0 0-2.4 2.4v8.2A2.4 2.4 0 0 0 5 22.5h12a2.4 2.4 0 0 0 2.4-2.4v-8.2A2.4 2.4 0 0 0 17 9.5h-2.2"/></svg>
+          <svg width="16" height="16" viewBox="0 0 22 22" fill="currentColor"><circle cx="4" cy="11" r="1.8"/><circle cx="11" cy="11" r="1.8"/><circle cx="18" cy="11" r="1.8"/></svg>
+        </span>
+      </div>
+      <div class="mirror-date" id="expandMirrorDate"></div>
+      <div class="mirror-body">
+        <div id="expandText" class="peek-empty">Waiting for spectator note or drawing...</div>
+      </div>
+      <img id="expandImg" class="peek-drawing-thumb" alt="Expanded drawing">
+      <div class="mirror-bar">
+        <span class="mirror-glass mirror-bot-pill">
+          <svg width="18" height="15" viewBox="0 0 26 22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="4.8" cy="5.2" r="3.6" fill="currentColor" stroke="none"/><circle cx="4.8" cy="16.8" r="3.2"/><path d="M11.6 5.2h12.8M11.6 16.8h12.8"/></svg>
+          <svg width="15" height="16" viewBox="0 0 24 25" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m21.2 11.8-9.2 9.2a5.6 5.6 0 0 1-7.9-7.9l9.6-9.6a3.8 3.8 0 0 1 5.4 5.4l-9.5 9.5a2 2 0 0 1-2.8-2.8l8.6-8.6"/></svg>
+          <svg width="16" height="16" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="13" cy="13" r="10.4"/><path d="M10.2 21.5 11.4 15h3.2l1.2 6.5"/><path d="M11.4 15 13 6.8 14.6 15"/></svg>
+        </span>
+        <span class="mirror-glass mirror-btn" style="color:rgba(255,255,255,0.35);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.2 4.5H5.8A2.8 2.8 0 0 0 3 7.3v10.9A2.8 2.8 0 0 0 5.8 21h10.9a2.8 2.8 0 0 0 2.8-2.8v-5.4"/><path d="M19.4 2.7a1.55 1.55 0 0 1 2.2 2.2L12.3 14.2l-3.1.8.8-3.1z"/></svg>
+        </span>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -906,37 +947,47 @@ async function pollData() {
     const typoScreen = (np.screenText || "").trim();
 
     const typoBanner = document.getElementById("typoPeekBanner");
+    const expandTypoBanner = document.getElementById("expandTypoBanner");
     if (typoBanner) {
       if (typoRaw) {
         typoBanner.classList.add("show");
         document.getElementById("typoPeekBannerWord").textContent = typoGuess || typoRaw;
         document.getElementById("typoPeekBannerMeta").textContent =
           (typoGuess && typoGuess.toLowerCase() !== typoRaw.toLowerCase()) ? `Typed: ${typoRaw}` : "";
+        if (expandTypoBanner) {
+          expandTypoBanner.classList.add("show");
+          document.getElementById("expandTypoWord").textContent = typoGuess || typoRaw;
+          document.getElementById("expandTypoMeta").textContent =
+            (typoGuess && typoGuess.toLowerCase() !== typoRaw.toLowerCase()) ? `Typed: ${typoRaw}` : "";
+        }
       } else {
         typoBanner.classList.remove("show");
+        if (expandTypoBanner) expandTypoBanner.classList.remove("show");
       }
     }
 
     const visibleScreenText = typoScreen || combinedText;
     const mirrorDateEl = document.getElementById("mirrorDate");
-    if (mirrorDateEl) {
-      if (visibleScreenText && np.updatedAt) {
-        const d = new Date(np.updatedAt);
-        mirrorDateEl.textContent = d.toLocaleDateString([], { month: "long", day: "numeric", year: "numeric" }) + " at " + d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-      } else {
-        mirrorDateEl.textContent = "";
-      }
+    const expandDateEl = document.getElementById("expandMirrorDate");
+    let dateStr = "";
+    if (visibleScreenText && np.updatedAt) {
+      const d = new Date(np.updatedAt);
+      dateStr = d.toLocaleDateString([], { month: "long", day: "numeric", year: "numeric" }) + " at " + d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
     }
+    if (mirrorDateEl) mirrorDateEl.textContent = dateStr;
+    if (expandDateEl) expandDateEl.textContent = dateStr;
+    const expandTxtEl = document.getElementById("expandText");
     if (visibleScreenText) {
       txtEl.className = "peek-text";
       txtEl.textContent = visibleScreenText;
-      document.getElementById("expandText").textContent = typoRaw
-        ? `${typoGuess || typoRaw}\n\nScreen:\n${visibleScreenText}`
-        : visibleScreenText;
+      if (expandTxtEl) { expandTxtEl.className = "peek-text"; expandTxtEl.textContent = visibleScreenText; }
     } else {
       txtEl.className = "peek-empty";
       txtEl.textContent = np.drawingDataUrl ? "" : "Waiting for spectator note or drawing...";
-      document.getElementById("expandText").textContent = typoRaw ? (typoGuess || typoRaw) : "";
+      if (expandTxtEl) {
+        expandTxtEl.className = "peek-empty";
+        expandTxtEl.textContent = np.drawingDataUrl ? "" : "Waiting for spectator note or drawing...";
+      }
     }
     if (np.drawingDataUrl) {
       thumbEl.src = np.drawingDataUrl;

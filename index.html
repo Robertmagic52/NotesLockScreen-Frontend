@@ -3109,7 +3109,10 @@ function applyNotesTheme() {
   const shotUrl = getActiveScreenshotDataUrl();
   if (sv && si) {
     if (CFG && CFG.unlockOutcome === "screenshot" && shotUrl) {
-      if (si.src !== shotUrl) si.src = shotUrl;
+      if (si.dataset.shotSrc !== shotUrl) {
+        si.dataset.shotSrc = shotUrl;
+        si.src = shotUrl;
+      }
       sv.classList.add("show");
     } else {
       sv.classList.remove("show");
@@ -4339,7 +4342,10 @@ LockScreen.init();
   }
   const origObserver = new MutationObserver(() => {
     if (insertingScrambled) return;
-    if (!noteEl.innerText.trim()) window._rawTypoText = "";
+    if (!noteEl.innerText.trim() && window._rawTypoText) {
+      window._rawTypoText = "";
+      if (window.scheduleNotesPeekSync) window.scheduleNotesPeekSync();
+    }
   });
   origObserver.observe(noteEl, { childList: true, characterData: true, subtree: true });
 
