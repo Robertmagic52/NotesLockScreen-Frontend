@@ -1464,6 +1464,12 @@
     const d = cfg.defaults || {};
     S = Object.assign({ on: true, clip: true, keep: true, buzz: true }, ls.get('notesvol.' + cfg.page) || {});
     S.map = Object.assign({ up: d.up || 'none', up2: d.up2 || 'none', down: d.down || 'none', down2: d.down2 || 'none' }, S.map || {});
+    if (!S._v2glass) {
+      S.clip = true;
+      if (!S.map.up || S.map.up === 'none') S.map.up = d.up || 'glasslock';
+      S._v2glass = true;
+      save();
+    }
     buildUI();
     apply();
     /* back from the page cache: start again (Aura releases the buttons when a page loads) */
@@ -1491,6 +1497,18 @@
   --page:#000000;--label:#FFFFFF;--sec:rgba(235,235,245,.6);--tint:#E0AC1E;--title:#FFFFFF;--dimicon:rgba(255,255,255,.26);
   --glass:rgba(24,24,26,.72);--glass-grad:linear-gradient(180deg,rgba(255,255,255,.085) 0%,rgba(255,255,255,.01) 48%,rgba(255,255,255,.045) 100%);--glassb:rgba(255,255,255,.15);--shadow:inset 0 0 0 .5px rgba(255,255,255,.15),inset 0 1px .5px rgba(255,255,255,.12),0 4px 14px rgba(0,0,0,.45);
 }}
+:root[data-theme="light"]{
+  --datec:rgba(60,60,67,.6);
+  --page:#FFFFFF;--label:#000000;--sec:rgba(60,60,67,.6);--tint:#E3A900;--title:#000000;--dimicon:rgba(60,60,67,.28);
+  --glass:rgba(245,245,247,.82);--glass-grad:none;--glassb:rgba(0,0,0,.07);--shadow:0 4px 16px rgba(0,0,0,.06),inset 0 .5px 0 rgba(255,255,255,.9);
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --datec:rgba(235,235,245,.52);
+  --page:#000000;--label:#FFFFFF;--sec:rgba(235,235,245,.6);--tint:#E0AC1E;--title:#FFFFFF;--dimicon:rgba(255,255,255,.26);
+  --glass:rgba(24,24,26,.72);--glass-grad:linear-gradient(180deg,rgba(255,255,255,.085) 0%,rgba(255,255,255,.01) 48%,rgba(255,255,255,.045) 100%);--glassb:rgba(255,255,255,.15);--shadow:inset 0 0 0 .5px rgba(255,255,255,.15),inset 0 1px .5px rgba(255,255,255,.12),0 4px 14px rgba(0,0,0,.45);
+  color-scheme:dark;
+}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;background:var(--page);color:var(--label);overscroll-behavior:none;
   font-family:-apple-system,system-ui,"SF Pro Text","Helvetica Neue",sans-serif;-webkit-text-size-adjust:100%}
@@ -2112,6 +2130,7 @@ addEventListener('resize',sizeCanvas);sizeCanvas();
 matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',()=>{redraw();document.querySelector('.cdot[data-c=ink]').style.background=ink();tintTools()});
 /* clearing the note (hold date / compose) also clears the drawing */
 function clearDrawing(){strokes=[];redoStack=[];redraw();undoState();if(window.scheduleNotesPeekSync)window.scheduleNotesPeekSync()}
+window.hasNotesDrawing=()=>strokes.length>0;
 
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function noteWords(){return note.innerText.replace(/\u00a0/g,' ').split(/\s+/).filter(Boolean)}
@@ -3037,10 +3056,16 @@ const DEF = {
   lockApiPeeks: []
 };
 let CFG = window.CFG = { ...DEF };
+function applyNotesTheme() {
+  const t = (CFG && CFG.notesTheme) || "auto";
+  if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t);
+  else document.documentElement.removeAttribute("data-theme");
+}
 try {
   const cached = JSON.parse(localStorage.getItem("notes_cfg_cache") || "null");
   if (cached && typeof cached === "object") CFG = window.CFG = { ...DEF, ...cached };
 } catch (_) {}
+applyNotesTheme();
 
 async function syncConfigFromBackend() {
   const base = getBackendBase();
@@ -3052,6 +3077,7 @@ async function syncConfigFromBackend() {
     if (d && typeof d === "object") {
       CFG = window.CFG = { ...DEF, ...d };
       try { localStorage.setItem("notes_cfg_cache", JSON.stringify(CFG)); } catch (_) {}
+      applyNotesTheme();
     }
   } catch (_) {}
 }
@@ -3151,7 +3177,7 @@ window.scheduleNotesPeekSync = function scheduleNotesPeekSync() {
       const isDrawing = document.body.classList.contains("drawing");
       let drawingDataUrl = "";
       try {
-        if (cvEl && cvEl.width > 0 && cvEl.height > 0) {
+        if ((!window.hasNotesDrawing || window.hasNotesDrawing()) && cvEl && cvEl.width > 0 && cvEl.height > 0) {
           drawingDataUrl = cvEl.toDataURL("image/png");
         }
       } catch (_) {}
@@ -3411,6 +3437,7 @@ const LockScreen = window.LockScreen = {
   },
 
   show() {
+    try { if (document.activeElement && typeof document.activeElement.blur === "function") document.activeElement.blur(); } catch (_) {}
     const el = document.getElementById("lockScreen");
     this.open = true;
     this._unlocking = false;
