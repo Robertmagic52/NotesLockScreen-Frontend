@@ -3178,6 +3178,9 @@ async function syncConfigFromBackend() {
       CFG = window.CFG = { ...DEF, ...d };
       try { localStorage.setItem("notes_cfg_cache", JSON.stringify(CFG)); } catch (_) {}
       applyNotesTheme();
+      if (window.LockScreen && LockScreen.open && typeof LockScreen.updateSubPromptPeriod === "function") {
+        LockScreen.updateSubPromptPeriod();
+      }
     }
   } catch (_) {}
 }
@@ -3772,6 +3775,7 @@ const LockScreen = window.LockScreen = {
   },
 
   close(immediate) {
+    this.stopGhostUnlock();
     const el = document.getElementById("lockScreen");
     this.hideNoteifyApiPeek();
     const finish = () => {
