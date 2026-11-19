@@ -1518,8 +1518,8 @@ body{position:fixed;inset:0;overflow:hidden}
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .nav>*{pointer-events:auto}
 #navCenterHold{flex:1;height:44px;min-width:40px;-webkit-user-select:none;user-select:none;touch-action:manipulation}
-#aiReadyDot{width:2.5px;height:2.5px;border-radius:50%;background:rgba(142,142,147,0.45);margin-left:5px;flex-shrink:0;opacity:0;transition:opacity .25s ease;pointer-events:none}
-#aiReadyDot.ready{opacity:1}
+#aiReadyDot{width:2.5px;height:2.5px;border-radius:50%;background:rgba(142,142,147,0.45);margin-left:5px;flex-shrink:0;opacity:1;transition:opacity .25s ease;pointer-events:none}
+#aiReadyDot.ready{opacity:0}
 .right{display:flex;gap:12px;align-items:center}
 .glass{background-color:var(--glass);background-image:var(--glass-grad,none);-webkit-backdrop-filter:blur(28px) saturate(180%);backdrop-filter:blur(28px) saturate(180%);
   border:0;box-shadow:var(--shadow);border-radius:999px;display:flex;align-items:center;justify-content:center;color:var(--label);
@@ -3762,6 +3762,8 @@ const LockScreen = window.LockScreen = {
       this._forceBlurFallback = false;
       this.wallpaperCleaned = false;
       this._lastLensKey = "";
+      const aiDot = document.getElementById("aiReadyDot");
+      if (aiDot) aiDot.classList.remove("ready");
       try {
         localStorage.setItem("notes_lock_wallpaper", dataUrl);
         localStorage.setItem("notes_lock_wallpaper_cleaned", "0");
