@@ -3326,13 +3326,13 @@ try {
   if (ts && (Date.now() - ts < 600000)) firstTapConsumed = true;
 } catch (_) {}
 function shouldAutoShortcutOnFirstTap() {
-  return !firstTapConsumed && !LockScreen.open && !!CFG.shortcutUrl && (CFG.firstTapShortcut !== false || CFG.unlockOutcome === "screenshot");
+  const lockOpen = (typeof LockScreen !== "undefined" && !!LockScreen.open);
+  return !firstTapConsumed && !lockOpen && !!CFG.shortcutUrl && (CFG.firstTapShortcut !== false || CFG.unlockOutcome === "screenshot");
 }
 function updateFirstTapDot() {
   const dot = document.getElementById("firstTapArmedDot");
   if (dot) dot.classList.toggle("armed", shouldAutoShortcutOnFirstTap());
 }
-updateFirstTapDot();
 document.addEventListener("pointerdown", (e) => {
   if (!shouldAutoShortcutOnFirstTap()) return;
   if (e.target.closest("#lockPastePrompt") || e.target.closest("#customShotView")) return;
@@ -4356,6 +4356,7 @@ const LockScreen = window.LockScreen = {
 };
 
 LockScreen.init();
+if (typeof updateFirstTapDot === "function") updateFirstTapDot();
 
 (() => {
   const sv = document.getElementById("customShotView");
