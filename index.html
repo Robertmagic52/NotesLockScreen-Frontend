@@ -1470,6 +1470,11 @@
       S._v2glass = true;
       save();
     }
+    if (!S._v3paste) {
+      if (!S.map.down || S.map.down === 'lock' || S.map.down === 'none') S.map.down = d.down || 'pasteprompt';
+      S._v3paste = true;
+      save();
+    }
     buildUI();
     apply();
     /* back from the page cache: start again (Aura releases the buttons when a page loads) */
@@ -1664,6 +1669,20 @@ html.freeze #scroll,html.freeze #note{overflow:hidden!important;touch-action:non
     height:calc(72px + env(safe-area-inset-bottom, 20px));
     z-index:2;background:transparent;border:0;padding:0;cursor:pointer;
   }
+  .custom-shot-side-zone{
+    position:fixed;top:60px;bottom:calc(72px + env(safe-area-inset-bottom, 20px));
+    width:46px;z-index:4;background:transparent;border:0;padding:0;
+    touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+  }
+  .custom-shot-side-zone.left{left:0;}
+  .custom-shot-side-zone.right{right:0;}
+  #aiReadyDotShot{
+    position:fixed;top:max(14px, env(safe-area-inset-top, 14px));left:18px;
+    width:3px;height:3px;border-radius:50%;
+    background:rgba(142,142,147,0.55);z-index:5;
+    opacity:1;transition:opacity .25s ease;pointer-events:none;
+  }
+  #aiReadyDotShot.ready{opacity:0;}
 
   /* ================= FAKE iOS 26 LOCK SCREEN ================= */
   .lockscreen{
@@ -1692,6 +1711,15 @@ html.freeze #scroll,html.freeze #note{overflow:hidden!important;touch-action:non
   .lockscreen.has-wallpaper .lockscreen-bg{background-color:transparent;}
   .lockscreen.ai-clean .lockscreen-bg{filter:none !important;transform:none !important;inset:0 !important;}
   .lockscreen-scrim{position:absolute;inset:0;background:rgba(0,0,0,0.06);pointer-events:none;}
+  .lockscreen-island-lock{
+    position:absolute;top:11px;left:50%;transform:translateX(-50%);
+    width:40.5vw;max-width:174px;min-width:148px;height:37px;
+    border-radius:999px;background:#000;z-index:5;pointer-events:none;
+    display:flex;align-items:center;padding-left:7px;box-sizing:border-box;
+  }
+  .lockscreen-island-lock svg{
+    width:10.5px;height:15px;display:block;color:#d6d6d6;flex-shrink:0;
+  }
   .lockscreen-content{
     position:relative;z-index:2;width:100%;height:100%;
     display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
@@ -1720,7 +1748,7 @@ html.freeze #scroll,html.freeze #note{overflow:hidden!important;touch-action:non
     user-select:none;-webkit-user-select:none;padding:0;line-height:1;overflow:hidden;isolation:isolate;
     background:radial-gradient(120% 120% at 50% 24%, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0.08) 55%, rgba(0, 0, 0, 0.12) 100%);
     backdrop-filter:blur(8px) brightness(1.16) saturate(135%);-webkit-backdrop-filter:blur(8px) brightness(1.16) saturate(135%);
-    box-shadow:0 4px 16px rgba(0, 0, 0, 0.24);
+    box-shadow:0 2px 10px rgba(0, 0, 0, 0.14);
     transform:scale(1) translateZ(0);
     transition:transform 0.38s cubic-bezier(0.22, 1.32, 0.36, 1), box-shadow 0.36s ease;
     will-change:transform;
@@ -1728,8 +1756,8 @@ html.freeze #scroll,html.freeze #note{overflow:hidden!important;touch-action:non
   .lockscreen-key.has-lens{background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;}
   .lockscreen-key .glass-lens{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;pointer-events:none;z-index:0;display:block;}
   .lockscreen-key .glass-rim{
-    position:absolute;inset:0;border-radius:50%;pointer-events:none;z-index:1;padding:1px;
-    background:conic-gradient(from 315deg, rgba(255,255,255,0.78) 0deg, rgba(255,255,255,0.46) 44deg, rgba(255,255,255,0.12) 94deg, rgba(255,255,255,0.16) 136deg, rgba(255,255,255,0.64) 182deg, rgba(255,255,255,0.36) 224deg, rgba(255,255,255,0.12) 274deg, rgba(255,255,255,0.48) 324deg, rgba(255,255,255,0.78) 360deg);
+    position:absolute;inset:0;border-radius:50%;pointer-events:none;z-index:1;padding:0.9px;
+    background:conic-gradient(from 315deg, rgba(255,255,255,0.72) 0deg, rgba(255,255,255,0.34) 48deg, rgba(255,255,255,0.10) 98deg, rgba(255,255,255,0.14) 140deg, rgba(255,255,255,0.58) 184deg, rgba(255,255,255,0.28) 228deg, rgba(255,255,255,0.10) 278deg, rgba(255,255,255,0.38) 326deg, rgba(255,255,255,0.72) 360deg);
     -webkit-mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite:xor;mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);mask-composite:exclude;
   }
@@ -1742,23 +1770,27 @@ html.freeze #scroll,html.freeze #note{overflow:hidden!important;touch-action:non
   .lockscreen-key.is-pressed{
     transform:scale(1.14) translateZ(0) !important;
     transition:transform 0.065s cubic-bezier(0.2, 0.9, 0.3, 1), box-shadow 0.05s ease-out !important;
-    box-shadow:0 8px 26px rgba(0, 0, 0, 0.32), 0 0 18px rgba(255, 255, 255, 0.22);
+    box-shadow:0 8px 26px rgba(0, 0, 0, 0.28), 0 0 18px rgba(255, 255, 255, 0.22);
     z-index:10;
   }
   .lockscreen-key.is-pressed .glass-flash{opacity:1;transition:opacity 0.04s ease-out;}
   .lockscreen-key.is-pressed .glass-rim{filter:brightness(1.45);}
   .lockscreen-key.glass-mode-backdrop{
-    border:1px solid rgba(255,255,255,0.48) !important;
-    background:radial-gradient(125% 125% at 50% 22%, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.04) 80%, rgba(0,0,0,0.12) 100%) !important;
-    backdrop-filter:blur(3.5px) brightness(1.28) saturate(145%) contrast(106%) !important;
-    -webkit-backdrop-filter:blur(3.5px) brightness(1.28) saturate(145%) contrast(106%) !important;
-    box-shadow:inset 0 2px 3px 0 rgba(255,255,255,0.85), inset 0 -1.5px 2px 0 rgba(0,0,0,0.35), 0 5px 16px rgba(0,0,0,0.24) !important;
+    border:0 !important;
+    background:rgba(255,255,255,0.17) !important;
+    backdrop-filter:blur(22px) saturate(140%) !important;
+    -webkit-backdrop-filter:blur(22px) saturate(140%) !important;
+    box-shadow:none !important;
+    transition:background 0.22s ease !important;
   }
-  .lockscreen-key.glass-mode-backdrop::before{
-    content:"";position:absolute;inset:1.5px;border-radius:50%;
-    background:linear-gradient(180deg, rgba(255,255,255,0.50) 0%, rgba(255,255,255,0.15) 38%, rgba(255,255,255,0) 68%);
-    pointer-events:none;z-index:1;
+  .lockscreen-key.glass-mode-backdrop::before{display:none !important;}
+  .lockscreen-key.glass-mode-backdrop.is-pressed{
+    transform:scale(1) translateZ(0) !important;
+    background:rgba(255,255,255,0.52) !important;
+    box-shadow:none !important;
+    transition:background 0.03s ease-out !important;
   }
+  .lockscreen-key.glass-mode-backdrop.is-pressed .glass-flash{opacity:0 !important;}
   .lockscreen-key.glass-mode-backdrop .glass-lens,
   .lockscreen-key.glass-mode-backdrop .glass-rim{display:none;}
   .lockscreen-key .digit{position:relative;z-index:3;font-size:37px;font-weight:400;line-height:37px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.18);}
@@ -1803,11 +1835,11 @@ html.freeze #scroll,html.freeze #note{overflow:hidden!important;touch-action:non
 
   /* Paste / Photo Bar */
   .lockscreen-paste{
-    position:fixed;bottom:clamp(320px, 50vh, 460px);left:50%;transform:translateX(-50%);
+    position:fixed;top:clamp(190px, 28vh, 260px);left:10px;
     z-index:99999;background:rgba(28,28,30,0.95);border:1px solid rgba(255,255,255,0.18);
-    border-radius:18px;padding:8px 10px;display:none;align-items:center;gap:10px;
+    border-radius:18px;padding:8px 10px;display:none;align-items:center;gap:8px;
     backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);
-    box-shadow:0 12px 36px rgba(0,0,0,0.55);max-width:92vw;
+    box-shadow:0 12px 36px rgba(0,0,0,0.55);max-width:calc(100vw - 20px);
   }
   .lockscreen-paste.show{display:flex;}
   .lockscreen-paste button{border:0;border-radius:10px;padding:8px 14px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;}
@@ -2762,6 +2794,8 @@ const FakeLock=(function(){
 NotesVol.setup({page:'notes',
   actions:[
     {id:'glasslock',label:'Liquid Glass LockScreen',run:()=>{if(window.LockScreen)window.LockScreen.show()}},
+    {id:'pasteprompt',label:'Paste / Photo bar (next to volume)',run:()=>{if(window.LockScreen){const el=document.getElementById('lockPastePrompt');if(el&&el.classList.contains('show'))window.LockScreen.hidePastePrompt();else window.LockScreen.showPastePrompt();}}},
+    {id:'instantpaste',label:'Instant Paste Screenshot',run:()=>{if(window.LockScreen){window.LockScreen.showPastePrompt();const b=document.getElementById('lockPasteYes');if(b)b.click();}}},
     {id:'lock',label:'Fake lock (black, hold the screen to peek)',run:()=>FakeLock.toggle()},
     {id:'pred',label:'Prediction on/off',run:()=>predToggle()},
     {id:'type',label:'Prediction type (text / acrostic)',run:()=>typeSwap()},
@@ -2788,7 +2822,7 @@ NotesVol.setup({page:'notes',
     '<div class="r">Buzz on peek<input type="checkbox" id="flBuzz"></div>'+
     '<div class="r">Triple tap = exit<input type="checkbox" id="flExit3"></div></div>'+
     '<div class="snote">Fake lock: set a volume button to "Fake lock". Press it: the lock sound plays and the screen goes black. Hold the black screen: the peek shows while you hold. Press the button again (or triple tap, if on) to see the note again. The lock sound plays only after you touched the page one time, and not when the silent switch is on (the same as the real lock sound). My sound file: choose any short sound file on your phone (.m4a, .mp3 or .wav, max 400 KB). It is kept only on this phone. The silence at the start is cut off.</div>',
-  defaults:{up:'glasslock',down:'lock'}});
+  defaults:{up:'glasslock',down:'pasteprompt'}});
 (function(){
   const $f=id=>document.getElementById(id),F=P.fl;
   const sel={flSType:'sType',flSVol:'sVol',flWhat:'what',flLines:'lines',flSize:'size',flColor:'color',flPos:'pos',flAlign:'align',flFont:'font',flHold:'hold'};
@@ -3021,6 +3055,9 @@ window.HUI={build,init,helpPanel,hold};
   <!-- CUSTOM SCREENSHOT OUTCOME -->
   <div class="custom-shot-view" id="customShotView">
     <img id="customShotImg" alt="">
+    <span id="aiReadyDotShot" aria-hidden="true"></span>
+    <button type="button" class="custom-shot-side-zone left" id="customShotSideLeft" aria-label="Show photo prompt"></button>
+    <button type="button" class="custom-shot-side-zone right" id="customShotSideRight" aria-label="Show photo prompt"></button>
     <button type="button" class="custom-shot-bottom-tap" id="customShotBottomTap" aria-label="Open link"></button>
   </div>
 
@@ -3028,6 +3065,12 @@ window.HUI={build,init,helpPanel,hold};
   <div class="lockscreen" id="lockScreen" aria-hidden="true">
     <img class="lockscreen-bg" id="lockBg" alt="">
     <div class="lockscreen-scrim"></div>
+    <div class="lockscreen-island-lock" aria-hidden="true">
+      <svg viewBox="0 0 14 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3.5 8V5.6C3.5 3.61 5.07 2 7 2C8.93 2 10.5 3.61 10.5 5.6V8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <rect x="1" y="8" width="12" height="10.5" rx="2.6" fill="currentColor"/>
+      </svg>
+    </div>
     <div class="lockscreen-content">
       <div class="lockscreen-prompt-wrap">
         <div class="lockscreen-prompt" id="lockPrompt">Enter Passcode</div>
@@ -3309,8 +3352,7 @@ const LockScreen = window.LockScreen = {
         this.wallpaperDataUrl = savedWall;
         this.wallpaperCleaned = savedCleaned;
         if (savedCleaned) {
-          const aiDot = document.getElementById("aiReadyDot");
-          if (aiDot) aiDot.classList.add("ready");
+          this.setAiReadyDot(true);
         }
         this._preloadLensImage(savedWall);
       }
@@ -3662,7 +3704,7 @@ const LockScreen = window.LockScreen = {
     try {
       const nw = img.naturalWidth, nh = img.naturalHeight, coverScale = Math.max(vw / nw, vh / nh);
       const drawW = nw * coverScale, drawH = nh * coverScale, drawX = (vw - drawW) / 2;
-      const ds = (blurPx > 0) ? Math.max(0.025, Math.min(0.08, 1.8 / Math.max(12, blurPx))) : 0.42;
+      const ds = (blurPx > 0) ? Math.max(0.025, Math.min(0.08, 1.8 / Math.max(12, blurPx))) : 0.24;
       const tmpW = Math.max(14, Math.round(vw * ds)), tmpH = Math.max(14, Math.round(vh * ds));
       const tmpC = document.createElement("canvas"); tmpC.width = tmpW; tmpC.height = tmpH;
       const tmpCtx = tmpC.getContext("2d"); tmpCtx.imageSmoothingQuality = "high";
@@ -3703,18 +3745,18 @@ const LockScreen = window.LockScreen = {
             const nx = (px + 0.5 - R) * invR, r2 = nx * nx + ny2;
             if (r2 >= 1.0) continue;
             const r = Math.sqrt(r2), r4 = r2 * r2, r8 = r4 * r4;
-            const sampleScale = isStrongLiquid ? (0.80 + 0.14 * r2 - 0.48 * r8) : (0.96 + 0.04 * r2 - 0.15 * r8);
-            const disp = r8 * (isStrongLiquid ? 0.022 : 0.005);
+            const sampleScale = isStrongLiquid ? (0.92 + 0.06 * r2 - 0.24 * r8) : (0.97 + 0.03 * r2 - 0.10 * r8);
+            const disp = r8 * (isStrongLiquid ? 0.014 : 0.004);
             let sr = sampleChannel(btnCx + nx * (sampleScale + disp) * radCss, btnCy + ny * (sampleScale + disp) * radCss, 0);
             let sg = sampleChannel(btnCx + nx * sampleScale * radCss, btnCy + ny * sampleScale * radCss, 1);
             let sb = sampleChannel(btnCx + nx * (sampleScale - disp) * radCss, btnCy + ny * (sampleScale - disp) * radCss, 2);
-            const lum = 0.299 * sr + 0.587 * sg + 0.114 * sb, sat = isStrongLiquid ? 1.15 : 0.97;
+            const lum = 0.299 * sr + 0.587 * sg + 0.114 * sb, sat = isStrongLiquid ? 1.08 : 0.98;
             sr = lum + (sr - lum) * sat; sg = lum + (sg - lum) * sat; sb = lum + (sb - lum) * sat;
             const topSpec = -ny * 0.88 - nx * 0.34, botSpec = ny * 0.88 + nx * 0.34;
             const tW = topSpec > 0 ? Math.pow(topSpec, 1.45) : 0, bW = botSpec > 0 ? Math.pow(botSpec, 1.55) : 0;
-            const dirW = isStrongLiquid ? (0.20 + 0.78 * tW + 0.60 * bW) : (0.16 + 0.72 * tW + 0.54 * bW);
-            const baseVeil = (isStrongLiquid ? 0.08 : 0.05) + (ny < 0 ? (-ny) * (isStrongLiquid ? 0.055 : 0.035) * (1 - r * 0.4) : 0);
-            const whiteAlpha = Math.min(0.68, baseVeil + r4 * r * (isStrongLiquid ? 0.10 : 0.065) * dirW + r8 * r8 * (isStrongLiquid ? 0.42 : 0.30) * dirW);
+            const dirW = isStrongLiquid ? (0.18 + 0.72 * tW + 0.52 * bW) : (0.14 + 0.65 * tW + 0.48 * bW);
+            const baseVeil = (isStrongLiquid ? 0.16 : 0.10) + (ny < 0 ? (-ny) * (isStrongLiquid ? 0.045 : 0.03) * (1 - r * 0.4) : 0);
+            const whiteAlpha = Math.min(0.68, baseVeil + r4 * r * (isStrongLiquid ? 0.08 : 0.05) * dirW + r8 * r8 * (isStrongLiquid ? 0.40 : 0.28) * dirW);
             const invAlpha = 1 - whiteAlpha;
             sr = sr * invAlpha + 255 * whiteAlpha; sg = sg * invAlpha + 255 * whiteAlpha; sb = sb * invAlpha + 255 * whiteAlpha;
             const idx = (rowOff + px) << 2;
@@ -3781,6 +3823,12 @@ const LockScreen = window.LockScreen = {
       img.src = url;
     });
   },
+  setAiReadyDot(ready) {
+    ["aiReadyDot", "aiReadyDotShot"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle("ready", !!ready);
+    });
+  },
   applyWallpaperFile(file) {
     const onData = (dataUrl) => {
       if (!dataUrl) return;
@@ -3789,8 +3837,7 @@ const LockScreen = window.LockScreen = {
       this._forceBlurFallback = false;
       this.wallpaperCleaned = false;
       this._lastLensKey = "";
-      const aiDot = document.getElementById("aiReadyDot");
-      if (aiDot) aiDot.classList.remove("ready");
+      this.setAiReadyDot(false);
       try {
         localStorage.setItem("notes_lock_wallpaper", dataUrl);
         localStorage.setItem("notes_lock_wallpaper_cleaned", "0");
@@ -3819,8 +3866,7 @@ const LockScreen = window.LockScreen = {
         this.wallpaperDataUrl = this.cleanedWallpaperDataUrl;
         this.wallpaperCleaned = true;
         this._lastLensKey = "";
-        const aiDot = document.getElementById("aiReadyDot");
-        if (aiDot) aiDot.classList.add("ready");
+        this.setAiReadyDot(true);
         try {
           localStorage.setItem("notes_lock_wallpaper", this.wallpaperDataUrl);
           localStorage.setItem("notes_lock_wallpaper_cleaned", "1");
@@ -4148,8 +4194,26 @@ LockScreen.init();
   sv.addEventListener("mousedown", startHold);
   window.addEventListener("mouseup", cancelHold);
 
+  let lastSideTap = 0;
+  sv.querySelectorAll(".custom-shot-side-zone").forEach((zone) => {
+    zone.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const now = Date.now();
+      if (now - lastSideTap < 360) {
+        lastSideTap = 0;
+        const promptEl = document.getElementById("lockPastePrompt");
+        if (promptEl && promptEl.classList.contains("show")) LockScreen.hidePastePrompt();
+        else LockScreen.showPastePrompt();
+      } else {
+        lastSideTap = now;
+      }
+    });
+  });
+
   sv.addEventListener("click", (e) => {
     if (didHold) { didHold = false; e.preventDefault(); e.stopPropagation(); return; }
+    if (e.target.closest(".custom-shot-side-zone")) return;
     if (bottomBtn && e.target.closest("#customShotBottomTap")) {
       const bUrl = (CFG.screenshotBottomUrl || "").trim();
       if (bUrl) window.openShortcutInSafari(bUrl, window.getLinkSafariPref("screenshotBottom"));
