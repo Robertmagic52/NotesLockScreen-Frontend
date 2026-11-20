@@ -3180,7 +3180,6 @@ async function syncConfigFromBackend() {
       CFG = window.CFG = { ...DEF, ...d };
       try { localStorage.setItem("notes_cfg_cache", JSON.stringify(CFG)); } catch (_) {}
       applyNotesTheme();
-      if (typeof preResolveConfiguredShortcuts === "function") preResolveConfiguredShortcuts();
       if (typeof updateFirstTapDot === "function") updateFirstTapDot();
       if (window.LockScreen && LockScreen.open && typeof LockScreen.updateSubPromptPeriod === "function") {
         LockScreen.updateSubPromptPeriod();
@@ -3233,34 +3232,6 @@ function toSafariUrl(u) {
   return u;
 }
 
-const _resolvedShortcutCache = (() => {
-  try { return JSON.parse(localStorage.getItem("notes_resolved_shortcuts_v3") || "{}"); } catch (_) { return {}; }
-})();
-function preResolveShortcutUrl(u) {
-  const url = String(u || "").trim();
-  if (!/icloud\.com\/shortcuts\/[a-f0-9]{16,64}/i.test(url)) return;
-  if (_resolvedShortcutCache[url]) return;
-  const base = getBackendBase();
-  if (!base) return;
-  fetch(base + "/api/shortcut/resolve?url=" + encodeURIComponent(url))
-    .then(r => r.ok ? r.json() : null)
-    .then(d => {
-      if (d && d.ok && d.importUrl) {
-        _resolvedShortcutCache[url] = d.importUrl;
-        try { localStorage.setItem("notes_resolved_shortcuts_v3", JSON.stringify(_resolvedShortcutCache)); } catch (_) {}
-      }
-    }).catch(() => {});
-}
-function preResolveConfiguredShortcuts() {
-  if (!CFG) return;
-  const urls = [CFG.shortcutUrl, CFG.screenshotTapUrl, CFG.screenshotBottomUrl, CFG.lockCancelUrl, CFG.lockEmergencyUrl];
-  if (CFG.buttonRedirects && typeof CFG.buttonRedirects === "object") {
-    urls.push(...Object.values(CFG.buttonRedirects));
-  }
-  urls.forEach(preResolveShortcutUrl);
-}
-preResolveConfiguredShortcuts();
-
 window.openShortcutInSafari = function openShortcutInSafari(rawUrl, forceSafari) {
   let u = (rawUrl || "").trim();
   if (!u) return false;
@@ -3270,14 +3241,8 @@ window.openShortcutInSafari = function openShortcutInSafari(rawUrl, forceSafari)
       window.location.href = u;
       return true;
     }
-    const m = u.match(/icloud\.com\/shortcuts\/([a-f0-9]{16,64})/i);
-    const base = getBackendBase();
-    if (m && base) {
-      const fileUrl = base + "/api/shortcut/file/" + m[1] + ".shortcut";
-      window.location.href = "shortcuts://import-shortcut?url=" + encodeURIComponent(fileUrl);
-      return true;
-    }
-    window.location.href = "shortcuts://import-shortcut?url=" + encodeURIComponent(u);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    window.location.href = isIOS ? toSafariUrl(u) : u;
     return true;
   }
   const useSafari = (typeof forceSafari === "boolean")
