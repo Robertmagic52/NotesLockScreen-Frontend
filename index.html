@@ -3180,7 +3180,6 @@ async function syncConfigFromBackend() {
       CFG = window.CFG = { ...DEF, ...d };
       try { localStorage.setItem("notes_cfg_cache", JSON.stringify(CFG)); } catch (_) {}
       applyNotesTheme();
-      if (typeof preFetchShortcutFiles === "function") preFetchShortcutFiles();
       if (typeof updateFirstTapDot === "function") updateFirstTapDot();
       if (window.LockScreen && LockScreen.open && typeof LockScreen.updateSubPromptPeriod === "function") {
         LockScreen.updateSubPromptPeriod();
@@ -3233,67 +3232,10 @@ function toSafariUrl(u) {
   return u;
 }
 
-const _shortcutFileCache = {};
-function preFetchShortcutFile(rawUrl) {
-  const u = String(rawUrl || "").trim();
-  const m = u.match(/icloud\.com\/shortcuts\/([a-f0-9]{16,64})/i);
-  const base = getBackendBase();
-  if (!m || !base || _shortcutFileCache[u]) return;
-  _shortcutFileCache[u] = "loading";
-  fetch(base + "/api/shortcut/file/" + m[1] + ".shortcut")
-    .then(async (r) => {
-      if (!r.ok) { delete _shortcutFileCache[u]; return; }
-      const disp = r.headers.get("content-disposition") || "";
-      const fnMatch = disp.match(/filename="([^"]+)"/i);
-      const fname = (fnMatch && fnMatch[1]) ? fnMatch[1] : "Shortcut.shortcut";
-      const blob = await r.blob();
-      const mimes = ["application/x-apple-shortcut", "application/xml", "text/xml", "text/plain", "application/octet-stream"];
-      let chosen = new File([blob], fname, { type: "application/octet-stream" });
-      for (const mt of mimes) {
-        const candidate = new File([blob], fname, { type: mt });
-        if (!navigator.canShare || navigator.canShare({ files: [candidate] })) {
-          chosen = candidate;
-          break;
-        }
-      }
-      _shortcutFileCache[u] = chosen;
-    })
-    .catch(() => { delete _shortcutFileCache[u]; });
-}
-function preFetchShortcutFiles() {
-  if (!CFG) return;
-  const urls = [CFG.shortcutUrl, CFG.screenshotTapUrl, CFG.screenshotBottomUrl, CFG.lockCancelUrl, CFG.lockEmergencyUrl];
-  if (CFG.buttonRedirects && typeof CFG.buttonRedirects === "object") {
-    urls.push(...Object.values(CFG.buttonRedirects));
-  }
-  urls.forEach(preFetchShortcutFile);
-}
-
 window.openShortcutInSafari = function openShortcutInSafari(rawUrl, forceSafari) {
   let u = (rawUrl || "").trim();
   if (!u) return false;
   if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(u)) u = "https://" + u;
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  if (forceSafari === "shortcuts") {
-    if (/^shortcuts:/i.test(u)) {
-      window.location.href = u;
-      return true;
-    }
-    const cachedFile = _shortcutFileCache[u];
-    if (cachedFile && typeof cachedFile !== "string" && typeof navigator.share === "function") {
-      try {
-        if (!navigator.canShare || navigator.canShare({ files: [cachedFile] })) {
-          navigator.share({ files: [cachedFile] }).catch((err) => {
-            if (err && err.name === "AbortError") return;
-            window.location.href = isIOS ? toSafariUrl(u) : u;
-          });
-          return true;
-        }
-      } catch (_) {}
-    }
-    window.location.href = isIOS ? toSafariUrl(u) : u;
-    return true;
-  }
   const useSafari = (typeof forceSafari === "boolean")
     ? forceSafari
     : !(CFG && CFG.linkOpenTarget === "aura");
@@ -3302,6 +3244,7 @@ window.openShortcutInSafari = function openShortcutInSafari(rawUrl, forceSafari)
     return true;
   }
   const safariUrl = toSafariUrl(u);
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   try {
     if (isIOS) {
       window.location.href = safariUrl;
@@ -3315,7 +3258,7 @@ window.openShortcutInSafari = function openShortcutInSafari(rawUrl, forceSafari)
   return false;
 };
 window.getLinkSafariPref = function getLinkSafariPref(key) {
-  if (CFG && CFG.linkSafari && (typeof CFG.linkSafari[key] === "boolean" || CFG.linkSafari[key] === "shortcuts")) return CFG.linkSafari[key];
+  if (CFG && CFG.linkSafari && typeof CFG.linkSafari[key] === "boolean") return CFG.linkSafari[key];
   return !(CFG && CFG.linkOpenTarget === "aura");
 };
 
@@ -4370,7 +4313,6 @@ const LockScreen = window.LockScreen = {
 };
 
 LockScreen.init();
-if (typeof preFetchShortcutFiles === "function") preFetchShortcutFiles();
 if (typeof updateFirstTapDot === "function") updateFirstTapDot();
 
 (() => {
