@@ -3266,23 +3266,10 @@ window.openShortcutInSafari = function openShortcutInSafari(rawUrl, forceSafari)
   if (!u) return false;
   if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(u)) u = "https://" + u;
   if (forceSafari === "shortcuts") {
-    if (/^shortcuts:/i.test(u)) {
-      window.location.href = u;
-      return true;
-    }
-    try {
-      const a = document.createElement("a");
-      a.href = u;
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      return true;
-    } catch (_) {
-      window.open(u, "_blank");
-      return true;
-    }
+    window.location.href = /^shortcuts:/i.test(u)
+      ? u
+      : ("shortcuts://import-shortcut?url=" + encodeURIComponent(u));
+    return true;
   }
   const useSafari = (typeof forceSafari === "boolean")
     ? forceSafari
