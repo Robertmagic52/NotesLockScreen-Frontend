@@ -3266,32 +3266,23 @@ window.openShortcutInSafari = function openShortcutInSafari(rawUrl, forceSafari)
   if (!u) return false;
   if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(u)) u = "https://" + u;
   if (forceSafari === "shortcuts") {
-    const cached = _resolvedShortcutCache[u];
-    if (cached) {
-      window.location.href = cached;
-      return true;
-    }
     if (/^shortcuts:/i.test(u)) {
       window.location.href = u;
       return true;
     }
-    const base = getBackendBase();
-    if (base && /icloud\.com\/shortcuts\/[a-f0-9]{16,64}/i.test(u)) {
-      fetch(base + "/api/shortcut/resolve?url=" + encodeURIComponent(u))
-        .then(r => r.ok ? r.json() : null)
-        .then(d => {
-          if (d && d.ok && d.importUrl) {
-            _resolvedShortcutCache[u] = d.importUrl;
-            try { localStorage.setItem("notes_resolved_shortcuts_v3", JSON.stringify(_resolvedShortcutCache)); } catch (_) {}
-            window.location.href = d.importUrl;
-          } else {
-            window.location.href = u;
-          }
-        }).catch(() => { window.location.href = u; });
+    try {
+      const a = document.createElement("a");
+      a.href = u;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      return true;
+    } catch (_) {
+      window.open(u, "_blank");
       return true;
     }
-    window.location.href = u;
-    return true;
   }
   const useSafari = (typeof forceSafari === "boolean")
     ? forceSafari
