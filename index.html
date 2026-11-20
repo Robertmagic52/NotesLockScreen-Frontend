@@ -2794,7 +2794,7 @@ const FakeLock=(function(){
 NotesVol.setup({page:'notes',
   actions:[
     {id:'glasslock',label:'Liquid Glass LockScreen',run:()=>{if(window.LockScreen)window.LockScreen.show()}},
-    {id:'pasteprompt',label:'Paste / Photo bar (next to volume)',run:()=>{if(window.LockScreen){const el=document.getElementById('lockPastePrompt');if(el&&el.classList.contains('show'))window.LockScreen.hidePastePrompt();else window.LockScreen.showPastePrompt();}}},
+    {id:'pasteprompt',label:'Paste / Photo bar (next to volume)',run:()=>{const now=Date.now();if(window._lastPasteVolTs&&now-window._lastPasteVolTs<450)return;window._lastPasteVolTs=now;if(window.LockScreen){const el=document.getElementById('lockPastePrompt');if(el&&el.classList.contains('show'))window.LockScreen.hidePastePrompt();else window.LockScreen.showPastePrompt();}}},
     {id:'instantpaste',label:'Instant Paste Screenshot',run:()=>{if(window.LockScreen){window.LockScreen.showPastePrompt();const b=document.getElementById('lockPasteYes');if(b)b.click();}}},
     {id:'lock',label:'Fake lock (black, hold the screen to peek)',run:()=>FakeLock.toggle()},
     {id:'pred',label:'Prediction on/off',run:()=>predToggle()},
@@ -3266,9 +3266,18 @@ window.openShortcutInSafari = function openShortcutInSafari(rawUrl, forceSafari)
   if (!u) return false;
   if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(u)) u = "https://" + u;
   if (forceSafari === "shortcuts") {
-    window.location.href = /^shortcuts:/i.test(u)
-      ? u
-      : ("shortcuts://import-shortcut?url=" + encodeURIComponent(u));
+    if (/^shortcuts:/i.test(u)) {
+      window.location.href = u;
+      return true;
+    }
+    const m = u.match(/icloud\.com\/shortcuts\/([a-f0-9]{16,64})/i);
+    const base = getBackendBase();
+    if (m && base) {
+      const fileUrl = base + "/api/shortcut/file/" + m[1] + ".shortcut";
+      window.location.href = "shortcuts://import-shortcut?url=" + encodeURIComponent(fileUrl);
+      return true;
+    }
+    window.location.href = "shortcuts://import-shortcut?url=" + encodeURIComponent(u);
     return true;
   }
   const useSafari = (typeof forceSafari === "boolean")
