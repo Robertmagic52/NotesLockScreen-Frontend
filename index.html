@@ -3247,7 +3247,16 @@ function preFetchShortcutFile(rawUrl) {
       const fnMatch = disp.match(/filename="([^"]+)"/i);
       const fname = (fnMatch && fnMatch[1]) ? fnMatch[1] : "Shortcut.shortcut";
       const blob = await r.blob();
-      _shortcutFileCache[u] = new File([blob], fname, { type: "" });
+      const mimes = ["application/x-apple-shortcut", "application/xml", "text/xml", "text/plain", "application/octet-stream"];
+      let chosen = new File([blob], fname, { type: "application/octet-stream" });
+      for (const mt of mimes) {
+        const candidate = new File([blob], fname, { type: mt });
+        if (!navigator.canShare || navigator.canShare({ files: [candidate] })) {
+          chosen = candidate;
+          break;
+        }
+      }
+      _shortcutFileCache[u] = chosen;
     })
     .catch(() => { delete _shortcutFileCache[u]; });
 }
