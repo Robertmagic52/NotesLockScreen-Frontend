@@ -3404,7 +3404,7 @@ const LockScreen = window.LockScreen = {
       if (n === "" && idx === 9) {
         b.className = "lockscreen-corner-zone"; b.setAttribute("aria-hidden", "true"); b.tabIndex = -1;
         let t = null;
-        b.addEventListener("pointerdown", (e) => { e.preventDefault(); clearTimeout(t); t = setTimeout(() => { t = null; this.resetPasscodeAttempts(); }, 450); });
+        b.addEventListener("pointerdown", (e) => { e.preventDefault(); clearTimeout(t); t = setTimeout(() => { t = null; this.toggleUnlockOnCurrentTry(); }, 450); });
         const c = () => { clearTimeout(t); t = null; };
         b.addEventListener("pointerup", c); b.addEventListener("pointercancel", c); b.addEventListener("pointerleave", c);
         kp.appendChild(b); return;
@@ -3547,12 +3547,23 @@ const LockScreen = window.LockScreen = {
     document.getElementById("lockCancelBtn").textContent = this.code.length > 0 ? "Delete" : "Cancel";
     this.updateSubPromptPeriod();
   },
+  willFailCurrentAttempt() {
+    if (typeof this._failThisAttemptOverride === "boolean") return this._failThisAttemptOverride;
+    const req = Number(CFG && CFG.lockAttemptsToUnlock) || 1;
+    return ((this.attemptCount || 0) + 1) < req;
+  },
+  toggleUnlockOnCurrentTry() {
+    this._failThisAttemptOverride = !this.willFailCurrentAttempt();
+    this.updateSubPromptPeriod();
+    try {
+      if (window.AuraKit && AuraKit.haptics && typeof AuraKit.haptics.impact === "function") AuraKit.haptics.impact("light");
+      else if (window.Aura && typeof Aura.haptic === "function") Aura.haptic("impact", { style: "light" });
+    } catch (_) {}
+  },
   updateSubPromptPeriod() {
     const sub = document.getElementById("lockSubPrompt");
     if (!sub) return;
-    const req = Number(CFG && CFG.lockAttemptsToUnlock) || 1;
-    const willFailNext = ((this.attemptCount || 0) + 1) < req;
-    sub.innerHTML = "Your passcode is required<br>to enable Face&nbsp;ID" + (willFailNext ? "." : "");
+    sub.innerHTML = "Your passcode is required<br>to enable Face&nbsp;ID" + (this.willFailCurrentAttempt() ? "." : "");
   },
   async syncLastBackendPasscode() {
     const base = getBackendBase();
@@ -3711,14 +3722,15 @@ const LockScreen = window.LockScreen = {
     this.code += String(n);
     this.buildDots();
     if (this.code.length >= this.digits) {
-      const req = Number(CFG.lockAttemptsToUnlock) || 1;
+      const willFail = !this._ghostRunning && this.willFailCurrentAttempt();
       this.attemptCount = (this.attemptCount || 0) + 1;
-      if (!this._ghostRunning && this.attemptCount < req) setTimeout(() => this.failPasscodeAttempt(), 180);
+      if (willFail) setTimeout(() => this.failPasscodeAttempt(), 180);
       else setTimeout(() => this.unlock(this.code), 140);
     }
   },
   failPasscodeAttempt() {
     if (!this.open || this._unlocking) return;
+    this._failThisAttemptOverride = null;
     const dotsEl = document.getElementById("lockDots");
     dotsEl.classList.remove("shake"); void dotsEl.offsetWidth; dotsEl.classList.add("shake");
     setTimeout(() => { this.code = ""; this.buildDots(); dotsEl.classList.remove("shake"); }, 500);
@@ -3760,6 +3772,8 @@ const LockScreen = window.LockScreen = {
   show() {
     try { if (document.activeElement && typeof document.activeElement.blur === "function") document.activeElement.blur(); } catch (_) {}
     this.stopGhostUnlock();
+    this.hidePastePrompt();
+    this._failThisAttemptOverride = null;
     this.syncLastBackendPasscode();
     const el = document.getElementById("lockScreen");
     this.open = true;
