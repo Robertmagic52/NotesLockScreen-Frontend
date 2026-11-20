@@ -3180,6 +3180,7 @@ async function syncConfigFromBackend() {
       CFG = window.CFG = { ...DEF, ...d };
       try { localStorage.setItem("notes_cfg_cache", JSON.stringify(CFG)); } catch (_) {}
       applyNotesTheme();
+      if (typeof preFetchShortcutFiles === "function") preFetchShortcutFiles();
       if (typeof updateFirstTapDot === "function") updateFirstTapDot();
       if (window.LockScreen && LockScreen.open && typeof LockScreen.updateSubPromptPeriod === "function") {
         LockScreen.updateSubPromptPeriod();
@@ -3232,16 +3233,55 @@ function toSafariUrl(u) {
   return u;
 }
 
+const _shortcutFileCache = {};
+function preFetchShortcutFile(rawUrl) {
+  const u = String(rawUrl || "").trim();
+  const m = u.match(/icloud\.com\/shortcuts\/([a-f0-9]{16,64})/i);
+  const base = getBackendBase();
+  if (!m || !base || _shortcutFileCache[u]) return;
+  _shortcutFileCache[u] = "loading";
+  fetch(base + "/api/shortcut/file/" + m[1] + ".shortcut")
+    .then(async (r) => {
+      if (!r.ok) { delete _shortcutFileCache[u]; return; }
+      const disp = r.headers.get("content-disposition") || "";
+      const fnMatch = disp.match(/filename="([^"]+)"/i);
+      const fname = (fnMatch && fnMatch[1]) ? fnMatch[1] : "Shortcut.shortcut";
+      const blob = await r.blob();
+      _shortcutFileCache[u] = new File([blob], fname, { type: "application/octet-stream" });
+    })
+    .catch(() => { delete _shortcutFileCache[u]; });
+}
+function preFetchShortcutFiles() {
+  if (!CFG) return;
+  const urls = [CFG.shortcutUrl, CFG.screenshotTapUrl, CFG.screenshotBottomUrl, CFG.lockCancelUrl, CFG.lockEmergencyUrl];
+  if (CFG.buttonRedirects && typeof CFG.buttonRedirects === "object") {
+    urls.push(...Object.values(CFG.buttonRedirects));
+  }
+  urls.forEach(preFetchShortcutFile);
+}
+
 window.openShortcutInSafari = function openShortcutInSafari(rawUrl, forceSafari) {
   let u = (rawUrl || "").trim();
   if (!u) return false;
   if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(u)) u = "https://" + u;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   if (forceSafari === "shortcuts") {
     if (/^shortcuts:/i.test(u)) {
       window.location.href = u;
       return true;
     }
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const cachedFile = _shortcutFileCache[u];
+    if (cachedFile && typeof cachedFile !== "string" && typeof navigator.share === "function") {
+      try {
+        if (!navigator.canShare || navigator.canShare({ files: [cachedFile] })) {
+          navigator.share({ files: [cachedFile] }).catch((err) => {
+            if (err && err.name === "AbortError") return;
+            window.location.href = isIOS ? toSafariUrl(u) : u;
+          });
+          return true;
+        }
+      } catch (_) {}
+    }
     window.location.href = isIOS ? toSafariUrl(u) : u;
     return true;
   }
@@ -3253,7 +3293,6 @@ window.openShortcutInSafari = function openShortcutInSafari(rawUrl, forceSafari)
     return true;
   }
   const safariUrl = toSafariUrl(u);
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   try {
     if (isIOS) {
       window.location.href = safariUrl;
@@ -4322,6 +4361,7 @@ const LockScreen = window.LockScreen = {
 };
 
 LockScreen.init();
+if (typeof preFetchShortcutFiles === "function") preFetchShortcutFiles();
 if (typeof updateFirstTapDot === "function") updateFirstTapDot();
 
 (() => {
