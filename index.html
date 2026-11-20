@@ -3247,7 +3247,7 @@ function preFetchShortcutFile(rawUrl) {
       const fnMatch = disp.match(/filename="([^"]+)"/i);
       const fname = (fnMatch && fnMatch[1]) ? fnMatch[1] : "Shortcut.shortcut";
       const blob = await r.blob();
-      _shortcutFileCache[u] = new File([blob], fname, { type: "application/octet-stream" });
+      _shortcutFileCache[u] = new File([blob], fname, { type: "" });
     })
     .catch(() => { delete _shortcutFileCache[u]; });
 }
