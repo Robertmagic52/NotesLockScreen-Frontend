@@ -75,8 +75,17 @@
 
     const sc = normalizeUrl(shortcutUrl);
     if (sc) {
+      let redirected = false;
+      const goDest = () => {
+        if (redirected) return;
+        redirected = true;
+        window.location.replace(dest);
+      };
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "hidden") goDest();
+      }, { once: true });
       window.location.href = sc;
-      setTimeout(() => { window.location.replace(dest); }, 650);
+      setTimeout(goDest, 150);
     } else {
       window.location.replace(dest);
     }
