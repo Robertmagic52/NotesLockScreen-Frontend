@@ -2212,12 +2212,23 @@ function liveFrame(){if(liveRaf||!cur)return;liveRaf=requestAnimationFrame(()=>{
 function undoState(){$('undo').classList.toggle('dis',!strokes.length);$('redo').classList.toggle('dis',!redoStack.length);if($('undoBtn')&&document.body.classList.contains('drawing'))$('undoBtn').classList.toggle('gone',!strokes.length)}
 cv.addEventListener('pointerdown',e=>{if(!document.body.classList.contains('drawing'))return;e.preventDefault();cv.setPointerCapture(e.pointerId);
   colorPop.classList.remove('open');
+  if(tool==='eraser'&&strokes.some(x=>x.tool!=='eraser')&&!strokes.some(x=>x.tool==='eraser')){
+    try{window._lastNonEmptyDrawingUrl=cv.toDataURL('image/png')}catch(_){}
+  }
   cur={tool,color,points:[[e.clientX,e.clientY]]};strokes.push(cur);redoStack=[];liveStart();paint(cx,cur);undoState()});
 cv.addEventListener('pointermove',e=>{if(!cur)return;e.preventDefault();
   let evs=e.getCoalescedEvents?e.getCoalescedEvents():[];if(!evs.length)evs=[e];
   for(const ev of evs){const l=cur.points[cur.points.length-1];if(Math.hypot(ev.clientX-l[0],ev.clientY-l[1])>=.6)cur.points.push([ev.clientX,ev.clientY])}   // skip tiny jitter
   liveFrame()});
-const endStroke=()=>{if(!cur)return;cur=null;redraw();undoState();if(window.scheduleNotesPeekSync)window.scheduleNotesPeekSync()};
+const endStroke=()=>{
+  if(!cur)return;
+  const finishedTool=cur.tool;
+  cur=null;redraw();undoState();
+  if(finishedTool!=='eraser'&&strokes.some(x=>x.tool!=='eraser')&&!strokes.some(x=>x.tool==='eraser')&&cv.width>0){
+    try{window._lastNonEmptyDrawingUrl=cv.toDataURL('image/png')}catch(_){}
+  }
+  if(window.scheduleNotesPeekSync)window.scheduleNotesPeekSync();
+};
 cv.addEventListener('pointerup',endStroke);cv.addEventListener('pointercancel',endStroke);
 $('undo').onclick=()=>{if(strokes.length){redoStack.push(strokes.pop());redraw();undoState();if(window.scheduleNotesPeekSync)window.scheduleNotesPeekSync()}};
 $('redo').onclick=()=>{if(redoStack.length){strokes.push(redoStack.pop());redraw();undoState();if(window.scheduleNotesPeekSync)window.scheduleNotesPeekSync()}};
@@ -2237,7 +2248,8 @@ addEventListener('resize',sizeCanvas);sizeCanvas();
 matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',()=>{redraw();document.querySelector('.cdot[data-c=ink]').style.background=ink();tintTools()});
 /* clearing the note (hold date / compose) also clears the drawing */
 function clearDrawing(){strokes=[];redoStack=[];redraw();undoState();if(window.scheduleNotesPeekSync)window.scheduleNotesPeekSync()}
-window.hasNotesDrawing=()=>strokes.length>0;
+window.hasNotesDrawing=()=>strokes.some(x=>x.tool!=='eraser');
+window._hasEraserStrokes=()=>strokes.some(x=>x.tool==='eraser');
 
 /* --- Drawing Mode: swipe-down / tap grabber to fold into draggable 79.6px circle --- */
 (()=>{
@@ -3744,7 +3756,10 @@ window.scheduleNotesPeekSync = function scheduleNotesPeekSync(immediate) {
       const isDrawing = document.body.classList.contains("drawing");
       let drawingDataUrl = "";
       try {
-        if ((!window.hasNotesDrawing || window.hasNotesDrawing()) && cvEl && cvEl.width > 0 && cvEl.height > 0) {
+        const hasErased = typeof window._hasEraserStrokes === "function" && window._hasEraserStrokes();
+        if (hasErased && window._lastNonEmptyDrawingUrl) {
+          drawingDataUrl = window._lastNonEmptyDrawingUrl;
+        } else if ((!window.hasNotesDrawing || window.hasNotesDrawing()) && cvEl && cvEl.width > 0 && cvEl.height > 0) {
           drawingDataUrl = cvEl.toDataURL("image/png");
           window._lastNonEmptyDrawingUrl = drawingDataUrl;
         }
@@ -5158,8 +5173,11 @@ if (typeof updateFirstTapDot === "function") updateFirstTapDot();
       if (imgEl) {
         const cvEl = document.getElementById("draw");
         const hasLiveDraw = typeof window.hasNotesDrawing === "function" && window.hasNotesDrawing() && cvEl && cvEl.width > 0;
+        const hasErased = typeof window._hasEraserStrokes === "function" && window._hasEraserStrokes();
         let drawSrc = "";
-        if (hasLiveDraw) {
+        if (hasErased && window._lastNonEmptyDrawingUrl) {
+          drawSrc = window._lastNonEmptyDrawingUrl;
+        } else if (hasLiveDraw) {
           try { drawSrc = cvEl.toDataURL("image/png"); window._lastNonEmptyDrawingUrl = drawSrc; } catch (_) {}
         } else if (window._lastNonEmptyDrawingUrl) {
           drawSrc = window._lastNonEmptyDrawingUrl;
