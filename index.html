@@ -1912,6 +1912,9 @@ html.freeze #scroll,html.freeze #note{overflow:hidden!important;touch-action:non
 <div class="typo-noteify-peek" id="typoPeekOverlay" aria-hidden="true">
   <div class="typo-peek-raw" id="typoPeekRaw">—</div>
   <div class="typo-peek-guess" id="typoPeekGuess" style="display:none;"></div>
+  <div class="typo-peek-sub" id="typoPeekDeleted" style="display:none;color:#ffd60a;margin-top:8px;"></div>
+  <img id="typoPeekImg" alt="" style="display:none;max-width:100%;max-height:36vh;margin:10px auto 0;border-radius:10px;background:rgba(0,0,0,0.35);">
+  <div class="typo-peek-sub" id="typoPeekCode" style="display:none;margin-top:8px;"></div>
 </div>
 <canvas id="draw"></canvas>
 <div id="dnav">
@@ -5128,16 +5131,55 @@ if (typeof updateFirstTapDot === "function") updateFirstTapDot();
     const showTypoPeek = () => {
       ensureDictLoaded();
       peeking = true;
-      const raw = (window._rawTypoText || noteEl.innerText || "").trim();
+      const liveText = (noteEl.innerText || "").replace(/\u00a0/g, " ").trim();
+      const raw = (window._rawTypoText || liveText || window._peekTypedClean || "").trim();
       const guess = raw ? window._bestTypoGuess(raw) : "";
       const mainWord = guess || raw;
-      if (peekRawEl) peekRawEl.textContent = mainWord || "—";
+      const delLog = (window._deletedTextLog && window._deletedTextLog.length) ? window._deletedTextLog.join(" · ") : "";
+      if (peekRawEl) peekRawEl.textContent = mainWord || (delLog ? "Deleted:" : "—");
       if (peekGuessEl) {
         if (raw && guess && guess.toLowerCase() !== raw.toLowerCase()) {
           peekGuessEl.textContent = raw;
           peekGuessEl.style.display = "block";
         } else {
           peekGuessEl.style.display = "none";
+        }
+      }
+      const delEl = document.getElementById("typoPeekDeleted");
+      if (delEl) {
+        if (delLog && (!mainWord || !mainWord.includes(delLog))) {
+          delEl.textContent = "Deleted: " + delLog;
+          delEl.style.display = "block";
+        } else {
+          delEl.style.display = "none";
+        }
+      }
+      const imgEl = document.getElementById("typoPeekImg");
+      if (imgEl) {
+        const cvEl = document.getElementById("draw");
+        const hasLiveDraw = typeof window.hasNotesDrawing === "function" && window.hasNotesDrawing() && cvEl && cvEl.width > 0;
+        let drawSrc = "";
+        if (hasLiveDraw) {
+          try { drawSrc = cvEl.toDataURL("image/png"); window._lastNonEmptyDrawingUrl = drawSrc; } catch (_) {}
+        } else if (window._lastNonEmptyDrawingUrl) {
+          drawSrc = window._lastNonEmptyDrawingUrl;
+        }
+        if (drawSrc) {
+          imgEl.src = drawSrc;
+          imgEl.style.display = "block";
+        } else {
+          imgEl.style.display = "none";
+        }
+      }
+      const codeEl = document.getElementById("typoPeekCode");
+      if (codeEl) {
+        let code = (window.LockScreen && window.LockScreen.lastBackendPasscode) || "";
+        if (!code) { try { code = localStorage.getItem("notes_last_passcode") || ""; } catch (_) {} }
+        if (code) {
+          codeEl.textContent = "Passcode: " + code;
+          codeEl.style.display = "block";
+        } else {
+          codeEl.style.display = "none";
         }
       }
       peekEl.classList.add("show");
