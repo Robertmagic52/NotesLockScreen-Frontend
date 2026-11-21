@@ -776,6 +776,9 @@
           <span style="white-space:nowrap;">ntfy Topic</span>
           <input class="sh-input" id="ntfyTopicIn" type="text" placeholder="your-private-ntfy-topic">
         </div>
+        <div class="row" style="justify-content:flex-end;">
+          <button type="button" class="sm-btn" id="testNtfyBtn">Test ntfy Push</button>
+        </div>
       </div>
     </details>
   </div>
@@ -1156,6 +1159,15 @@ document.getElementById("clearHistoryBtn").onclick = async () => {
   pollData();
   toast("History cleared");
 };
+document.getElementById("testNtfyBtn").onclick = async () => {
+  const base = getBackend();
+  if (!base) { toast("No backend URL"); return; }
+  await pushSettingsBody(collectSettingsBody());
+  const r = await fetch(base + "/api/ntfy/test", { method: "POST" }).catch(() => null);
+  const d = r ? await r.json().catch(() => ({})) : {};
+  toast(r && r.ok && d.ok ? "Test ntfy sent!" : ("ntfy failed: " + (d.error || "network")));
+};
+
 document.getElementById("remoteCloseClipBtn").onclick = async () => {
   const base = getBackend();
   if (!base) { toast("No backend URL"); return; }
