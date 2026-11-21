@@ -1055,7 +1055,6 @@ async function pollData() {
       thumbEl.classList.remove("show");
       document.getElementById("expandImg").classList.remove("show");
     }
-    document.getElementById("expandText").textContent = combinedText || "";
     timeEl.textContent = np.updatedAt ? relTime(np.updatedAt) + " · Tap to expand" : "Tap to expand";
 
     const pData = await pRes.json();
