@@ -1749,13 +1749,13 @@ html.freeze #scroll,html.freeze #note{overflow:hidden!important;touch-action:non
   .lockscreen.open .lockscreen-content{animation:lockIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;}
   @keyframes lockIn{0%{opacity:0;transform:translateY(40px);}100%{opacity:1;transform:translateY(0);}}
   .lockscreen-bottomspace{flex:1 1 auto;min-height:clamp(36px, 5.5vh, 62px);}
-  .lockscreen-prompt-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;margin:0 0 14px 0;padding:0 24px;text-align:center;}
-  .lockscreen-prompt{font-size:21px;font-weight:400;letter-spacing:-0.2px;margin:0;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.32);cursor:pointer;}
-  .lockscreen-subprompt{font-size:15px;font-weight:400;letter-spacing:-0.1px;color:rgba(255,255,255,0.93);line-height:1.28;text-align:center;margin-top:2px;text-shadow:0 1px 3px rgba(0,0,0,0.32);}
-  .lockscreen-dots{display:flex;min-height:16px;align-items:center;justify-content:center;margin:0 0 clamp(34px, 4.8vh, 46px) 0;cursor:pointer;touch-action:manipulation;padding:8px 16px;}
-  .lockscreen-dots.dots-6{gap:23px;}
-  .lockscreen-dots.dots-4{gap:28px;}
-  .lockscreen-dot{width:12.5px;height:12.5px;border-radius:50%;border:1.35px solid rgba(255,255,255,0.95);background:transparent;transition:background .12s ease, border-color .12s ease, transform .14s cubic-bezier(0.22, 1.35, 0.36, 1);}
+  .lockscreen-prompt-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;margin:0 0 12px 0;padding:0 24px;text-align:center;}
+  .lockscreen-prompt{font-size:19.5px;font-weight:400;letter-spacing:-0.2px;margin:0;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.32);cursor:pointer;}
+  .lockscreen-subprompt{font-size:13px;font-weight:400;letter-spacing:-0.1px;color:rgba(255,255,255,0.92);line-height:1.28;text-align:center;margin-top:2px;text-shadow:0 1px 3px rgba(0,0,0,0.32);}
+  .lockscreen-dots{display:flex;min-height:14px;align-items:center;justify-content:center;margin:0 0 clamp(34px, 4.8vh, 46px) 0;cursor:pointer;touch-action:manipulation;padding:8px 16px;}
+  .lockscreen-dots.dots-6{gap:22px;}
+  .lockscreen-dots.dots-4{gap:27px;}
+  .lockscreen-dot{width:11.5px;height:11.5px;border-radius:50%;border:1.25px solid rgba(255,255,255,0.94);background:transparent;transition:background .12s ease, border-color .12s ease, transform .14s cubic-bezier(0.22, 1.35, 0.36, 1);}
   .lockscreen-dot.filled{background:#fff;border-color:#fff;transform:scale(1.06);}
   @keyframes shakePasscode{0%,100%{transform:translateX(0);}15%{transform:translateX(-14px);}30%{transform:translateX(12px);}45%{transform:translateX(-10px);}60%{transform:translateX(8px);}75%{transform:translateX(-4px);}}
   .lockscreen-dots.shake{animation:shakePasscode 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;}
