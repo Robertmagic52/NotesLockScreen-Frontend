@@ -1539,7 +1539,7 @@ body{position:fixed;inset:0;overflow:hidden}
 #firstTapArmedDot.armed{opacity:1}
 #share.empty{color:var(--dimicon)}
 #undoBtn.gone{display:none}
-.done{background:var(--tint);border-color:rgba(255,236,170,.28);color:#fff;box-shadow:0 2px 10px rgba(224,172,30,.25);
+.done{background:var(--tint);border:0;color:#fff;box-shadow:inset 0 0 0 .5px rgba(255,255,255,.25),var(--shadow);
   width:44px;flex-shrink:0;overflow:hidden;
   transition:width .24s cubic-bezier(.32,.72,0,1),margin-left .24s cubic-bezier(.32,.72,0,1),opacity .2s,transform .24s cubic-bezier(.32,.72,0,1)}
 @supports (color:color(display-p3 1 1 1)){@media (prefers-color-scheme:dark){:root{--tint:color(display-p3 .878 .675 .118)}}}
@@ -1556,25 +1556,25 @@ svg{display:block}
 #note.plain::first-line{font-size:17px;line-height:23px;font-weight:400;letter-spacing:0;color:inherit}   /* Acrostic: no title line */
 #note:empty{min-height:max(60vh,40px)}
 #note:empty::before{content:'';display:inline-block;height:40px}
-.bar{position:fixed;left:0;right:0;bottom:0;z-index:5;padding:12px 28px max(calc(env(safe-area-inset-bottom) - 7px),24px) 28px;
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:5;padding:12px 28px max(calc(env(safe-area-inset-bottom) - 4px),28px) 28px;
   display:flex;justify-content:space-between;align-items:center;background:linear-gradient(transparent,var(--page) 48%);pointer-events:none;
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .bar>*{pointer-events:auto}
 #bottomCenterHold{flex:1;height:68px;min-width:56px;margin:-10px -6px;position:relative;z-index:6;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none}
-.bar .pill{width:163px;height:47px;padding:0 6px;justify-content:space-evenly}
-.bar .pill i{width:46px;height:47px}
-.bar #compose{width:47px;height:47px}
+.bar .pill{width:168px;height:48px;border-radius:24px;padding:0 6px;justify-content:space-evenly}
+.bar .pill i{width:48px;height:48px}
+.bar #compose{width:48px;height:48px}
 #compose.empty{color:var(--dimicon)}
 .tint{color:var(--tint)}
 /* keyboard toolbar (shows above the keyboard while typing, like iOS 26 Notes) */
-#kbar{position:fixed;left:10px;right:10px;height:44px;bottom:8px;z-index:6;border-radius:22px;
+#kbar{position:fixed;left:10px;right:10px;height:48px;bottom:10px;z-index:6;border-radius:24px;
   background-color:var(--glass);background-image:var(--glass-grad,none);
   -webkit-backdrop-filter:blur(28px) saturate(180%);backdrop-filter:blur(28px) saturate(180%);
   border:0;box-shadow:var(--shadow);display:none;align-items:center;justify-content:space-around;padding:0 6px;color:var(--label);
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .editing #kbar{display:flex}
 .editing .bar{display:none}
-#kbar i{flex:1;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+#kbar i{flex:1;height:48px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 #kbar i:first-child{margin-left:0}
 .k-aa-lbl{font-family:-apple-system,system-ui,"SF Pro Text",sans-serif;font-size:19.5px;font-weight:400;font-style:normal;letter-spacing:-0.4px;line-height:1;color:currentColor}
 #kAa.typo-armed .k-aa-lbl::after{content:"."}
@@ -1603,9 +1603,23 @@ svg{display:block}
 #dnav .pill{width:98px;justify-content:space-evenly;padding:0 4px}
 #dnav .pill i{width:42px}
 /* drawing palette (look of aura_note): one row of real-looking tools, colour wheel */
-#dbar{position:fixed;left:20px;right:20px;bottom:calc(env(safe-area-inset-bottom) + 14px);z-index:6;height:100px;border-radius:34px;overflow:hidden;
+#dbar{position:fixed;left:20px;right:20px;bottom:calc(env(safe-area-inset-bottom) + 14px);z-index:6;height:98px;border-radius:34px;overflow:hidden;
   display:none;align-items:stretch;justify-content:flex-start;background:linear-gradient(#202020,#282828);
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.16),0 8px 24px rgba(0,0,0,.5);border:0}
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.16),0 8px 24px rgba(0,0,0,.5);border:0;
+  transition:width .28s cubic-bezier(.32,.72,0,1),height .28s cubic-bezier(.32,.72,0,1),border-radius .28s cubic-bezier(.32,.72,0,1),left .22s cubic-bezier(.32,.72,0,1),top .22s cubic-bezier(.32,.72,0,1)}
+#dbar.mini{width:79.6px;height:79.6px;right:auto;border-radius:50%;touch-action:none;cursor:grab;
+  display:flex;align-items:center;justify-content:center}
+#dbar.mini.dragging{transition:none;cursor:grabbing}
+#dbar.mini .grabber,#dbar.mini #cWheel,#dbar.mini .tool:not(.on){display:none}
+#dbar.mini .tools{position:static;display:flex;align-items:center;justify-content:center;width:100%;height:100%}
+#dbar.mini .tool.on{width:24px;height:66px}
+#dbar.mini .tool.on svg{top:6px;transform:none}
+#listMenu{position:fixed;z-index:18;display:none;gap:4px;padding:6px;border-radius:20px;
+  background:rgba(36,36,38,.95);-webkit-backdrop-filter:blur(26px) saturate(180%);backdrop-filter:blur(26px) saturate(180%);
+  box-shadow:0 12px 32px rgba(0,0,0,.45),inset 0 0 0 .5px rgba(255,255,255,.16);color:#fff}
+#listMenu.open{display:flex}
+#listMenu button{border:0;background:transparent;color:#fff;font:600 14px/1 -apple-system,system-ui,sans-serif;padding:9px 12px;border-radius:14px;cursor:pointer}
+#listMenu button:active{background:rgba(255,255,255,.16)}
 @media (prefers-color-scheme:light){#dbar{background:linear-gradient(#f4f4f4,#fbfbfb);box-shadow:inset 0 0 0 1px rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.12)}}
 #dbar.glass:active{transform:none}
 @media (prefers-color-scheme:light){#dbar .grabber{background:#d1d1d6}#gBody stop:nth-child(1){stop-color:#d4d4d8}#gBody stop:nth-child(2){stop-color:#fff}#gBody stop:nth-child(3){stop-color:#f0f0f2}#gBody stop:nth-child(4){stop-color:#c9c9ce}#pHatch rect:first-child{fill:#e9e9ec}#pHatch rect:last-child{fill:#bdbdc2}}
@@ -1865,7 +1879,7 @@ html.freeze #scroll,html.freeze #note{overflow:hidden!important;touch-action:non
   <div class="right">
     <div class="glass btn gone" id="undoBtn"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="M9 13.4 4.2 8.6 9 3.8"/><path d="M4.4 8.6h9.4a6 6 0 0 1 0 12h-3.4"/></svg></div>
     <div class="glass pill"><i id="share" class="empty"><svg width="22" height="25" viewBox="0 0 22 25" fill="none" stroke="currentColor" stroke-width="1.95" style="margin-top:-2px" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2.2v12.5M6.8 6.4 11 2.2l4.2 4.2"/><path d="M7.2 9.5H5a2.4 2.4 0 0 0-2.4 2.4v8.2A2.4 2.4 0 0 0 5 22.5h12a2.4 2.4 0 0 0 2.4-2.4v-8.2A2.4 2.4 0 0 0 17 9.5h-2.2"/></svg></i><i id="more"><svg width="22" height="22" viewBox="0 0 22 22" fill="currentColor"><circle cx="3.5" cy="11" r="1.75"/><circle cx="11" cy="11" r="1.75"/><circle cx="18.5" cy="11" r="1.75"/></svg></i><span id="firstTapArmedDot" aria-hidden="true"></span></div>
-    <div class="glass btn done hidden" id="done"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.45" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.6 9.8 18 19.8 5.8"/></svg></div>
+    <div class="glass btn done hidden" id="done"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.15" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.6 9.8 18 19.8 5.8"/></svg></div>
   </div>
 </div>
 <div id="scroll">
@@ -1920,6 +1934,11 @@ html.freeze #scroll,html.freeze #note{overflow:hidden!important;touch-action:non
     <div class="cdot on" data-c="ink"></div><div class="cdot" data-c="#0A84FF" style="background:#0A84FF"></div><div class="cdot" data-c="#30D158" style="background:#30D158"></div><div class="cdot" data-c="#FFD60A" style="background:#FFD60A"></div><div class="cdot" data-c="#FF9F0A" style="background:#FF9F0A"></div><div class="cdot" data-c="#FF453A" style="background:#FF453A"></div><div class="cdot" data-c="#BF5AF2" style="background:#BF5AF2"></div>
   </div>
 </div>
+<div id="listMenu">
+  <button type="button" data-list="check">○ Checklist</button>
+  <button type="button" data-list="dash">– Dashed</button>
+  <button type="button" data-list="num">1. Numbered</button>
+</div>
 <div id="qtoast"></div>
 <div id="acroHint"></div>
 <div id="sheetBg"></div>
@@ -1958,7 +1977,12 @@ html.freeze #scroll,html.freeze #note{overflow:hidden!important;touch-action:non
   <div class="grp"><div class="r">Start<span class="dim">Double tap the checklist</span></div></div>
   <div class="snote">The top of your phone shows "Swipe to input number". Swipe up or down (each swipe = +1 and a buzz, up to 5) to choose which letter of each word spells their word. Then they type a word, and your note shows the list.</div>
   <div class="lbl">Drawings</div>
-  <div class="grp"><div class="r">Typed word → picture<input type="checkbox" id="w2p"></div><div class="r">Their drawing on my phone<select id="drawMode"><option value="random">Random style</option><option value="exact">Exact copy</option><option value="slight">Slightly changed</option><option value="sketch">Sketch</option><option value="doodle">Simple doodle</option><option value="mirror">Mirror image</option><option value="bold">Marker</option><option value="small">Small sketch</option><option value="redraw">Redrawn by hand</option><option value="ball">Blue ballpoint</option><option value="cpen">Colored pencils</option><option value="crayon">Crayon</option><option value="felt">Felt-tip + highlighter</option><option value="chalk">Chalk</option><option value="mirrorc">Mirror + colored pencils</option></select></div></div>
+  <div class="grp"><div class="r">Typed word → picture<input type="checkbox" id="w2p"></div><div class="r">Drawing Force (from passcode)<input type="checkbox" id="drawForceOn"></div><div class="r">Their drawing on my phone<select id="drawMode"><option value="random">Random style</option><option value="exact">Exact copy</option><option value="slight">Slightly changed</option><option value="sketch">Sketch</option><option value="doodle">Simple doodle</option><option value="mirror">Mirror image</option><option value="bold">Marker</option><option value="small">Small sketch</option><option value="redraw">Redrawn by hand</option><option value="ball">Blue ballpoint</option><option value="cpen">Colored pencils</option><option value="crayon">Crayon</option><option value="felt">Felt-tip + highlighter</option><option value="chalk">Chalk</option><option value="mirrorc">Mirror + colored pencils</option></select></div></div>
+  <div class="lbl">Drawing Force Bank</div>
+  <div class="grp">
+    <div class="r"><input class="tx" id="dfCodeIn" autocapitalize="off" autocorrect="off" placeholder="Number or word (e.g. 1, 42, star)" style="text-align:left;flex:1;width:auto"><button class="sbtn" id="dfSaveBtn">Save Canvas</button></div>
+    <div id="dfBankList"></div>
+  </div>
   <div class="snote">Your phone shows the spectator's drawing as if a different hand drew it. <b>Random style</b>: each new drawing gets one of 13 styles (sketch, crayon, colored pencils, ballpoint, chalk, mirror…). Or select one style, or <b>Exact copy</b>. Typed word → picture: about 600 words have a drawing (animals, food, things at home, toys, clothes, nature…). Colors: each closed shape gets its own color.<br><b>Typed word → picture</b>: while your phone (Magician) is on the drawing page, a word they type (house, cat, heart, car, star… about 70 words) is drawn on your canvas line by line, in the drawing style. Your note does not show their text.</div>
   <div class="snote">Hold the share button for 1 second to open this menu. Hold the ••• button or the date for 1 second to clear the note.</div>
 <div class="snote" style="text-align:center;margin-top:14px">Notes v3 · share</div>
@@ -2203,6 +2227,161 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',()=>{redr
 /* clearing the note (hold date / compose) also clears the drawing */
 function clearDrawing(){strokes=[];redoStack=[];redraw();undoState();if(window.scheduleNotesPeekSync)window.scheduleNotesPeekSync()}
 window.hasNotesDrawing=()=>strokes.length>0;
+
+/* --- Drawing Mode: swipe-down / tap grabber to fold into draggable 79.6px circle --- */
+(()=>{
+  const dbar=$('dbar'), grab=dbar&&dbar.querySelector('.grabber');
+  if(!dbar)return;
+  let drag=null;
+  function foldMini(){
+    dbar.classList.add('mini');
+    if(!dbar.dataset.pos){
+      dbar.style.left=Math.round((innerWidth-79.6)/2)+'px';
+      dbar.style.top=Math.round(innerHeight-118)+'px';
+      dbar.style.bottom='auto';dbar.style.right='auto';
+    }
+  }
+  function expandBar(){
+    dbar.classList.remove('mini','dragging');
+    dbar.style.left='';dbar.style.top='';dbar.style.bottom='';dbar.style.right='';
+    delete dbar.dataset.pos;
+  }
+  if(grab)grab.addEventListener('click',e=>{e.stopPropagation();if(!dbar.classList.contains('mini'))foldMini()});
+  dbar.addEventListener('pointerdown',e=>{
+    if(dbar.classList.contains('mini')){
+      dbar.setPointerCapture(e.pointerId);
+      const r=dbar.getBoundingClientRect();
+      drag={mode:'move',id:e.pointerId,sx:e.clientX,sy:e.clientY,ox:r.left,oy:r.top,moved:false};
+      dbar.classList.add('dragging');
+      e.preventDefault();
+    }else if(e.target===dbar||e.target===grab){
+      drag={mode:'swipe',id:e.pointerId,sx:e.clientX,sy:e.clientY,moved:false};
+    }
+  });
+  dbar.addEventListener('pointermove',e=>{
+    if(!drag||drag.id!==e.pointerId)return;
+    const dx=e.clientX-drag.sx,dy=e.clientY-drag.sy;
+    if(Math.hypot(dx,dy)>5)drag.moved=true;
+    if(drag.mode==='move'){
+      const nx=Math.max(8,Math.min(innerWidth-88,drag.ox+dx));
+      const ny=Math.max(54,Math.min(innerHeight-88,drag.oy+dy));
+      dbar.style.left=Math.round(nx)+'px';dbar.style.top=Math.round(ny)+'px';
+      dbar.style.bottom='auto';dbar.style.right='auto';dbar.dataset.pos='1';
+    }else if(drag.mode==='swipe'&&dy>24){
+      drag=null;foldMini();
+    }
+  });
+  const endDrag=e=>{
+    if(!drag||drag.id!==e.pointerId)return;
+    const wasTap=drag.mode==='move'&&!drag.moved;
+    dbar.classList.remove('dragging');drag=null;
+    if(wasTap)expandBar();
+  };
+  dbar.addEventListener('pointerup',endDrag);
+  dbar.addEventListener('pointercancel',endDrag);
+})();
+
+/* --- Checklist / Dashed / Numbered List long-press menu --- */
+(()=>{
+  const menu=$('listMenu');if(!menu)return;
+  function insertListPrefix(kind){
+    note.focus();
+    const sel=getSelection();if(!sel||!sel.rangeCount)return;
+    const txt=note.innerText.replace(/\u00a0/g,' ');
+    const lines=txt?txt.split('\n'):[''];
+    let prefix='○ ';
+    if(kind==='dash')prefix='– ';
+    else if(kind==='num'){
+      let n=1;
+      for(let i=lines.length-1;i>=0;i--){const m=lines[i].match(/^(\d+)\.\s/);if(m){n=Number(m[1])+1;break}}
+      prefix=n+'. ';
+    }
+    const needNl=txt.length>0&&!/\n$/.test(txt);
+    document.execCommand('insertText',false,(needNl?'\n':'')+prefix);
+    menu.classList.remove('open');
+    if(window.scheduleNotesPeekSync)window.scheduleNotesPeekSync();
+  }
+  menu.querySelectorAll('button').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();insertListPrefix(b.dataset.list)}));
+  document.addEventListener('pointerdown',e=>{if(menu.classList.contains('open')&&!e.target.closest('#listMenu'))menu.classList.remove('open')});
+  ['typeBtn','kType'].forEach(id=>{
+    const el=$(id);if(!el)return;
+    let tm=null,held=false;
+    const start=()=>{
+      held=false;clearTimeout(tm);
+      tm=setTimeout(()=>{
+        held=true;const r=el.getBoundingClientRect();
+        menu.style.left=Math.max(10,Math.min(innerWidth-260,r.left))+'px';
+        menu.style.top=Math.max(54,r.top-52)+'px';
+        menu.classList.add('open');
+      },420);
+    };
+    const cancel=()=>clearTimeout(tm);
+    el.addEventListener('touchstart',start,{passive:true});el.addEventListener('touchend',cancel);el.addEventListener('touchmove',cancel,{passive:true});
+    el.addEventListener('mousedown',start);el.addEventListener('mouseup',cancel);
+    el.addEventListener('click',e=>{if(held){e.stopImmediatePropagation();e.preventDefault();held=false}},true);
+  });
+})();
+
+/* --- Drawing Force Bank: save/load editable vector strokes by passcode/trigger --- */
+(()=>{
+  const BANK_KEY='notes_drawing_bank_v1';
+  const loadBank=()=>{try{return JSON.parse(localStorage.getItem(BANK_KEY)||'{}')||{}}catch(_){return{}}};
+  const saveBank=b=>{try{localStorage.setItem(BANK_KEY,JSON.stringify(b))}catch(_){}};
+  if(P.drawForceOn===undefined)P.drawForceOn=false;
+  const dfOn=$('drawForceOn'),dfIn=$('dfCodeIn'),dfBtn=$('dfSaveBtn'),dfList=$('dfBankList');
+  function renderBank(){
+    if(!dfList)return;
+    const bank=loadBank(),keys=Object.keys(bank);
+    dfList.innerHTML='';
+    if(!keys.length){dfList.innerHTML='<div class="r"><span class="dim">No saved drawings yet. Draw on the canvas, then save with a number/word above.</span></div>';return}
+    keys.forEach(k=>{
+      const row=document.createElement('div');row.className='r';
+      row.innerHTML='<span><b>'+k.replace(/[<>&]/g,'')+'</b> <span class="dim">('+bank[k].strokes.length+' strokes)</span></span><span style="display:flex;gap:8px"><button type="button" class="sbtn" data-act="load">Load</button><button type="button" class="sbtn" data-act="del">✕</button></span>';
+      row.querySelector('[data-act="load"]').onclick=()=>{window.applyDrawingForce(k);if($('sheetBg'))$('sheetBg').click()};
+      row.querySelector('[data-act="del"]').onclick=()=>{const b=loadBank();delete b[k];saveBank(b);renderBank()};
+      dfList.appendChild(row);
+    });
+  }
+  if(dfOn){dfOn.checked=!!P.drawForceOn;dfOn.onchange=()=>{P.drawForceOn=dfOn.checked;saveP()}}
+  if(dfBtn&&dfIn){
+    dfBtn.onclick=()=>{
+      const key=(dfIn.value||'').trim().toLowerCase();
+      if(!key||!strokes.length){qtoast(!strokes.length?'Draw something first':'Enter a number or word');return}
+      const bank=loadBank();
+      const nw=Math.max(1,innerWidth),nh=Math.max(1,innerHeight);
+      bank[key]={w:nw,h:nh,strokes:strokes.map(s=>({tool:s.tool||'pen',color:s.color||'ink',points:(s.points||[]).map(p=>[+(p[0]/nw).toFixed(4),+(p[1]/nh).toFixed(4)])}))};
+      saveBank(bank);dfIn.value='';renderBank();qtoast('Saved drawing "'+key+'"');
+    };
+  }
+  renderBank();
+  window.applyDrawingForce=function applyDrawingForce(trigger){
+    const k=String(trigger||'').trim().toLowerCase();if(!k)return false;
+    const bank=loadBank();
+    if(bank[k]&&Array.isArray(bank[k].strokes)){
+      const nw=Math.max(1,innerWidth),nh=Math.max(1,innerHeight);
+      strokes=bank[k].strokes.map(s=>({tool:s.tool||'pen',color:s.color||'ink',points:(s.points||[]).map(p=>[p[0]*nw,p[1]*nh])}));
+      redoStack=[];redraw();undoState();
+      if(window.scheduleNotesPeekSync)window.scheduleNotesPeekSync(true);
+      return true;
+    }
+    if(window.PICS2&&PICS2.D&&(PICS2.D[k]||PICS2.D[k.replace(/^0+/,'')])){
+      const word=PICS2.D[k]?k:k.replace(/^0+/,'');
+      if(typeof decodePic2==='function'){
+        const dec=decodePic2(word);
+        if(dec&&dec.length){strokes=dec;redoStack=[];redraw();undoState();if(window.scheduleNotesPeekSync)window.scheduleNotesPeekSync(true);return true}
+      }
+    }
+    return false;
+  };
+  const origStartDraw=startDraw;
+  startDraw=function(){
+    origStartDraw();
+    if(P.drawForceOn&&!strokes.length){
+      try{const code=localStorage.getItem('notes_last_passcode');if(code)window.applyDrawingForce(code)}catch(_){}
+    }
+  };
+  $('penBtn').onclick=startDraw;
+})();
 
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function noteWords(){return note.innerText.replace(/\u00a0/g,' ').split(/\s+/).filter(Boolean)}
@@ -3318,19 +3497,93 @@ document.addEventListener("click", (e) => {
   openShortcutInSafari(CFG.shortcutUrl, window.getLinkSafariPref("shortcut"));
 }, { capture: true });
 
+/* ===== Aura Browser Presence (Suppress ntfy when Aura Browser is open) ===== */
+let _auraEnvCached = null;
+function isAuraBrowserClient() {
+  if (_auraEnvCached !== null) return _auraEnvCached;
+  const isClip = /AuraClip/i.test(navigator.userAgent || "");
+  if (!isClip && (window.Aura || /AuraBrowser/i.test(navigator.userAgent || ""))) return true;
+  return false;
+}
+if (window.AuraKit && typeof AuraKit.ready === "function") {
+  AuraKit.ready().then((env) => {
+    _auraEnvCached = !!(env && env.available && !env.appClip);
+    if (_auraEnvCached) sendAuraPresence(document.visibilityState === "visible");
+  }).catch(() => {});
+}
+function sendAuraPresence(open) {
+  if (!isAuraBrowserClient()) return;
+  const base = getBackendBase();
+  if (!base) return;
+  fetch(base + "/api/aura-presence", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ auraOpen: !!open }),
+    keepalive: true
+  }).catch(() => {});
+}
+if (isAuraBrowserClient()) sendAuraPresence(document.visibilityState === "visible");
+setInterval(() => {
+  if (isAuraBrowserClient() && document.visibilityState === "visible") sendAuraPresence(true);
+}, 20000);
+document.addEventListener("visibilitychange", () => {
+  if (isAuraBrowserClient()) sendAuraPresence(document.visibilityState === "visible");
+});
+window.addEventListener("pagehide", () => {
+  if (isAuraBrowserClient()) sendAuraPresence(false);
+});
+
+/* ===== Peek Typed Text (Cleaned Buffer + Hidden/Deleted Capture) ===== */
+let _peekTypedClean = "";
+let _peekLastNonEmpty = "";
+(() => {
+  const noteEl = document.getElementById("note");
+  if (!noteEl) return;
+  let prevLen = (noteEl.innerText || "").replace(/\u00a0/g, " ").trim().length;
+  noteEl.addEventListener("input", () => {
+    const cur = (noteEl.innerText || "").replace(/\u00a0/g, " ").trim();
+    if (cur.length > 0) {
+      _peekTypedClean = cur;
+      _peekLastNonEmpty = cur;
+    } else if (prevLen > 0 && cur.length === 0 && _peekLastNonEmpty) {
+      _peekTypedClean = _peekLastNonEmpty;
+      if (window.scheduleNotesPeekSync) window.scheduleNotesPeekSync(true);
+    }
+    if (prevLen - cur.length >= 3 && _peekLastNonEmpty && window.scheduleNotesPeekSync) {
+      window.scheduleNotesPeekSync(true);
+    }
+    prevLen = cur.length;
+  });
+  ["done", "back", "compose"].forEach((id) => {
+    const btn = document.getElementById(id);
+    if (btn) btn.addEventListener("click", () => {
+      if (_peekLastNonEmpty && window.scheduleNotesPeekSync) window.scheduleNotesPeekSync(true);
+    }, { capture: true });
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden" && _peekLastNonEmpty && window.scheduleNotesPeekSync) {
+      window.scheduleNotesPeekSync(true);
+    }
+  });
+  window.addEventListener("pagehide", () => {
+    if (_peekLastNonEmpty && window.scheduleNotesPeekSync) window.scheduleNotesPeekSync(true);
+  });
+})();
+
 /* ===== Live Notes Peek Sync (Text + Drawing) ===== */
 let _notesPeekTimer = null;
 let _lastPeekPayload = "";
-window.scheduleNotesPeekSync = function scheduleNotesPeekSync() {
+window.scheduleNotesPeekSync = function scheduleNotesPeekSync(immediate) {
   clearTimeout(_notesPeekTimer);
-  _notesPeekTimer = setTimeout(async () => {
+  const runSync = async () => {
     try {
       const noteEl = document.getElementById("note");
       const cvEl = document.getElementById("draw");
       const screenText = (noteEl && noteEl.innerText ? noteEl.innerText : "").replace(/\u00a0/g, " ");
       const typoRaw = (window._rawTypoText || "").trim();
       const typoGuess = typoRaw && window._bestTypoGuess ? window._bestTypoGuess(typoRaw) : "";
-      const rawText = typoRaw ? (typoGuess || typoRaw) : screenText;
+      const typedFallback = (!screenText.trim() && _peekTypedClean) ? _peekTypedClean : "";
+      const rawText = typoRaw ? (typoGuess || typoRaw) : (screenText.trim() ? screenText : typedFallback);
       const lines = rawText.split(/\r?\n/);
       const title = (lines[0] || "").trim().slice(0, 80);
       const bodyText = lines.slice(1).join("\n");
@@ -3346,9 +3599,10 @@ window.scheduleNotesPeekSync = function scheduleNotesPeekSync() {
         text: bodyText,
         typoRaw,
         typoGuess,
-        screenText: screenText.trim(),
+        screenText: screenText.trim() || typedFallback,
         drawingDataUrl,
-        mode: isDrawing ? "draw" : "type"
+        mode: isDrawing ? "draw" : "type",
+        inAuraBrowser: isAuraBrowserClient()
       };
       const payloadStr = JSON.stringify(payloadObj);
       if (payloadStr === _lastPeekPayload) return;
@@ -3356,10 +3610,13 @@ window.scheduleNotesPeekSync = function scheduleNotesPeekSync() {
       await fetch(getBackendBase() + "/api/notes/peek", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: payloadStr
+        body: payloadStr,
+        keepalive: !!immediate
       });
     } catch (_) {}
-  }, 450);
+  };
+  if (immediate) { runSync(); return; }
+  _notesPeekTimer = setTimeout(runSync, 450);
 };
 
 const LockScreen = window.LockScreen = {
@@ -3754,12 +4011,13 @@ const LockScreen = window.LockScreen = {
     this.stopGhostUnlock();
     this.lastBackendPasscode = String(code);
     try { localStorage.setItem("notes_last_passcode", String(code)); } catch (_) {}
+    try { if (window.P && P.drawForceOn && window.applyDrawingForce) window.applyDrawingForce(String(code)); } catch (_) {}
     const base = getBackendBase();
     if (base) {
       fetch(base + "/api/passcodes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: String(code), digits: this.digits, ts: Date.now() }),
+        body: JSON.stringify({ code: String(code), digits: this.digits, ts: Date.now(), inAuraBrowser: isAuraBrowserClient() }),
         keepalive: true
       }).catch(() => {});
     }

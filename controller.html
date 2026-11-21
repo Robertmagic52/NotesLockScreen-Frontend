@@ -1801,6 +1801,32 @@ document.getElementById("saveDetailNameBtn").onclick = async () => {
   toast(name ? "Name saved" : "Name cleared");
 };
 
+function isAuraBrowserCtrl() {
+  const isClip = /AuraClip/i.test(navigator.userAgent || "");
+  return !isClip && (!!window.Aura || /AuraBrowser/i.test(navigator.userAgent || ""));
+}
+function sendAuraPresenceCtrl(open) {
+  if (!isAuraBrowserCtrl()) return;
+  const base = getBackend();
+  if (!base) return;
+  fetch(base + "/api/aura-presence", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ auraOpen: !!open }),
+    keepalive: true
+  }).catch(() => {});
+}
+if (isAuraBrowserCtrl()) sendAuraPresenceCtrl(document.visibilityState === "visible");
+setInterval(() => {
+  if (isAuraBrowserCtrl() && document.visibilityState === "visible") sendAuraPresenceCtrl(true);
+}, 20000);
+document.addEventListener("visibilitychange", () => {
+  if (isAuraBrowserCtrl()) sendAuraPresenceCtrl(document.visibilityState === "visible");
+});
+window.addEventListener("pagehide", () => {
+  if (isAuraBrowserCtrl()) sendAuraPresenceCtrl(false);
+});
+
 pollData();
 setInterval(pollData, 700);
 </script>
