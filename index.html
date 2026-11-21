@@ -1548,8 +1548,8 @@ body{position:fixed;inset:0;overflow:hidden}
 svg{display:block}
 #scroll{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
   padding:calc(max(env(safe-area-inset-top),12px) + 60px) 20px calc(env(safe-area-inset-bottom) + 110px) 20px}
-#date{text-align:center;font-size:12.5px;line-height:17px;font-weight:400;color:var(--datec);padding:0 0 12px;margin-left:0;-webkit-user-select:none;user-select:none;letter-spacing:-.05px}
-#date.empty{display:none}
+#date{text-align:center;font-size:12.5px;line-height:17px;min-height:17px;font-weight:400;color:var(--datec);padding:0 0 12px;margin-left:0;-webkit-user-select:none;user-select:none;letter-spacing:-.05px}
+#date.empty{visibility:hidden}
 #note{min-height:60vh;outline:none;font-size:17px;line-height:23px;white-space:pre-wrap;word-wrap:break-word;caret-color:var(--tint);
   -webkit-user-select:text;user-select:text}
 #note::first-line{font-size:28px;line-height:34px;font-weight:700;letter-spacing:.2px;color:var(--title)}
