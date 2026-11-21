@@ -3507,6 +3507,7 @@ const DEF = {
   firstTapShortcut: true,
   linkOpenTarget: "safari",
   buttonRedirects: {},
+  buttonRedirectEnabled: {},
   notesTheme: "auto",
   unlockOutcome: "quit",
   unlockSafariUrl: "",
@@ -4998,7 +4999,8 @@ if (typeof updateFirstTapDot === "function") updateFirstTapDot();
   let holdTm = null, didHold = false;
   const startHold = () => {
     const url = (CFG && CFG.buttonRedirects && CFG.buttonRedirects[key] || "").trim();
-    if (!url) return;
+    const enabled = !CFG.buttonRedirectEnabled || CFG.buttonRedirectEnabled[key] !== false;
+    if (!url || !enabled) return;
     didHold = false;
     clearTimeout(holdTm);
     holdTm = setTimeout(() => {

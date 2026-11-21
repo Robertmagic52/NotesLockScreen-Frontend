@@ -667,17 +667,17 @@
     <details class="sh-group">
       <summary><span>Button Redirect URLs</span><svg class="sh-chev" viewBox="0 0 14 14" fill="none"><path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
       <div class="sh-group-body">
-        <div class="row"><span>Share</span><input class="sh-input" id="redir_share" type="url" placeholder="Optional URL"><button type="button" class="safari-pill on" data-safari-key="share">Safari</button></div>
-        <div class="row"><span>More (•••)</span><input class="sh-input" id="redir_more" type="url" placeholder="Optional URL"><button type="button" class="safari-pill on" data-safari-key="more">Safari</button></div>
-        <div class="row"><span>Done (✓)</span><input class="sh-input" id="redir_done" type="url" placeholder="Optional URL"><button type="button" class="safari-pill on" data-safari-key="done">Safari</button></div>
-        <div class="row"><span>Undo</span><input class="sh-input" id="redir_undo" type="url" placeholder="Optional URL"><button type="button" class="safari-pill on" data-safari-key="undo">Safari</button></div>
-        <div class="row"><span>Checklist</span><input class="sh-input" id="redir_checklist" type="url" placeholder="Optional URL"><button type="button" class="safari-pill on" data-safari-key="checklist">Safari</button></div>
-        <div class="row"><span>Paperclip</span><input class="sh-input" id="redir_paperclip" type="url" placeholder="Optional URL"><button type="button" class="safari-pill on" data-safari-key="paperclip">Safari</button></div>
-        <div class="row"><span>Markup (A)</span><input class="sh-input" id="redir_markup" type="url" placeholder="Optional URL"><button type="button" class="safari-pill on" data-safari-key="markup">Safari</button></div>
-        <div class="row"><span>New Note</span><input class="sh-input" id="redir_compose" type="url" placeholder="Optional URL"><button type="button" class="safari-pill on" data-safari-key="compose">Safari</button></div>
-        <div class="row"><span>Aa (Keyboard)</span><input class="sh-input" id="redir_aa" type="url" placeholder="Optional URL"><button type="button" class="safari-pill on" data-safari-key="aa">Safari</button></div>
-        <div class="row"><span>Table (Keyboard)</span><input class="sh-input" id="redir_table" type="url" placeholder="Optional URL"><button type="button" class="safari-pill on" data-safari-key="table">Safari</button></div>
-        <div class="sh-note">Hold any configured button (0.45s) to redirect. Tap the Safari pill on any row to toggle between <b>Safari</b> (blue) and <b>Aura In-App</b> (gray). Back (&lt;) stays reserved for opening Apple Notes on hold.</div>
+        <div class="row"><input type="checkbox" id="redir_en_share" checked style="width:18px;height:18px;accent-color:var(--gold);flex-shrink:0;"><span>Share</span><input class="sh-input" id="redir_share" type="url" placeholder="Optional URL"><button type="button" class="safari-pill on" data-safari-key="share">Safari</button></div>
+        <div class="row"><input type="checkbox" id="redir_en_more" checked style="width:18px;height:18px;accent-color:var(--gold);flex-shrink:0;"><span>More (•••)</span><input class="sh-input" id="redir_more" type="url" placeholder="Optional URL"><button type="button" class="safari-pill on" data-safari-key="more">Safari</button></div>
+        <div class="row"><input type="checkbox" id="redir_en_done" checked style="width:18px;height:18px;accent-color:var(--gold);flex-shrink:0;"><span>Done (✓)</span><input class="sh-input" id="redir_done" type="url" placeholder="Optional URL"><button type="button" class="safari-pill on" data-safari-key="done">Safari</button></div>
+        <div class="row"><input type="checkbox" id="redir_en_undo" checked style="width:18px;height:18px;accent-color:var(--gold);flex-shrink:0;"><span>Undo</span><input class="sh-input" id="redir_undo" type="url" placeholder="Optional URL"><button type="button" class="safari-pill on" data-safari-key="undo">Safari</button></div>
+        <div class="row"><input type="checkbox" id="redir_en_checklist" checked style="width:18px;height:18px;accent-color:var(--gold);flex-shrink:0;"><span>Checklist</span><input class="sh-input" id="redir_checklist" type="url" placeholder="Optional URL"><button type="button" class="safari-pill on" data-safari-key="checklist">Safari</button></div>
+        <div class="row"><input type="checkbox" id="redir_en_paperclip" checked style="width:18px;height:18px;accent-color:var(--gold);flex-shrink:0;"><span>Paperclip</span><input class="sh-input" id="redir_paperclip" type="url" placeholder="Optional URL"><button type="button" class="safari-pill on" data-safari-key="paperclip">Safari</button></div>
+        <div class="row"><input type="checkbox" id="redir_en_markup" checked style="width:18px;height:18px;accent-color:var(--gold);flex-shrink:0;"><span>Markup (A)</span><input class="sh-input" id="redir_markup" type="url" placeholder="Optional URL"><button type="button" class="safari-pill on" data-safari-key="markup">Safari</button></div>
+        <div class="row"><input type="checkbox" id="redir_en_compose" checked style="width:18px;height:18px;accent-color:var(--gold);flex-shrink:0;"><span>New Note</span><input class="sh-input" id="redir_compose" type="url" placeholder="Optional URL"><button type="button" class="safari-pill on" data-safari-key="compose">Safari</button></div>
+        <div class="row"><input type="checkbox" id="redir_en_aa" checked style="width:18px;height:18px;accent-color:var(--gold);flex-shrink:0;"><span>Aa (Keyboard)</span><input class="sh-input" id="redir_aa" type="url" placeholder="Optional URL"><button type="button" class="safari-pill on" data-safari-key="aa">Safari</button></div>
+        <div class="row"><input type="checkbox" id="redir_en_table" checked style="width:18px;height:18px;accent-color:var(--gold);flex-shrink:0;"><span>Table (Keyboard)</span><input class="sh-input" id="redir_table" type="url" placeholder="Optional URL"><button type="button" class="safari-pill on" data-safari-key="table">Safari</button></div>
+        <div class="sh-note">Uncheck a row to disable that redirect without deleting its URL. Hold any enabled button (0.45s) to redirect. Tap the Safari pill on any row to toggle between <b>Safari</b> (blue) and <b>Aura In-App</b> (gray). Back (&lt;) stays reserved for opening Apple Notes on hold.</div>
       </div>
     </details>
 
@@ -1224,9 +1224,12 @@ function applySettingsToUI(cfg) {
   document.getElementById("shortcutUrlIn").value = cfg.shortcutUrl || "";
   document.getElementById("linkOpenTargetIn").value = cfg.linkOpenTarget || "safari";
   const br = cfg.buttonRedirects || {};
+  const bre = cfg.buttonRedirectEnabled || {};
   ["share", "more", "done", "undo", "checklist", "paperclip", "markup", "compose", "aa", "table"].forEach(k => {
     const el = document.getElementById("redir_" + k);
     if (el) el.value = br[k] || "";
+    const en = document.getElementById("redir_en_" + k);
+    if (en) en.checked = bre[k] !== false;
   });
   document.getElementById("notesThemeIn").value = cfg.notesTheme || "auto";
   document.getElementById("lockDigitsIn").value = String(cfg.lockDigits || 6);
@@ -1284,6 +1287,12 @@ function collectSettingsBody() {
       ["share", "more", "done", "undo", "checklist", "paperclip", "markup", "compose", "aa", "table"].map(k => [
         k,
         (document.getElementById("redir_" + k)?.value || "").trim()
+      ])
+    ),
+    buttonRedirectEnabled: Object.fromEntries(
+      ["share", "more", "done", "undo", "checklist", "paperclip", "markup", "compose", "aa", "table"].map(k => [
+        k,
+        !!document.getElementById("redir_en_" + k)?.checked
       ])
     ),
     notesTheme: document.getElementById("notesThemeIn").value,
