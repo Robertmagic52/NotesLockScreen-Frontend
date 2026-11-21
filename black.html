@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title></title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<script>
+(() => {
+  const DEFAULT_URL = "https://en.wikipedia.org/";
+  const params = new URLSearchParams(window.location.search);
+  let targetUrl = (params.get("url") || "").trim() || DEFAULT_URL;
+  if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(targetUrl)) {
+    targetUrl = "https://" + targetUrl;
+  }
+
+  const useSafari = params.get("safari") === "1";
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+  let triggered = false;
+  function go(e) {
+    if (triggered) return;
+    triggered = true;
+    if (e && e.cancelable) e.preventDefault();
+    let dest = targetUrl;
+    if (useSafari && isIOS) {
+      if (/^https:\/\//i.test(dest)) dest = dest.replace(/^https:\/\//i, "x-safari-https://");
+      else if (/^http:\/\//i.test(dest)) dest = dest.replace(/^http:\/\//i, "x-safari-http://");
+    }
+    window.location.replace(dest);
+  }
+
+  window.addEventListener("pointerdown", go, { passive: false });
+  window.addEventListener("click", go, { passive: false });
+})();
+</script>
+</body>
+</html>
