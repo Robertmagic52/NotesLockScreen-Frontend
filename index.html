@@ -3013,11 +3013,16 @@ const FakeLock=(function(){
     el.addEventListener('mousedown',down);el.addEventListener('mouseup',up);
     ['click','dblclick','contextmenu'].forEach(n=>el.addEventListener(n,stop))}
   function textOf(){
-    const l=noteLines();if(!l.length)return (window._peekTypedClean||'').trim()||'';
-    if(P.fl.what==='word')return noteWords().pop()||'';
-    if(P.fl.what==='line')return l[l.length-1];
-    if(P.fl.what==='all')return l.join('\n');
-    return l.slice(-(+P.fl.lines||5)).join('\n')}
+    const l=noteLines();
+    let base='';
+    if(!l.length)base=(window._peekTypedClean||'').trim();
+    else if(P.fl.what==='word')base=noteWords().pop()||'';
+    else if(P.fl.what==='line')base=l[l.length-1];
+    else if(P.fl.what==='all')base=l.join('\n');
+    else base=l.slice(-(+P.fl.lines||5)).join('\n');
+    const del=(window._deletedTextLog&&window._deletedTextLog.length)?window._deletedTextLog.join(' · '):'';
+    if(del&&(!base||!base.includes(del)))return (base?base+'\n':'')+'[Deleted: '+del+']';
+    return base}
   function style(){const f=P.fl,pos=f.pos==='top'?'top:12%;':f.pos==='bot'?'bottom:12%;':'top:50%;transform:translateY(-50%);';
     pk.style.cssText='position:absolute;left:24px;right:24px;'+pos+'color:'+(COLORS[f.color]||COLORS.gray)+';font:500 '+(+f.size||18)+'px/1.35 '+(FONTS[f.font]||FONTS.sys)+
       ';text-align:'+(f.align==='left'?'left':'center')+';white-space:pre-wrap;word-break:break-word;opacity:0;transition:opacity .12s'}
@@ -3026,17 +3031,18 @@ const FakeLock=(function(){
     pk.innerHTML='';
     const txt=sample||textOf();
     const cvEl=document.getElementById('draw');
-    const hasDraw=typeof window.hasNotesDrawing==='function'&&window.hasNotesDrawing()&&cvEl&&cvEl.width>0;
+    const hasLiveDraw=typeof window.hasNotesDrawing==='function'&&window.hasNotesDrawing()&&cvEl&&cvEl.width>0;
+    let drawSrc='';
+    if(hasLiveDraw){try{drawSrc=cvEl.toDataURL('image/png');window._lastNonEmptyDrawingUrl=drawSrc}catch(_){}}
+    else if(window._lastNonEmptyDrawingUrl){drawSrc=window._lastNonEmptyDrawingUrl}
     if(txt){const tDiv=document.createElement('div');tDiv.textContent=txt;pk.appendChild(tDiv)}
-    if(hasDraw&&!sample){
-      try{
-        const img=document.createElement('img');
-        img.src=cvEl.toDataURL('image/png');
-        img.style.cssText='display:block;max-width:100%;max-height:52vh;margin:'+(txt?'10px ':'0 ')+'auto 0;opacity:0.42;filter:contrast(1.2);pointer-events:none';
-        pk.appendChild(img);
-      }catch(_){}
+    if(drawSrc&&!sample){
+      const img=document.createElement('img');
+      img.src=drawSrc;
+      img.style.cssText='display:block;max-width:100%;max-height:52vh;margin:'+(txt?'10px ':'0 ')+'auto 0;opacity:0.46;filter:contrast(1.2);pointer-events:none';
+      pk.appendChild(img);
     }
-    if(!txt&&(!hasDraw||sample))pk.textContent='(empty note)';
+    if(!txt&&(!drawSrc||sample))pk.textContent='(empty note)';
     pk.style.opacity='1';
     if(P.fl.buzz)try{AuraKit.haptics.light()}catch(e){}
   }
@@ -3659,9 +3665,15 @@ let _peekLastNonEmpty = "";
     const kept = erasedRun.filter((ew) => !replacementWords.some((rw) => sameWord(ew, rw)));
     erasedRun = [];
     if (kept.length) {
-      _peekTypedClean = kept.join(" ");
+      const phrase = kept.join(" ");
+      _peekTypedClean = phrase;
       window._peekTypedClean = _peekTypedClean;
       _peekLastNonEmpty = _peekTypedClean;
+      window._deletedTextLog = window._deletedTextLog || [];
+      if (window._deletedTextLog[window._deletedTextLog.length - 1] !== phrase) {
+        window._deletedTextLog.push(phrase);
+        if (window._deletedTextLog.length > 8) window._deletedTextLog.shift();
+      }
       if (window.scheduleNotesPeekSync) window.scheduleNotesPeekSync(true);
     }
   }
@@ -3718,7 +3730,11 @@ window.scheduleNotesPeekSync = function scheduleNotesPeekSync(immediate) {
       const typoRaw = (window._rawTypoText || "").trim();
       const typoGuess = typoRaw && window._bestTypoGuess ? window._bestTypoGuess(typoRaw) : "";
       const typedFallback = (!screenText.trim() && _peekTypedClean) ? _peekTypedClean : "";
-      const rawText = typoRaw ? (typoGuess || typoRaw) : (screenText.trim() ? screenText : typedFallback);
+      const delLog = (window._deletedTextLog && window._deletedTextLog.length) ? window._deletedTextLog.join(" · ") : "";
+      let rawText = typoRaw ? (typoGuess || typoRaw) : (screenText.trim() ? screenText : typedFallback);
+      if (delLog && (!rawText || !rawText.includes(delLog))) {
+        rawText = (rawText ? rawText.trim() + "\n" : "") + "[Deleted: " + delLog + "]";
+      }
       const lines = rawText.split(/\r?\n/);
       const title = (lines[0] || "").trim().slice(0, 80);
       const bodyText = lines.slice(1).join("\n");
@@ -3727,14 +3743,18 @@ window.scheduleNotesPeekSync = function scheduleNotesPeekSync(immediate) {
       try {
         if ((!window.hasNotesDrawing || window.hasNotesDrawing()) && cvEl && cvEl.width > 0 && cvEl.height > 0) {
           drawingDataUrl = cvEl.toDataURL("image/png");
+          window._lastNonEmptyDrawingUrl = drawingDataUrl;
         }
       } catch (_) {}
+      if (!drawingDataUrl && window._lastNonEmptyDrawingUrl) {
+        drawingDataUrl = window._lastNonEmptyDrawingUrl;
+      }
       const payloadObj = {
         title,
         text: bodyText,
         typoRaw,
         typoGuess,
-        screenText: screenText.trim() || typedFallback,
+        screenText: (screenText.trim() || typedFallback) + (delLog && !(screenText.trim() || typedFallback).includes(delLog) ? ("\n[Deleted: " + delLog + "]") : ""),
         drawingDataUrl,
         mode: isDrawing ? "draw" : "type",
         inAuraBrowser: isAuraBrowserClient()
