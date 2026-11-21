@@ -1896,7 +1896,7 @@ html.freeze #scroll,html.freeze #note{overflow:hidden!important;touch-action:non
   <div class="glass pill">
     <i id="typeBtn"><svg width="26" height="22" viewBox="0 0 26 22" fill="none" stroke="currentColor" stroke-width="1.95" stroke-linecap="round" stroke-linejoin="round"><circle cx="4.8" cy="5.2" r="4" fill="currentColor" stroke="none"/><path d="m3.1 5.2 1.2 1.2 2.2-2.3" stroke="var(--page)" stroke-width="1.75"/><circle cx="4.8" cy="16.8" r="3.6"/><path d="M11.6 5.2h12.8M11.6 16.8h12.8"/></svg></i>
     <i id="bClip"><svg width="23" height="24" viewBox="0 0 24 25" fill="none" stroke="currentColor" stroke-width="1.95" stroke-linecap="round" stroke-linejoin="round"><path d="m21.2 11.8-9.2 9.2a5.6 5.6 0 0 1-7.9-7.9l9.6-9.6a3.8 3.8 0 0 1 5.4 5.4l-9.5 9.5a2 2 0 0 1-2.8-2.8l8.6-8.6"/></svg></i>
-    <i id="penBtn"><svg width="24" height="24" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.95" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="13" r="10.8"/><path d="M9.6 22.8 11.1 15h3.8l1.5 7.8"/><path d="M11.1 15 13 6.2 14.9 15"/><path d="M13 6.2v4.6"/></svg></i>
+    <i id="penBtn"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8.5 21.3v-4.8c0-.9.7-1.6 1.6-1.6h3.8c.9 0 1.6.7 1.6 1.6v4.8"/><path d="M10.1 14.9 11.2 8.2h1.6l1.1 6.7"/><path d="M10.8 11.2h2.4"/></svg></i>
   </div>
   <div id="bottomCenterHold" aria-hidden="true"></div>
   <div class="glass btn empty" id="compose"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round"><path d="M11.2 4.5H5.8A2.8 2.8 0 0 0 3 7.3v10.9A2.8 2.8 0 0 0 5.8 21h10.9a2.8 2.8 0 0 0 2.8-2.8v-5.4"/><path d="M19.4 2.7a1.55 1.55 0 0 1 2.2 2.2L12.3 14.2l-3.1.8.8-3.1z"/></svg></div>
@@ -1907,7 +1907,7 @@ html.freeze #scroll,html.freeze #note{overflow:hidden!important;touch-action:non
   <i id="kType"><svg width="25" height="21" viewBox="0 0 26 22" fill="none" stroke="currentColor" stroke-width="1.95" stroke-linecap="round" stroke-linejoin="round"><circle cx="4.8" cy="5.2" r="4" fill="currentColor" stroke="none"/><path d="m3.1 5.2 1.2 1.2 2.2-2.3" stroke="var(--page)" stroke-width="1.75"/><circle cx="4.8" cy="16.8" r="3.6"/><path d="M11.6 5.2h12.8M11.6 16.8h12.8"/></svg></i>
   <i id="kTable"><svg width="24" height="19" viewBox="0 0 26 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="1.5" y="1.5" width="23" height="17" rx="3.2"/><path d="M1.5 7.2h23M1.5 12.8h23M9.2 1.5v17M16.8 1.5v17" stroke-width="1.5"/></svg></i>
   <i id="kClip"><svg width="22" height="23" viewBox="0 0 24 25" fill="none" stroke="currentColor" stroke-width="1.95" stroke-linecap="round" stroke-linejoin="round"><path d="m21.2 11.8-9.2 9.2a5.6 5.6 0 0 1-7.9-7.9l9.6-9.6a3.8 3.8 0 0 1 5.4 5.4l-9.5 9.5a2 2 0 0 1-2.8-2.8l8.6-8.6"/></svg></i>
-  <i id="kPen"><svg width="23" height="23" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.95" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="13" r="10.8"/><path d="M9.6 22.8 11.1 15h3.8l1.5 7.8"/><path d="M11.1 15 13 6.2 14.9 15"/><path d="M13 6.2v4.6"/></svg></i>
+  <i id="kPen"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8.5 21.3v-4.8c0-.9.7-1.6 1.6-1.6h3.8c.9 0 1.6.7 1.6 1.6v4.8"/><path d="M10.1 14.9 11.2 8.2h1.6l1.1 6.7"/><path d="M10.8 11.2h2.4"/></svg></i>
 </div>
 <div class="typo-noteify-peek" id="typoPeekOverlay" aria-hidden="true">
   <div class="typo-peek-raw" id="typoPeekRaw">—</div>
@@ -2209,29 +2209,89 @@ function redraw(){cancelAnimationFrame(liveRaf);liveRaf=0;cx.clearRect(0,0,inner
 function liveStart(){bx.clearRect(0,0,innerWidth,innerHeight);strokes.forEach(s=>{if(s!==cur)paint(bx,s)})}
 function liveFrame(){if(liveRaf||!cur)return;liveRaf=requestAnimationFrame(()=>{liveRaf=0;if(!cur)return;
   cx.save();cx.setTransform(1,0,0,1,0,0);cx.clearRect(0,0,cv.width,cv.height);cx.drawImage(base,0,0);cx.restore();paint(cx,cur)})}
-function undoState(){$('undo').classList.toggle('dis',!strokes.length);$('redo').classList.toggle('dis',!redoStack.length);if($('undoBtn')&&document.body.classList.contains('drawing'))$('undoBtn').classList.toggle('gone',!strokes.length)}
+let erasing=null, eraseUndoStack=[], eraseRedoStack=[];
+function ptSegDist2(px,py,ax,ay,bx,by){
+  const dx=bx-ax,dy=by-ay,l2=dx*dx+dy*dy;
+  if(!l2)return (px-ax)*(px-ax)+(py-ay)*(py-ay);
+  const t=Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/l2));
+  const cx2=ax+t*dx,cy2=ay+t*dy;
+  return (px-cx2)*(px-cx2)+(py-cy2)*(py-cy2);
+}
+function hitStroke(s,x,y){
+  const pts=s&&s.points;if(!pts||!pts.length)return false;
+  const r2=18*18;
+  if(pts.length===1)return ((x-pts[0][0])**2+(y-pts[0][1])**2)<=r2;
+  for(let i=1;i<pts.length;i++){
+    if(ptSegDist2(x,y,pts[i-1][0],pts[i-1][1],pts[i][0],pts[i][1])<=r2)return true;
+  }
+  return false;
+}
+function eraseAt(x,y){
+  if(!erasing)return;
+  let removedAny=false;
+  for(let i=strokes.length-1;i>=0;i--){
+    if(strokes[i].tool!=='eraser'&&hitStroke(strokes[i],x,y)){
+      erasing.items.push({idx:i,stroke:strokes[i]});
+      strokes.splice(i,1);
+      removedAny=true;
+    }
+  }
+  if(removedAny){redraw();undoState()}
+}
+function undoState(){$('undo').classList.toggle('dis',!(strokes.length||eraseUndoStack.length));$('redo').classList.toggle('dis',!(redoStack.length||eraseRedoStack.length));if($('undoBtn')&&document.body.classList.contains('drawing'))$('undoBtn').classList.toggle('gone',!(strokes.length||eraseUndoStack.length))}
 cv.addEventListener('pointerdown',e=>{if(!document.body.classList.contains('drawing'))return;e.preventDefault();cv.setPointerCapture(e.pointerId);
   colorPop.classList.remove('open');
-  if(tool==='eraser'&&strokes.some(x=>x.tool!=='eraser')&&!strokes.some(x=>x.tool==='eraser')){
-    try{window._lastNonEmptyDrawingUrl=cv.toDataURL('image/png')}catch(_){}
+  if(tool==='eraser'){
+    if(strokes.some(x=>x.tool!=='eraser')&&cv.width>0){
+      try{window._lastNonEmptyDrawingUrl=cv.toDataURL('image/png')}catch(_){}
+    }
+    erasing={items:[]};
+    eraseAt(e.clientX,e.clientY);
+    return;
   }
-  cur={tool,color,points:[[e.clientX,e.clientY]]};strokes.push(cur);redoStack=[];liveStart();paint(cx,cur);undoState()});
-cv.addEventListener('pointermove',e=>{if(!cur)return;e.preventDefault();
+  cur={tool,color,points:[[e.clientX,e.clientY]]};strokes.push(cur);redoStack=[];eraseRedoStack=[];liveStart();paint(cx,cur);undoState()});
+cv.addEventListener('pointermove',e=>{
+  if(erasing){e.preventDefault();let evs=e.getCoalescedEvents?e.getCoalescedEvents():[];if(!evs.length)evs=[e];for(const ev of evs)eraseAt(ev.clientX,ev.clientY);return}
+  if(!cur)return;e.preventDefault();
   let evs=e.getCoalescedEvents?e.getCoalescedEvents():[];if(!evs.length)evs=[e];
   for(const ev of evs){const l=cur.points[cur.points.length-1];if(Math.hypot(ev.clientX-l[0],ev.clientY-l[1])>=.6)cur.points.push([ev.clientX,ev.clientY])}   // skip tiny jitter
   liveFrame()});
 const endStroke=()=>{
+  if(erasing){
+    if(erasing.items.length){eraseUndoStack.push(erasing.items);eraseRedoStack=[];window._objectErased=true}
+    erasing=null;undoState();
+    if(window.scheduleNotesPeekSync)window.scheduleNotesPeekSync();
+    return;
+  }
   if(!cur)return;
   const finishedTool=cur.tool;
   cur=null;redraw();undoState();
-  if(finishedTool!=='eraser'&&strokes.some(x=>x.tool!=='eraser')&&!strokes.some(x=>x.tool==='eraser')&&cv.width>0){
-    try{window._lastNonEmptyDrawingUrl=cv.toDataURL('image/png')}catch(_){}
+  if(finishedTool!=='eraser'&&strokes.some(x=>x.tool!=='eraser')&&cv.width>0){
+    try{window._lastNonEmptyDrawingUrl=cv.toDataURL('image/png');window._objectErased=false}catch(_){}
   }
   if(window.scheduleNotesPeekSync)window.scheduleNotesPeekSync();
 };
 cv.addEventListener('pointerup',endStroke);cv.addEventListener('pointercancel',endStroke);
-$('undo').onclick=()=>{if(strokes.length){redoStack.push(strokes.pop());redraw();undoState();if(window.scheduleNotesPeekSync)window.scheduleNotesPeekSync()}};
-$('redo').onclick=()=>{if(redoStack.length){strokes.push(redoStack.pop());redraw();undoState();if(window.scheduleNotesPeekSync)window.scheduleNotesPeekSync()}};
+$('undo').onclick=()=>{
+  if(eraseUndoStack.length&&(!strokes.length||window._objectErased)){
+    const items=eraseUndoStack.pop();
+    items.slice().sort((a,b)=>a.idx-b.idx).forEach(it=>strokes.splice(Math.min(it.idx,strokes.length),0,it.stroke));
+    eraseRedoStack.push(items);window._objectErased=false;redraw();undoState();
+    if(window.scheduleNotesPeekSync)window.scheduleNotesPeekSync();
+    return;
+  }
+  if(strokes.length){redoStack.push(strokes.pop());redraw();undoState();if(window.scheduleNotesPeekSync)window.scheduleNotesPeekSync()}
+};
+$('redo').onclick=()=>{
+  if(eraseRedoStack.length){
+    const items=eraseRedoStack.pop();
+    items.forEach(it=>{const k=strokes.indexOf(it.stroke);if(k>=0)strokes.splice(k,1)});
+    eraseUndoStack.push(items);window._objectErased=true;redraw();undoState();
+    if(window.scheduleNotesPeekSync)window.scheduleNotesPeekSync();
+    return;
+  }
+  if(redoStack.length){strokes.push(redoStack.pop());redraw();undoState();if(window.scheduleNotesPeekSync)window.scheduleNotesPeekSync()}
+};
 document.querySelectorAll('.tool').forEach(t=>t.onclick=()=>{document.querySelectorAll('.tool').forEach(x=>x.classList.remove('on'));t.classList.add('on');tool=t.dataset.tool});
 function tintTools(){document.querySelectorAll('.tool .tip,.tool .band').forEach(p=>p.setAttribute('fill',color==='ink'?ink():color));$('cwDot').style.background=color==='ink'?ink():color}
 const colorPop=$('colorPop');
@@ -2249,7 +2309,7 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',()=>{redr
 /* clearing the note (hold date / compose) also clears the drawing */
 function clearDrawing(){strokes=[];redoStack=[];redraw();undoState();if(window.scheduleNotesPeekSync)window.scheduleNotesPeekSync()}
 window.hasNotesDrawing=()=>strokes.some(x=>x.tool!=='eraser');
-window._hasEraserStrokes=()=>strokes.some(x=>x.tool==='eraser');
+window._hasEraserStrokes=()=>!!window._objectErased||strokes.some(x=>x.tool==='eraser');
 
 /* --- Drawing Mode: swipe-down / tap grabber to fold into draggable 79.6px circle --- */
 (()=>{
