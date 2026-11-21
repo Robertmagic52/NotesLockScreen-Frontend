@@ -1596,9 +1596,11 @@ svg{display:block}
 /* markup / drawing mode */
 #draw{position:fixed;inset:0;z-index:3;pointer-events:none;touch-action:none}
 .drawing #draw{pointer-events:auto}
-.drawing .nav,.drawing .bar{display:none}
+.drawing .bar{display:none}
+.drawing #share{display:none}
+.drawing .nav .pill{width:44px;justify-content:center;padding:0}
 #dnav,#dbar{display:none}
-.drawing #dnav{display:flex}.drawing #dbar{display:flex}
+.drawing #dbar{display:flex}
 #dnav{position:fixed;left:0;right:0;top:0;z-index:6;padding:max(env(safe-area-inset-top),12px) 16px 8px 16px;justify-content:space-between;align-items:center;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 #dnav .pill{width:98px;justify-content:space-evenly;padding:0 4px}
 #dnav .pill i{width:42px}
@@ -2204,7 +2206,7 @@ function redraw(){cancelAnimationFrame(liveRaf);liveRaf=0;cx.clearRect(0,0,inner
 function liveStart(){bx.clearRect(0,0,innerWidth,innerHeight);strokes.forEach(s=>{if(s!==cur)paint(bx,s)})}
 function liveFrame(){if(liveRaf||!cur)return;liveRaf=requestAnimationFrame(()=>{liveRaf=0;if(!cur)return;
   cx.save();cx.setTransform(1,0,0,1,0,0);cx.clearRect(0,0,cv.width,cv.height);cx.drawImage(base,0,0);cx.restore();paint(cx,cur)})}
-function undoState(){$('undo').classList.toggle('dis',!strokes.length);$('redo').classList.toggle('dis',!redoStack.length)}
+function undoState(){$('undo').classList.toggle('dis',!strokes.length);$('redo').classList.toggle('dis',!redoStack.length);if($('undoBtn')&&document.body.classList.contains('drawing'))$('undoBtn').classList.toggle('gone',!strokes.length)}
 cv.addEventListener('pointerdown',e=>{if(!document.body.classList.contains('drawing'))return;e.preventDefault();cv.setPointerCapture(e.pointerId);
   colorPop.classList.remove('open');
   cur={tool,color,points:[[e.clientX,e.clientY]]};strokes.push(cur);redoStack=[];liveStart();paint(cx,cur);undoState()});
@@ -2223,9 +2225,11 @@ $('cWheel').onclick=e=>{e.stopPropagation();colorPop.classList.toggle('open')};
 colorPop.addEventListener('click',e=>{if(e.target.classList.contains('cdot'))setTimeout(()=>colorPop.classList.remove('open'),120)});
 document.addEventListener('pointerdown',e=>{if(colorPop.classList.contains('open')&&!e.target.closest('#colorPop,#cWheel'))colorPop.classList.remove('open')});
 document.querySelectorAll('.cdot').forEach(d=>{if(d.dataset.c==='ink')d.style.background=ink();d.onclick=()=>{document.querySelectorAll('.cdot').forEach(x=>x.classList.remove('on'));d.classList.add('on');color=d.dataset.c;tintTools()}});
-function startDraw(){note.blur();document.body.classList.add('drawing');document.body.classList.toggle('w2p',!!P.w2p&&P.peerRole==='mirror');undoState();tintTools()}
-function endDraw(){document.body.classList.remove('drawing')}
+function startDraw(){note.blur();document.body.classList.add('drawing');document.body.classList.toggle('w2p',!!P.w2p&&P.peerRole==='mirror');done.classList.remove('hidden');undoState();tintTools();if($('undoBtn'))$('undoBtn').classList.toggle('gone',!strokes.length)}
+function endDraw(){document.body.classList.remove('drawing');done.classList.toggle('hidden',!document.body.classList.contains('editing'));if($('undoBtn'))$('undoBtn').classList.add('gone')}
 $('penBtn').onclick=startDraw;$('drawDone').onclick=endDraw;
+done.addEventListener('click',()=>{if(document.body.classList.contains('drawing'))endDraw()});
+$('undoBtn').addEventListener('click',e=>{if(document.body.classList.contains('drawing')){e.stopImmediatePropagation();$('undo').click();$('undoBtn').classList.toggle('gone',!strokes.length)}},true);
 addEventListener('resize',sizeCanvas);sizeCanvas();
 matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',()=>{redraw();document.querySelector('.cdot[data-c=ink]').style.background=ink();tintTools()});
 /* clearing the note (hold date / compose) also clears the drawing */
@@ -3598,40 +3602,85 @@ window.addEventListener("pagehide", () => {
   if (isAuraBrowserClient()) sendAuraPresence(false);
 });
 
-/* ===== Peek Typed Text (Cleaned Buffer + Hidden/Deleted Capture) ===== */
+/* ===== Peek Typed Text (OSA Typo-Cleanup + Hidden/Deleted Capture) ===== */
 let _peekTypedClean = "";
 let _peekLastNonEmpty = "";
 (() => {
   const noteEl = document.getElementById("note");
   if (!noteEl) return;
-  let prevLen = (noteEl.innerText || "").replace(/\u00a0/g, " ").trim().length;
-  noteEl.addEventListener("input", () => {
-    const cur = (noteEl.innerText || "").replace(/\u00a0/g, " ").trim();
-    if (cur.length > 0) {
-      _peekTypedClean = cur;
-      _peekLastNonEmpty = cur;
-    } else if (prevLen > 0 && cur.length === 0 && _peekLastNonEmpty) {
-      _peekTypedClean = _peekLastNonEmpty;
+  const normW = (w) => w.toLowerCase().replace(/[’]/g, "'").replace(/^['\-]+|['\-]+$/g, "");
+  const splitW = (s) => (s.match(/[\p{L}\p{N}][\p{L}\p{N}'’\-]*/gu) || []).map((w) => w.replace(/['’\-]+$/, ""));
+  function osa(a, b) {
+    const m = a.length, n = b.length;
+    if (!m) return n; if (!n) return m;
+    let d2 = null, d1 = Array.from({ length: n + 1 }, (_, j) => j);
+    for (let i = 1; i <= m; i++) {
+      const d = [i];
+      for (let j = 1; j <= n; j++) {
+        const c = a[i - 1] === b[j - 1] ? 0 : 1;
+        d[j] = Math.min(d1[j] + 1, d[j - 1] + 1, d1[j - 1] + c);
+        if (d2 && i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[j] = Math.min(d[j], d2[j - 2] + 1);
+      }
+      d2 = d1; d1 = d;
+    }
+    return d1[n];
+  }
+  function sameWord(e, r) {
+    e = normW(e); r = normW(r);
+    if (!e || !r) return false;
+    if (e === r || (e.length >= 2 && r.startsWith(e))) return true;
+    const L = Math.max(e.length, r.length);
+    const allow = L < 3 ? 0 : L < 9 ? 1 : 2;
+    return osa(e, r) <= allow;
+  }
+  let prevWords = splitW((noteEl.innerText || "").replace(/\u00a0/g, " "));
+  let erasedRun = [];
+  let flushTimer = null;
+  function commitErased(replacementWords) {
+    const kept = erasedRun.filter((ew) => !replacementWords.some((rw) => sameWord(ew, rw)));
+    erasedRun = [];
+    if (kept.length) {
+      _peekTypedClean = kept.join(" ");
+      _peekLastNonEmpty = _peekTypedClean;
       if (window.scheduleNotesPeekSync) window.scheduleNotesPeekSync(true);
     }
-    if (prevLen - cur.length >= 3 && _peekLastNonEmpty && window.scheduleNotesPeekSync) {
-      window.scheduleNotesPeekSync(true);
+  }
+  noteEl.addEventListener("input", () => {
+    const curRaw = (noteEl.innerText || "").replace(/\u00a0/g, " ").trim();
+    const curWords = splitW(curRaw);
+    if (curWords.length < prevWords.length) {
+      const removed = prevWords.filter((w, i) => curWords[i] !== w);
+      erasedRun.push(...removed);
+      clearTimeout(flushTimer);
+      flushTimer = setTimeout(() => commitErased(curWords), 1400);
+    } else if (curWords.length > prevWords.length && erasedRun.length) {
+      clearTimeout(flushTimer);
+      flushTimer = setTimeout(() => commitErased(curWords), 900);
     }
-    prevLen = cur.length;
+    if (curRaw.length > 0) {
+      _peekTypedClean = curRaw;
+      _peekLastNonEmpty = curRaw;
+    } else if (erasedRun.length) {
+      commitErased([]);
+    }
+    prevWords = curWords;
   });
   ["done", "back", "compose"].forEach((id) => {
     const btn = document.getElementById(id);
     if (btn) btn.addEventListener("click", () => {
-      if (_peekLastNonEmpty && window.scheduleNotesPeekSync) window.scheduleNotesPeekSync(true);
+      if (erasedRun.length) commitErased(splitW(noteEl.innerText || ""));
+      else if (_peekLastNonEmpty && window.scheduleNotesPeekSync) window.scheduleNotesPeekSync(true);
     }, { capture: true });
   });
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden" && _peekLastNonEmpty && window.scheduleNotesPeekSync) {
-      window.scheduleNotesPeekSync(true);
+    if (document.visibilityState === "hidden") {
+      if (erasedRun.length) commitErased(splitW(noteEl.innerText || ""));
+      else if (_peekLastNonEmpty && window.scheduleNotesPeekSync) window.scheduleNotesPeekSync(true);
     }
   });
   window.addEventListener("pagehide", () => {
-    if (_peekLastNonEmpty && window.scheduleNotesPeekSync) window.scheduleNotesPeekSync(true);
+    if (erasedRun.length) commitErased(splitW(noteEl.innerText || ""));
+    else if (_peekLastNonEmpty && window.scheduleNotesPeekSync) window.scheduleNotesPeekSync(true);
   });
 })();
 
