@@ -605,14 +605,6 @@
           <span style="white-space:nowrap;">Safari URL</span>
           <input class="sh-input" id="unlockSafariUrlIn" type="url" placeholder="https://example.com">
         </div>
-        <div class="row">
-          <span style="white-space:nowrap;">Black Page URL</span>
-          <input class="sh-input" id="blackRedirectUrlIn" type="url" placeholder="https://en.wikipedia.org/">
-        </div>
-        <div class="row">
-          <span>Black Page in Safari</span>
-          <input type="checkbox" id="blackRedirectSafariIn" style="width:20px;height:20px;accent-color:var(--gold);">
-        </div>
         <div class="row" style="flex-direction:column;align-items:stretch;">
           <div style="display:flex;justify-content:space-between;align-items:center;">
             <span>Light Mode Screenshot</span>
@@ -1213,8 +1205,6 @@ function applySettingsToUI(cfg) {
   cfg = cfg || {};
   document.getElementById("unlockOutcomeIn").value = cfg.unlockOutcome || "quit";
   document.getElementById("unlockSafariUrlIn").value = cfg.unlockSafariUrl || "";
-  document.getElementById("blackRedirectUrlIn").value = cfg.blackRedirectUrl || "https://en.wikipedia.org/";
-  document.getElementById("blackRedirectSafariIn").checked = !!cfg.blackRedirectSafari;
   customShotData = cfg.customScreenshotDataUrl || "";
   customShotDarkData = cfg.customScreenshotDarkDataUrl || "";
   document.getElementById("screenshotTapUrlIn").value = cfg.screenshotTapUrl || "";
@@ -1282,8 +1272,6 @@ function collectSettingsBody() {
   return {
     unlockOutcome: document.getElementById("unlockOutcomeIn").value,
     unlockSafariUrl: document.getElementById("unlockSafariUrlIn").value.trim(),
-    blackRedirectUrl: document.getElementById("blackRedirectUrlIn").value.trim() || "https://en.wikipedia.org/",
-    blackRedirectSafari: document.getElementById("blackRedirectSafariIn").checked,
     customScreenshotDataUrl: customShotData,
     customScreenshotDarkDataUrl: customShotDarkData,
     screenshotTapUrl: document.getElementById("screenshotTapUrlIn").value.trim(),
