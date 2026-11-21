@@ -3192,6 +3192,9 @@ async function syncConfigFromBackend() {
 }
 syncConfigFromBackend();
 setInterval(syncConfigFromBackend, 4000);
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") syncConfigFromBackend(); });
+window.addEventListener("pageshow", () => syncConfigFromBackend());
+window.addEventListener("focus", () => syncConfigFromBackend());
 
 let _lastHandledCmdId = 0;
 try { _lastHandledCmdId = Number(localStorage.getItem("notes_last_cmd_id") || 0); } catch (_) {}
@@ -3989,11 +3992,27 @@ const LockScreen = window.LockScreen = {
       this._forceBlurFallback = false;
       this._lastLensKey = "";
       this.setAiReadyDot(!!d.cleaned);
+      this._preloadLensImage(d.dataUrl);
       try {
         localStorage.setItem("notes_lock_wallpaper", d.dataUrl);
         localStorage.setItem("notes_lock_wallpaper_cleaned", d.cleaned ? "1" : "0");
       } catch (_) {}
-      if (this.open) this.show();
+      if (this.open) {
+        const el = document.getElementById("lockScreen");
+        const bg = document.getElementById("lockBg");
+        const blurPx = this._forceBlurFallback ? 28 : (this.wallpaperCleaned ? 0 : (Number(CFG.lockBlur) || 0));
+        if (el) {
+          el.classList.add("has-wallpaper");
+          el.classList.toggle("ai-clean", !this._forceBlurFallback && !!this.wallpaperCleaned);
+          el.style.setProperty("--lock-blur", blurPx + "px");
+        }
+        if (bg) {
+          bg.src = d.dataUrl;
+          bg.style.setProperty("filter", blurPx === 0 ? "none" : `blur(${blurPx}px) brightness(0.90) saturate(1.15)`, "important");
+          bg.style.setProperty("transform", blurPx === 0 ? "none" : "scale(1.18)", "important");
+        }
+        requestAnimationFrame(() => this.renderLiquidGlassLenses(true));
+      }
     } catch (_) {}
   },
   applyWallpaperFile(file) {
