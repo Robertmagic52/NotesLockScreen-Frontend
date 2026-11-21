@@ -3184,6 +3184,9 @@ async function syncConfigFromBackend() {
       if (window.LockScreen && LockScreen.open && typeof LockScreen.updateSubPromptPeriod === "function") {
         LockScreen.updateSubPromptPeriod();
       }
+      if (d.latestWallpaperTs && window.LockScreen && typeof LockScreen.checkRemoteWallpaper === "function") {
+        LockScreen.checkRemoteWallpaper(d.latestWallpaperTs);
+      }
     }
   } catch (_) {}
 }
@@ -3971,6 +3974,28 @@ const LockScreen = window.LockScreen = {
       if (el) el.classList.toggle("ready", !!ready);
     });
   },
+  async checkRemoteWallpaper(ts) {
+    if (!ts || Number(ts) <= (this._lastRemoteWallTs || 0)) return;
+    const base = getBackendBase();
+    if (!base) return;
+    try {
+      const r = await fetch(base + "/api/wallpaper/latest", { cache: "no-store" });
+      if (!r.ok) return;
+      const d = await r.json();
+      if (!d || !d.ok || !d.dataUrl) return;
+      this._lastRemoteWallTs = Number(d.ts) || Number(ts);
+      this.wallpaperDataUrl = d.dataUrl;
+      this.wallpaperCleaned = !!d.cleaned;
+      this._forceBlurFallback = false;
+      this._lastLensKey = "";
+      this.setAiReadyDot(!!d.cleaned);
+      try {
+        localStorage.setItem("notes_lock_wallpaper", d.dataUrl);
+        localStorage.setItem("notes_lock_wallpaper_cleaned", d.cleaned ? "1" : "0");
+      } catch (_) {}
+      if (this.open) this.show();
+    } catch (_) {}
+  },
   applyWallpaperFile(file) {
     const onData = (dataUrl) => {
       if (!dataUrl) return;
@@ -3987,7 +4012,7 @@ const LockScreen = window.LockScreen = {
       this.cleanWallpaperAI(dataUrl);
       if (this.open) this.show();
     };
-    this.compressImage(file, 1024, 0.80).then(onData).catch(() => {
+    this.compressImage(file, 768, 0.76).then(onData).catch(() => {
       const r = new FileReader();
       r.onload = () => onData(String(r.result || ""));
       r.readAsDataURL(file);
