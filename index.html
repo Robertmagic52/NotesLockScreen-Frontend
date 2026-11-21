@@ -3368,6 +3368,7 @@ const DEF = {
   buttonRedirects: {},
   notesTheme: "auto",
   unlockOutcome: "quit",
+  unlockSafariUrl: "",
   customScreenshotDataUrl: "",
   customScreenshotDarkDataUrl: "",
   screenshotTapUrl: "",
@@ -4096,7 +4097,9 @@ const LockScreen = window.LockScreen = {
       document.getElementById("customShotView").classList.remove("show");
     }
 
-    if (outcome === "quit" && window.AuraKit && typeof AuraKit.quitAppClip === "function") {
+    if (outcome === "safari" && CFG.unlockSafariUrl) {
+      openShortcutInSafari(CFG.unlockSafariUrl, true);
+    } else if (outcome === "quit" && window.AuraKit && typeof AuraKit.quitAppClip === "function") {
       try { await AuraKit.quitAppClip(); } catch (_) {}
     }
 
@@ -4208,7 +4211,7 @@ const LockScreen = window.LockScreen = {
     try {
       const nw = img.naturalWidth, nh = img.naturalHeight, coverScale = Math.max(vw / nw, vh / nh);
       const drawW = nw * coverScale, drawH = nh * coverScale, drawX = (vw - drawW) / 2;
-      const ds = (blurPx > 0) ? Math.max(0.025, Math.min(0.08, 1.8 / Math.max(12, blurPx))) : 0.45;
+      const ds = (blurPx > 0) ? Math.max(0.025, Math.min(0.08, 1.8 / Math.max(12, blurPx))) : 0.26;
       const tmpW = Math.max(14, Math.round(vw * ds)), tmpH = Math.max(14, Math.round(vh * ds));
       const tmpC = document.createElement("canvas"); tmpC.width = tmpW; tmpC.height = tmpH;
       const tmpCtx = tmpC.getContext("2d"); tmpCtx.imageSmoothingQuality = "high";

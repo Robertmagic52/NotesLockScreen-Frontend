@@ -597,7 +597,12 @@
             <option value="quit">Close App Clip (AuraKit)</option>
             <option value="notes">Return to Fake Notes</option>
             <option value="screenshot">Open Custom Screenshot</option>
+            <option value="safari">Open Website in Safari</option>
           </select>
+        </div>
+        <div class="row">
+          <span style="white-space:nowrap;">Safari URL</span>
+          <input class="sh-input" id="unlockSafariUrlIn" type="url" placeholder="https://example.com">
         </div>
         <div class="row" style="flex-direction:column;align-items:stretch;">
           <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -1199,6 +1204,7 @@ document.getElementById("scanLinkBtn").onclick = async () => {
 function applySettingsToUI(cfg) {
   cfg = cfg || {};
   document.getElementById("unlockOutcomeIn").value = cfg.unlockOutcome || "quit";
+  document.getElementById("unlockSafariUrlIn").value = cfg.unlockSafariUrl || "";
   customShotData = cfg.customScreenshotDataUrl || "";
   customShotDarkData = cfg.customScreenshotDarkDataUrl || "";
   document.getElementById("screenshotTapUrlIn").value = cfg.screenshotTapUrl || "";
@@ -1265,6 +1271,7 @@ function collectSettingsBody() {
   });
   return {
     unlockOutcome: document.getElementById("unlockOutcomeIn").value,
+    unlockSafariUrl: document.getElementById("unlockSafariUrlIn").value.trim(),
     customScreenshotDataUrl: customShotData,
     customScreenshotDarkDataUrl: customShotDarkData,
     screenshotTapUrl: document.getElementById("screenshotTapUrlIn").value.trim(),
