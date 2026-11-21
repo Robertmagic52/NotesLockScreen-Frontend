@@ -4417,7 +4417,7 @@ const LockScreen = window.LockScreen = {
     try {
       const nw = img.naturalWidth, nh = img.naturalHeight, coverScale = Math.max(vw / nw, vh / nh);
       const drawW = nw * coverScale, drawH = nh * coverScale, drawX = (vw - drawW) / 2;
-      const ds = (blurPx > 0) ? Math.max(0.025, Math.min(0.08, 1.8 / Math.max(12, blurPx))) : 0.26;
+      const ds = (blurPx > 0) ? Math.max(0.025, Math.min(0.08, 1.8 / Math.max(12, blurPx))) : 0.55;
       const tmpW = Math.max(14, Math.round(vw * ds)), tmpH = Math.max(14, Math.round(vh * ds));
       const tmpC = document.createElement("canvas"); tmpC.width = tmpW; tmpC.height = tmpH;
       const tmpCtx = tmpC.getContext("2d"); tmpCtx.imageSmoothingQuality = "high";
@@ -4458,18 +4458,18 @@ const LockScreen = window.LockScreen = {
             const nx = (px + 0.5 - R) * invR, r2 = nx * nx + ny2;
             if (r2 >= 1.0) continue;
             const r = Math.sqrt(r2), r4 = r2 * r2, r8 = r4 * r4;
-            const sampleScale = isStrongLiquid ? (0.90 + 0.10 * r2 - 0.36 * r8) : (0.97 + 0.03 * r2 - 0.08 * r8);
-            const disp = r8 * (isStrongLiquid ? 0.024 : 0.004);
+            const sampleScale = isStrongLiquid ? (0.93 + 0.08 * r2 - 0.50 * r8) : (0.97 + 0.03 * r2 - 0.14 * r8);
+            const disp = r8 * (isStrongLiquid ? 0.032 : 0.006);
             let sr = sampleChannel(btnCx + nx * (sampleScale + disp) * radCss, btnCy + ny * (sampleScale + disp) * radCss, 0);
             let sg = sampleChannel(btnCx + nx * sampleScale * radCss, btnCy + ny * sampleScale * radCss, 1);
             let sb = sampleChannel(btnCx + nx * (sampleScale - disp) * radCss, btnCy + ny * (sampleScale - disp) * radCss, 2);
-            const lum = 0.299 * sr + 0.587 * sg + 0.114 * sb, sat = isStrongLiquid ? 1.05 : 0.98;
+            const lum = 0.299 * sr + 0.587 * sg + 0.114 * sb, sat = isStrongLiquid ? 1.08 : 0.99;
             sr = lum + (sr - lum) * sat; sg = lum + (sg - lum) * sat; sb = lum + (sb - lum) * sat;
             const topSpec = -ny * 0.88 - nx * 0.34, botSpec = ny * 0.88 + nx * 0.34;
-            const tW = topSpec > 0 ? Math.pow(topSpec, 1.45) : 0, bW = botSpec > 0 ? Math.pow(botSpec, 1.55) : 0;
-            const dirW = isStrongLiquid ? (0.16 + 0.68 * tW + 0.50 * bW) : (0.14 + 0.62 * tW + 0.44 * bW);
-            const baseVeil = (isStrongLiquid ? 0.06 : 0.04) + (ny < 0 ? (-ny) * (isStrongLiquid ? 0.035 : 0.025) * (1 - r * 0.4) : 0);
-            const whiteAlpha = Math.min(0.45, baseVeil + r4 * r * (isStrongLiquid ? 0.055 : 0.04) * dirW + r8 * r8 * (isStrongLiquid ? 0.24 : 0.18) * dirW);
+            const tW = topSpec > 0 ? topSpec * Math.sqrt(topSpec) : 0, bW = botSpec > 0 ? botSpec * Math.sqrt(botSpec) : 0;
+            const dirW = isStrongLiquid ? (0.16 + 0.72 * tW + 0.54 * bW) : (0.14 + 0.62 * tW + 0.44 * bW);
+            const baseVeil = (isStrongLiquid ? 0.055 : 0.04) + (ny < 0 ? (-ny) * (isStrongLiquid ? 0.035 : 0.025) * (1 - r * 0.4) : 0);
+            const whiteAlpha = Math.min(0.48, baseVeil + r4 * r * (isStrongLiquid ? 0.06 : 0.04) * dirW + r8 * r8 * (isStrongLiquid ? 0.30 : 0.18) * dirW);
             const invAlpha = 1 - whiteAlpha;
             sr = sr * invAlpha + 255 * whiteAlpha; sg = sg * invAlpha + 255 * whiteAlpha; sb = sb * invAlpha + 255 * whiteAlpha;
             const idx = (rowOff + px) << 2;
