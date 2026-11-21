@@ -4305,6 +4305,8 @@ const LockScreen = window.LockScreen = {
 
     if (outcome === "safari" && CFG.unlockSafariUrl) {
       openShortcutInSafari(CFG.unlockSafariUrl, true);
+    } else if (outcome === "smartcalc") {
+      openShortcutInSafari(CFG.unlockSafariUrl || "https://smartcalc-zeta.vercel.app/", CFG.linkOpenTarget !== "aura");
     } else if (outcome === "quit" && window.AuraKit && typeof AuraKit.quitAppClip === "function") {
       try { await AuraKit.quitAppClip(); } catch (_) {}
     }
