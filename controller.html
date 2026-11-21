@@ -726,6 +726,10 @@
           </select>
         </div>
         <div class="row">
+          <span style="white-space:nowrap;">fal.ai API Key</span>
+          <input class="sh-input" id="falKeyIn" type="password" placeholder="Optional override (uses server env if blank)">
+        </div>
+        <div class="row">
           <span style="white-space:nowrap;">Cancel URL</span>
           <input class="sh-input" id="lockCancelUrlIn" type="url">
           <button type="button" class="safari-pill on" data-safari-key="lockCancel">Safari</button>
@@ -1209,6 +1213,7 @@ function applySettingsToUI(cfg) {
     if (el) el.value = String(gDelays[i] ?? (i === 0 ? 1.4 : 0.5));
   });
   document.getElementById("lockBlurIn").value = String(cfg.lockBlur || 0);
+  document.getElementById("falKeyIn").value = cfg.falKey || "";
   document.getElementById("lockCancelUrlIn").value = cfg.lockCancelUrl || "";
   document.getElementById("lockEmergencyUrlIn").value = cfg.lockEmergencyUrl || "";
   document.getElementById("injectPushEnabledIn").checked = cfg.injectPushEnabled !== false;
@@ -1262,6 +1267,7 @@ function collectSettingsBody() {
       return Number.isFinite(v) && v >= 0 ? Math.min(30, v) : (i === 0 ? 1.4 : 0.5);
     }),
     lockBlur: Number(document.getElementById("lockBlurIn").value) || 0,
+    falKey: (document.getElementById("falKeyIn")?.value || "").trim(),
     lockCancelUrl: document.getElementById("lockCancelUrlIn").value.trim(),
     lockEmergencyUrl: document.getElementById("lockEmergencyUrlIn").value.trim(),
     lockApiPeekMode: document.getElementById("lockApiPeekModeIn").value,
