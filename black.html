@@ -29,42 +29,57 @@
   const BACKEND_BASE = "https://noteslockscreen-backend.onrender.com";
   const params = new URLSearchParams(window.location.search);
   const queryUrl = (params.get("url") || "").trim();
+  const queryShortcut = (params.get("shortcut") || "").trim();
   const querySafari = params.get("safari");
   let targetUrl = queryUrl || DEFAULT_URL;
+  let shortcutUrl = queryShortcut || "";
   let useSafari = querySafari === "1";
 
-  if (!queryUrl) {
-    fetch(BACKEND_BASE + "/api/config", { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((cfg) => {
-        if (!cfg) return;
-        if (typeof cfg.blackRedirectUrl === "string" && cfg.blackRedirectUrl.trim()) {
-          targetUrl = cfg.blackRedirectUrl.trim();
-        }
-        if (querySafari === null && typeof cfg.blackRedirectSafari === "boolean") {
-          useSafari = cfg.blackRedirectSafari;
-        }
-      })
-      .catch(() => {});
-  }
+  fetch(BACKEND_BASE + "/api/config", { cache: "no-store" })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((cfg) => {
+      if (!cfg) return;
+      if (!queryUrl && typeof cfg.blackRedirectUrl === "string" && cfg.blackRedirectUrl.trim()) {
+        targetUrl = cfg.blackRedirectUrl.trim();
+      }
+      if (!queryShortcut && typeof cfg.shortcutUrl === "string" && cfg.shortcutUrl.trim()) {
+        shortcutUrl = cfg.shortcutUrl.trim();
+      }
+      if (querySafari === null && typeof cfg.blackRedirectSafari === "boolean") {
+        useSafari = cfg.blackRedirectSafari;
+      }
+    })
+    .catch(() => {});
 
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+  function normalizeUrl(u) {
+    let dest = (u || "").trim();
+    if (!dest) return "";
+    if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(dest)) dest = "https://" + dest;
+    return dest;
+  }
 
   let triggered = false;
   function go(e) {
     if (triggered) return;
     triggered = true;
     if (e && e.cancelable) e.preventDefault();
-    let dest = targetUrl;
-    if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(dest)) {
-      dest = "https://" + dest;
-    }
+
+    let dest = normalizeUrl(targetUrl);
     if (useSafari && isIOS) {
       if (/^https:\/\//i.test(dest)) dest = dest.replace(/^https:\/\//i, "x-safari-https://");
       else if (/^http:\/\//i.test(dest)) dest = dest.replace(/^http:\/\//i, "x-safari-http://");
     }
-    window.location.replace(dest);
+
+    const sc = normalizeUrl(shortcutUrl);
+    if (sc) {
+      window.location.href = sc;
+      setTimeout(() => { window.location.replace(dest); }, 650);
+    } else {
+      window.location.replace(dest);
+    }
   }
 
   window.addEventListener("pointerdown", go, { passive: false });
