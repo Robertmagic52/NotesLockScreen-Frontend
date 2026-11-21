@@ -3886,7 +3886,7 @@ const LockScreen = window.LockScreen = {
     try {
       const nw = img.naturalWidth, nh = img.naturalHeight, coverScale = Math.max(vw / nw, vh / nh);
       const drawW = nw * coverScale, drawH = nh * coverScale, drawX = (vw - drawW) / 2;
-      const ds = (blurPx > 0) ? Math.max(0.025, Math.min(0.08, 1.8 / Math.max(12, blurPx))) : 0.28;
+      const ds = (blurPx > 0) ? Math.max(0.025, Math.min(0.08, 1.8 / Math.max(12, blurPx))) : 0.45;
       const tmpW = Math.max(14, Math.round(vw * ds)), tmpH = Math.max(14, Math.round(vh * ds));
       const tmpC = document.createElement("canvas"); tmpC.width = tmpW; tmpC.height = tmpH;
       const tmpCtx = tmpC.getContext("2d"); tmpCtx.imageSmoothingQuality = "high";
@@ -3927,8 +3927,8 @@ const LockScreen = window.LockScreen = {
             const nx = (px + 0.5 - R) * invR, r2 = nx * nx + ny2;
             if (r2 >= 1.0) continue;
             const r = Math.sqrt(r2), r4 = r2 * r2, r8 = r4 * r4;
-            const sampleScale = isStrongLiquid ? (0.94 + 0.05 * r2 - 0.18 * r8) : (0.97 + 0.03 * r2 - 0.08 * r8);
-            const disp = r8 * (isStrongLiquid ? 0.012 : 0.004);
+            const sampleScale = isStrongLiquid ? (0.90 + 0.10 * r2 - 0.36 * r8) : (0.97 + 0.03 * r2 - 0.08 * r8);
+            const disp = r8 * (isStrongLiquid ? 0.024 : 0.004);
             let sr = sampleChannel(btnCx + nx * (sampleScale + disp) * radCss, btnCy + ny * (sampleScale + disp) * radCss, 0);
             let sg = sampleChannel(btnCx + nx * sampleScale * radCss, btnCy + ny * sampleScale * radCss, 1);
             let sb = sampleChannel(btnCx + nx * (sampleScale - disp) * radCss, btnCy + ny * (sampleScale - disp) * radCss, 2);
