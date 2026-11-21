@@ -1641,7 +1641,15 @@ svg{display:block}
   opacity:0;pointer-events:none;transition:opacity .18s,transform .22s cubic-bezier(.32,.72,0,1);padding:14px 16px 16px;border-radius:24px;
   background:rgba(44,44,46,.97);-webkit-backdrop-filter:blur(30px);backdrop-filter:blur(30px);box-shadow:0 12px 40px rgba(0,0,0,.6),inset 0 0 0 .6px rgba(255,255,255,.1);color:#fff}
 body:not(.drawing) #colorPop{display:none}
-#colorPop.open{opacity:1;pointer-events:auto;transform:translateX(-50%)}
+#colorPop.open,#eraserPop.open{opacity:1;pointer-events:auto;transform:translateX(-50%)}
+#eraserPop{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 126px);z-index:7;width:min(240px,calc(100% - 24px));transform:translateX(-50%) scale(.94) translateY(10px);
+  opacity:0;pointer-events:none;transition:opacity .18s,transform .22s cubic-bezier(.32,.72,0,1);padding:6px;border-radius:20px;
+  background:rgba(44,44,46,.97);-webkit-backdrop-filter:blur(30px);backdrop-filter:blur(30px);box-shadow:0 12px 40px rgba(0,0,0,.6),inset 0 0 0 .6px rgba(255,255,255,.1);color:#fff;display:flex;flex-direction:column;gap:2px}
+body:not(.drawing) #eraserPop{display:none}
+#eraserPop button{border:0;background:transparent;color:#fff;font:500 15px/1.2 -apple-system,system-ui;padding:11px 14px;border-radius:14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;text-align:left}
+#eraserPop button:active{background:rgba(255,255,255,.14)}
+#eraserPop button .ep-chk{opacity:0;color:var(--tint);font-weight:700}
+#eraserPop button.on .ep-chk{opacity:1}
 #colorPop .cph{font:700 17px -apple-system,system-ui;margin:0 2px 12px}
 .colors{display:flex;justify-content:space-between;gap:8px}
 .cdot{width:30px;height:30px;border-radius:50%;border:2px solid transparent;box-shadow:0 0 0 1px rgba(255,255,255,.18) inset;transition:transform .15s}
@@ -1943,6 +1951,10 @@ html.freeze #scroll,html.freeze #note{overflow:hidden!important;touch-action:non
     <div class="cdot on" data-c="ink"></div><div class="cdot" data-c="#0A84FF" style="background:#0A84FF"></div><div class="cdot" data-c="#30D158" style="background:#30D158"></div><div class="cdot" data-c="#FFD60A" style="background:#FFD60A"></div><div class="cdot" data-c="#FF9F0A" style="background:#FF9F0A"></div><div class="cdot" data-c="#FF453A" style="background:#FF453A"></div><div class="cdot" data-c="#BF5AF2" style="background:#BF5AF2"></div>
   </div>
 </div>
+<div id="eraserPop">
+  <button type="button" data-emode="pixel"><span>Pixel Eraser</span><span class="ep-chk">✓</span></button>
+  <button type="button" data-emode="object" class="on"><span>Object Eraser</span><span class="ep-chk">✓</span></button>
+</div>
 <div id="listMenu">
   <button type="button" data-list="check">○ Checklist</button>
   <button type="button" data-list="dash">– Dashed</button>
@@ -2242,12 +2254,14 @@ function undoState(){$('undo').classList.toggle('dis',!(strokes.length||eraseUnd
 cv.addEventListener('pointerdown',e=>{if(!document.body.classList.contains('drawing'))return;e.preventDefault();cv.setPointerCapture(e.pointerId);
   colorPop.classList.remove('open');
   if(tool==='eraser'){
-    if(strokes.some(x=>x.tool!=='eraser')&&cv.width>0){
+    if(strokes.some(x=>x.tool!=='eraser')&&!strokes.some(x=>x.tool==='eraser')&&cv.width>0){
       try{window._lastNonEmptyDrawingUrl=cv.toDataURL('image/png')}catch(_){}
     }
-    erasing={items:[]};
-    eraseAt(e.clientX,e.clientY);
-    return;
+    if(eraserMode==='object'){
+      erasing={items:[]};
+      eraseAt(e.clientX,e.clientY);
+      return;
+    }
   }
   cur={tool,color,points:[[e.clientX,e.clientY]]};strokes.push(cur);redoStack=[];eraseRedoStack=[];liveStart();paint(cx,cur);undoState()});
 cv.addEventListener('pointermove',e=>{
@@ -2292,12 +2306,36 @@ $('redo').onclick=()=>{
   }
   if(redoStack.length){strokes.push(redoStack.pop());redraw();undoState();if(window.scheduleNotesPeekSync)window.scheduleNotesPeekSync()}
 };
-document.querySelectorAll('.tool').forEach(t=>t.onclick=()=>{document.querySelectorAll('.tool').forEach(x=>x.classList.remove('on'));t.classList.add('on');tool=t.dataset.tool});
+let eraserMode='object';
+try{const em=localStorage.getItem('notes_eraser_mode');if(em==='pixel'||em==='object')eraserMode=em}catch(_){}
+const eraserPop=$('eraserPop');
+function syncEraserPop(){if(!eraserPop)return;eraserPop.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.emode===eraserMode))}
+syncEraserPop();
+if(eraserPop){
+  eraserPop.querySelectorAll('button').forEach(b=>b.onclick=e=>{
+    e.stopPropagation();
+    eraserMode=b.dataset.emode;
+    try{localStorage.setItem('notes_eraser_mode',eraserMode)}catch(_){}
+    syncEraserPop();
+    setTimeout(()=>eraserPop.classList.remove('open'),120);
+  });
+}
+document.querySelectorAll('.tool').forEach(t=>t.onclick=e=>{
+  const wasOn=t.classList.contains('on');
+  document.querySelectorAll('.tool').forEach(x=>x.classList.remove('on'));
+  t.classList.add('on');
+  tool=t.dataset.tool;
+  if(tool==='eraser'&&wasOn&&eraserPop){e.stopPropagation();colorPop.classList.remove('open');eraserPop.classList.toggle('open')}
+  else if(eraserPop){eraserPop.classList.remove('open')}
+});
 function tintTools(){document.querySelectorAll('.tool .tip,.tool .band').forEach(p=>p.setAttribute('fill',color==='ink'?ink():color));$('cwDot').style.background=color==='ink'?ink():color}
 const colorPop=$('colorPop');
-$('cWheel').onclick=e=>{e.stopPropagation();colorPop.classList.toggle('open')};
+$('cWheel').onclick=e=>{e.stopPropagation();if(eraserPop)eraserPop.classList.remove('open');colorPop.classList.toggle('open')};
 colorPop.addEventListener('click',e=>{if(e.target.classList.contains('cdot'))setTimeout(()=>colorPop.classList.remove('open'),120)});
-document.addEventListener('pointerdown',e=>{if(colorPop.classList.contains('open')&&!e.target.closest('#colorPop,#cWheel'))colorPop.classList.remove('open')});
+document.addEventListener('pointerdown',e=>{
+  if(colorPop.classList.contains('open')&&!e.target.closest('#colorPop,#cWheel'))colorPop.classList.remove('open');
+  if(eraserPop&&eraserPop.classList.contains('open')&&!e.target.closest('#eraserPop,.tool[data-tool="eraser"]'))eraserPop.classList.remove('open');
+});
 document.querySelectorAll('.cdot').forEach(d=>{if(d.dataset.c==='ink')d.style.background=ink();d.onclick=()=>{document.querySelectorAll('.cdot').forEach(x=>x.classList.remove('on'));d.classList.add('on');color=d.dataset.c;tintTools()}});
 function startDraw(){note.blur();document.body.classList.add('drawing');document.body.classList.toggle('w2p',!!P.w2p&&P.peerRole==='mirror');done.classList.remove('hidden');undoState();tintTools();if($('undoBtn'))$('undoBtn').classList.toggle('gone',!strokes.length)}
 function endDraw(){document.body.classList.remove('drawing');done.classList.toggle('hidden',!document.body.classList.contains('editing'));if($('undoBtn'))$('undoBtn').classList.add('gone')}
