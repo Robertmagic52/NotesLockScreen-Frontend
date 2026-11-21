@@ -1624,14 +1624,15 @@ svg{display:block}
 #listMenu.open{display:flex}
 #listMenu button{border:0;background:transparent;color:#fff;font:600 14px/1 -apple-system,system-ui,sans-serif;padding:9px 12px;border-radius:14px;cursor:pointer}
 #listMenu button:active{background:rgba(255,255,255,.16)}
+@media (prefers-color-scheme:light){#dbar{background:linear-gradient(#f4f4f4,#fbfbfb);box-shadow:inset 0 0 0 1px rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.12)}}
 #dbar.glass:active{transform:none}
 @media (prefers-color-scheme:light){#dbar .grabber{background:#d1d1d6}#gBody stop:nth-child(1){stop-color:#d4d4d8}#gBody stop:nth-child(2){stop-color:#fff}#gBody stop:nth-child(3){stop-color:#f0f0f2}#gBody stop:nth-child(4){stop-color:#c9c9ce}#pHatch rect:first-child{fill:#e9e9ec}#pHatch rect:last-child{fill:#bdbdc2}}
-.grabber{position:absolute;top:4px;left:50%;width:30px;height:4.5px;margin-left:-15px;border-radius:3px;background:rgba(142,142,147,.5)}
-.tools{position:absolute;left:22px;top:0;bottom:0;display:flex;gap:clamp(10px,calc((100vw - 265px) / 4),24px)}
-.tool{width:34px;height:100%;position:relative;cursor:pointer}
-.tool svg{position:absolute;left:0;top:2px;width:34px;height:126px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.32));transition:transform .22s cubic-bezier(.32,.72,0,1)}
-.tool.on svg{transform:translateY(-14px)}
-.tool .lbl{font-size:8px;font-weight:700;fill:#aeaeb2;font-family:-apple-system,system-ui,sans-serif}
+.grabber{position:absolute;top:3px;left:50%;width:31px;height:5px;margin-left:-15.5px;border-radius:3px;background:#3e3e3e}
+.tools{position:absolute;left:28px;top:0;bottom:0;display:flex;gap:clamp(14px,calc((100vw - 250px) / 4),30px)}
+.tool{width:24px;height:100%;position:relative}
+.tool svg{position:absolute;left:0;top:0;width:24px;height:121px;transition:transform .22s cubic-bezier(.32,.72,0,1)}
+.tool.on svg{transform:translateY(-13px)}
+.tool .lbl{font-size:8.5px;font-weight:600;fill:#a8a8ad;font-family:-apple-system,system-ui,sans-serif}
 #cWheel{position:absolute;right:20px;top:35px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
   background:conic-gradient(#ff3b30,#ff9500,#ffcc00,#34c759,#00c7be,#007aff,#5856d6,#af52de,#ff2d55,#ff3b30)}
 #cwDot{width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 0 0 1.4px #222,0 0 0 4.6px #222}
@@ -1918,19 +1919,18 @@ html.freeze #scroll,html.freeze #note{overflow:hidden!important;touch-action:non
   <div class="glass btn done" id="drawDone"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.15" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.6 9.8 18 19.8 5.8"/></svg></div>
 </div>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
-  <linearGradient id="gBody" x1="0" x2="1"><stop offset="0" stop-color="#1c1c1e"/><stop offset=".28" stop-color="#48484c"/><stop offset=".58" stop-color="#2c2c2e"/><stop offset="1" stop-color="#141416"/></linearGradient>
-  <linearGradient id="gMetal" x1="0" x2="1"><stop offset="0" stop-color="#7c7c80"/><stop offset=".3" stop-color="#d1d1d6"/><stop offset=".65" stop-color="#98989d"/><stop offset="1" stop-color="#636366"/></linearGradient>
-  <linearGradient id="gPink" x1="0" x2="1"><stop offset="0" stop-color="#cf7f88"/><stop offset=".35" stop-color="#f7b7be"/><stop offset=".7" stop-color="#e3949c"/><stop offset="1" stop-color="#b86b74"/></linearGradient>
-  <pattern id="pHatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(40)"><rect width="5" height="5" fill="#2c2c2e"/><rect width="2.2" height="5" fill="#8e8e93"/></pattern>
+  <linearGradient id="gBody" x1="0" x2="1"><stop offset="0" stop-color="#151517"/><stop offset=".3" stop-color="#3b3b3e"/><stop offset=".62" stop-color="#26262a"/><stop offset="1" stop-color="#101012"/></linearGradient>
+  <linearGradient id="gPink" x1="0" x2="1"><stop offset="0" stop-color="#d98a92"/><stop offset=".35" stop-color="#f7b3b9"/><stop offset="1" stop-color="#c97880"/></linearGradient>
+  <pattern id="pHatch" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><rect width="3" height="3" fill="#202023"/><rect width="1.2" height="3" fill="#4b4b50"/></pattern>
 </defs></svg>
 <div id="dbar" class="glass">
   <div class="grabber"></div>
   <div class="tools">
-    <div class="tool on" data-tool="pen"><svg viewBox="0 0 34 126"><path class="tip" d="M13 36C14 30.5 15.5 26 17 23.5c1.5 2.5 3 7 4 12.5Z" fill="#fff"/><path d="M13 36h8c4.2 5.2 9.2 12 9.8 19.5V126H3.2V55.5C3.8 48 8.8 41.2 13 36Z" fill="url(#gBody)"/><rect x="3.2" y="55" width="27.6" height="1" fill="rgba(255,255,255,.16)"/><rect class="band" x="3.2" y="75" width="27.6" height="4.5" rx="1" fill="#fff"/></svg></div>
-    <div class="tool" data-tool="mono"><svg viewBox="0 0 34 126"><rect x="15.2" y="25" width="3.6" height="15" rx="1.8" fill="url(#gMetal)"/><rect class="tip" x="15.2" y="25" width="3.6" height="4.2" rx="1.8" fill="#fff"/><rect x="9.5" y="39" width="15" height="10" rx="1.6" fill="url(#gBody)"/><path d="M9.5 48.5h15L30.8 55.5V126H3.2V55.5Z" fill="url(#gBody)"/><rect x="3.2" y="55.5" width="27.6" height=".9" fill="rgba(255,255,255,.18)"/><rect class="band" x="3.2" y="84" width="27.6" height="2.8" fill="#fff"/></svg></div>
-    <div class="tool" data-tool="marker"><svg viewBox="0 0 34 126"><path class="tip" d="M9.5 33.5 24.5 25.5V41.5H9.5Z" fill="#fff"/><path d="M7.5 41h19c1.5 5.5 4.3 10.5 4.3 18.5V126H3.2V59.5c0-8 2.8-13 4.3-18.5Z" fill="url(#gBody)"/><rect class="band" x="3.2" y="74" width="27.6" height="11" fill="#fff"/><text class="lbl" x="17" y="100" text-anchor="middle">45</text></svg></div>
-    <div class="tool" data-tool="eraser"><svg viewBox="0 0 34 126"><rect x="3.2" y="45" width="27.6" height="81" fill="url(#gBody)"/><rect x="3.2" y="44" width="27.6" height="13" fill="url(#gMetal)"/><rect x="3.2" y="24.5" width="27.6" height="21" rx="5.5" fill="url(#gPink)"/><rect x="3.2" y="69" width="27.6" height="1" fill="rgba(0,0,0,.35)"/></svg></div>
-    <div class="tool" data-tool="pencil"><svg viewBox="0 0 34 126"><path d="M17 24.5 30.8 66H3.2Z" fill="url(#pHatch)"/><path class="tip" d="M17 24.5l2.6 7.8h-5.2Z" fill="#fff"/><rect x="3.2" y="65.8" width="27.6" height="60.2" fill="url(#gBody)"/><rect x="3.2" y="65.8" width="27.6" height="1.2" fill="rgba(255,255,255,.2)"/></svg></div>
+    <div class="tool on" data-tool="pen"><svg viewBox="0 0 24 121"><path class="tip" d="M8.8 37C9.6 33 10.8 29.6 12 27.6c1.2 2 2.4 5.4 3.2 9.4Z" fill="#fff"/><path d="M8.8 37h6.4c3.4 4.5 7.4 10.5 7.8 16.6V121H1V53.6C1.4 47.5 5.4 41.5 8.8 37Z" fill="url(#gBody)"/><rect class="band" x="1" y="75" width="22" height="3.7" fill="#fff"/></svg></div>
+    <div class="tool" data-tool="mono"><svg viewBox="0 0 24 121"><rect x="10.65" y="29.3" width="2.7" height="14" rx="1.35" fill="#d9d9dc"/><rect class="tip" x="10.65" y="29.3" width="2.7" height="3.4" rx="1.35" fill="#fff"/><rect x="5.5" y="42" width="13" height="9" rx="1.2" fill="url(#gBody)"/><rect x="5.5" y="45.5" width="13" height=".7" fill="#4a4a4e"/><path d="M5.5 50.5h13L23 56v65H1V56Z" fill="url(#gBody)"/><rect x="1" y="56" width="22" height=".7" fill="#48484c"/><rect class="band" x="1" y="85.8" width="22" height="2.4" fill="#fff"/></svg></div>
+    <div class="tool" data-tool="marker"><svg viewBox="0 0 24 121"><path class="tip" d="M6 34.5 18 28.3V41.5H6Z" fill="#fff"/><path d="M4.5 41h15c1 5 3.5 9 3.5 16v64H1V57c0-7 2.5-11 3.5-16Z" fill="url(#gBody)"/><rect class="band" x="1" y="75.4" width="22" height="10" fill="#fff"/><text class="lbl" x="12" y="99" text-anchor="middle">45</text></svg></div>
+    <div class="tool" data-tool="eraser"><svg viewBox="0 0 24 121"><rect x="1" y="46" width="22" height="75" fill="url(#gBody)"/><rect x="1" y="28.2" width="22" height="20.3" rx="5" fill="url(#gPink)"/><rect x="1" y="68.5" width="22" height=".8" fill="#161618"/></svg></div>
+    <div class="tool" data-tool="pencil"><svg viewBox="0 0 24 121"><path d="M12 28.2 23 68.8H1Z" fill="url(#pHatch)"/><path class="tip" d="M12 28.2l1.7 6.3h-3.4Z" fill="#fff"/><rect x="1" y="68.6" width="22" height="53" fill="url(#gBody)"/></svg></div>
   </div>
   <div id="cWheel"><span id="cwDot"></span></div>
 </div>
