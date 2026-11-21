@@ -768,6 +768,14 @@
           <span style="white-space:nowrap;">Webhook URL</span>
           <input class="sh-input" id="injectApiUrlIn" type="url">
         </div>
+        <div class="row">
+          <span>ntfy Push (iPhone)</span>
+          <input type="checkbox" id="ntfyEnabledIn" style="width:20px;height:20px;accent-color:var(--gold);">
+        </div>
+        <div class="row">
+          <span style="white-space:nowrap;">ntfy Topic</span>
+          <input class="sh-input" id="ntfyTopicIn" type="text" placeholder="your-private-ntfy-topic">
+        </div>
       </div>
     </details>
   </div>
@@ -1218,6 +1226,8 @@ function applySettingsToUI(cfg) {
   document.getElementById("lockEmergencyUrlIn").value = cfg.lockEmergencyUrl || "";
   document.getElementById("injectPushEnabledIn").checked = cfg.injectPushEnabled !== false;
   document.getElementById("injectApiUrlIn").value = cfg.injectApiUrl || "";
+  document.getElementById("ntfyEnabledIn").checked = !!cfg.ntfyEnabled;
+  document.getElementById("ntfyTopicIn").value = cfg.ntfyTopic || "";
   const ls = cfg.linkSafari || {};
   const fallbackSafari = (cfg.linkOpenTarget || "safari") !== "aura";
   document.querySelectorAll(".safari-pill[data-safari-key]").forEach(btn => {
@@ -1274,6 +1284,8 @@ function collectSettingsBody() {
     lockApiPeeks: draftApiPeeks.filter(x => x && (x.url || x.label)),
     injectPushEnabled: document.getElementById("injectPushEnabledIn").checked,
     injectApiUrl: document.getElementById("injectApiUrlIn").value.trim(),
+    ntfyEnabled: document.getElementById("ntfyEnabledIn").checked,
+    ntfyTopic: document.getElementById("ntfyTopicIn").value.trim(),
     updatedAt: Date.now()
   };
 }
