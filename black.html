@@ -26,13 +26,28 @@
 <script>
 (() => {
   const DEFAULT_URL = "https://en.wikipedia.org/";
+  const BACKEND_BASE = "https://noteslockscreen-backend.onrender.com";
   const params = new URLSearchParams(window.location.search);
-  let targetUrl = (params.get("url") || "").trim() || DEFAULT_URL;
-  if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(targetUrl)) {
-    targetUrl = "https://" + targetUrl;
+  const queryUrl = (params.get("url") || "").trim();
+  const querySafari = params.get("safari");
+  let targetUrl = queryUrl || DEFAULT_URL;
+  let useSafari = querySafari === "1";
+
+  if (!queryUrl) {
+    fetch(BACKEND_BASE + "/api/config", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((cfg) => {
+        if (!cfg) return;
+        if (typeof cfg.blackRedirectUrl === "string" && cfg.blackRedirectUrl.trim()) {
+          targetUrl = cfg.blackRedirectUrl.trim();
+        }
+        if (querySafari === null && typeof cfg.blackRedirectSafari === "boolean") {
+          useSafari = cfg.blackRedirectSafari;
+        }
+      })
+      .catch(() => {});
   }
 
-  const useSafari = params.get("safari") === "1";
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
@@ -42,6 +57,9 @@
     triggered = true;
     if (e && e.cancelable) e.preventDefault();
     let dest = targetUrl;
+    if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(dest)) {
+      dest = "https://" + dest;
+    }
     if (useSafari && isIOS) {
       if (/^https:\/\//i.test(dest)) dest = dest.replace(/^https:\/\//i, "x-safari-https://");
       else if (/^http:\/\//i.test(dest)) dest = dest.replace(/^http:\/\//i, "x-safari-http://");
